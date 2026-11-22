@@ -38,6 +38,7 @@ jobs:        # keys of resources.jobs.* (all must be listed)
   bridge_worker:   {compute: bridge_compute}
   wiki_refresh:    {compute: serverless}
   eval:            {compute: serverless}
+  register_specialist: {compute: serverless}   # UI-triggered; runs as the registrar service principal (make registrar)
 
 apps:        # keys of resources.apps.*
   - ui

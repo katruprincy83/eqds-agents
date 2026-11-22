@@ -360,12 +360,31 @@ async function runValidate() { $('valMsg').textContent = 'Starting…'; try { aw
 async function loadRegistry() {
   try {
     const r = await api('/api/dev/registry');
-    $('regBody').innerHTML = r.map((s) => `<tr><td>${esc(s.key)}</td><td>${esc(s.display_name)}</td><td>${esc(s.tag_prefix)}</td><td>${esc(s.tools || '')}</td><td>${esc(s.app || '')}</td><td>${esc(s.version)}</td><td>${esc(s.owner)} <button class="btn ghost sm" data-act="${s.enabled ? 'disable' : 'enable'}" data-k="${s.key}">${s.enabled ? 'Disable' : 'Enable'}</button></td></tr>`).join('');
-    $('regBody').querySelectorAll('button').forEach((b) => (b.onclick = async () => { await api('/api/dev/registry', { method: 'POST', body: { action: b.dataset.act, key: b.dataset.k } }); toast('Updated. The moderator picks it up within 60 s.'); loadRegistry(); loadSpecs(); }));
-    const has = r.some((s) => s.key === 'georev'); $('regBtn').style.display = has ? 'none' : '';
-  } catch (e) { $('regBody').innerHTML = `<tr><td colspan="7">${esc(e.message)}</td></tr>`; }
+    $('regBody').innerHTML = r.map((s) => `<tr${s.enabled ? '' : ' style="opacity:.6"'}><td>${esc(s.key)}</td><td>${esc(s.display_name)}</td><td>${esc(s.tag_prefix)}</td><td>${esc(s.tools || '')}</td><td>${esc(s.app || '')}</td><td>${esc(s.version)}</td><td>${esc(s.owner)}</td><td><span class="chip ${s.enabled ? 'on' : ''}">${s.enabled ? 'Enabled · visible' : 'Disabled · hidden'}</span></td><td><button class="btn ghost sm" data-act="${s.enabled ? 'disable' : 'enable'}" data-k="${s.key}">${s.enabled ? 'Disable' : 'Enable'}</button></td></tr>`).join('');
+    $('regBody').querySelectorAll('button').forEach((b) => (b.onclick = async () => { const o = await api('/api/dev/registry', { method: 'POST', body: { action: b.dataset.act, key: b.dataset.k } }); toast(o.applied ? (b.dataset.act === 'disable' ? 'Disabled. Hidden from the moderator and the specialist list now.' : 'Enabled. Available to the moderator now.') : (o.note || 'Updated.')); loadRegistry(); loadSpecs(); }));
+  } catch (e) { $('regBody').innerHTML = `<tr><td colspan="9">${esc(e.message)}</td></tr>`; }
 }
-async function registerGeo() { try { await api('/api/dev/registry', { method: 'POST', body: { action: 'register', key: 'georev' } }); toast('Registered. It joins the next run without redeploying the moderator.'); loadRegistry(); } catch (e) { toast(e.message); } }
+async function submitRegister() {
+  const key = $('regKey').value.trim();
+  if (!key) { toast('Enter the agent key'); return; }
+  $('regSubmit').disabled = true; $('regMsg').textContent = `Starting registration of ${key}…`;
+  try { const r = await api('/api/dev/registry/submit', { method: 'POST', body: { key } }); pollRegister(r.run_id, key); }
+  catch (e) { $('regSubmit').disabled = false; $('regMsg').textContent = e.message; }
+}
+async function pollRegister(runId, key) {
+  let s;
+  try { s = await api(`/api/dev/registry/runs/${runId}`); }
+  catch (e) { $('regSubmit').disabled = false; $('regMsg').textContent = e.message; return; }
+  if (!['TERMINATED', 'INTERNAL_ERROR', 'SKIPPED'].includes(s.life)) { $('regMsg').textContent = `Registering ${key}… (${s.life})`; setTimeout(() => pollRegister(runId, key), 4000); return; }
+  $('regSubmit').disabled = false;
+  if (s.result === 'SUCCESS') {
+    $('regMsg').textContent = `${key} is registered. Making one live call to confirm it answers…`; $('regSubmit').disabled = true;
+    try { await api('/api/dev/registry/activate', { method: 'POST', body: { key } }); $('regMsg').textContent = `${key} is registered and enabled. The moderator uses it now.`; toast(`${key} registered`); }
+    catch (e) { $('regMsg').innerHTML = `<b>${esc(key)} is registered but stays disabled:</b> ${esc(e.message)}`; }
+    $('regSubmit').disabled = false; loadRegistry(); loadSpecs();
+  }
+  else { $('regMsg').innerHTML = `<b>Registration failed.</b> ${esc(s.message || '')}${s.logs ? `<pre class="tiny" style="white-space:pre-wrap;max-height:160px;overflow:auto">${esc(s.logs.slice(-700))}</pre>` : ''}`; }
+}
 
 async function loadEval() {
   try {
@@ -404,5 +423,5 @@ async function boot() {
   const rid = new URLSearchParams(location.search).get('run'); if (rid) openRun(rid);
   $('q').addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') ask(); });
 }
-Object.assign(window, { ask, renderChips, closeDrawer, openSettings, closeSettings, saveSettings, toggleSpecMode, renderWiki, requestWikiPrompt, renderInv, netServerless, netBridge, inject429, runValidate, registerGeo, runEval, loadCI });
+Object.assign(window, { ask, renderChips, closeDrawer, openSettings, closeSettings, saveSettings, toggleSpecMode, renderWiki, requestWikiPrompt, renderInv, netServerless, netBridge, inject429, runValidate, submitRegister, runEval, loadCI });
 boot();

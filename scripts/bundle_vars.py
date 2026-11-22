@@ -106,6 +106,9 @@ def render(env: Env) -> dict:
         "ui_permissions": [{"level": "CAN_USE", "group_name": g} for g in (env.get("ui.access_groups") or [])],
         "sp_ci": (env.get("service_principals") or {}).get("ci", ""),
     }
+    reg = (env.get("service_principals") or {}).get("registrar", "")
+    if reg:  # registration runs as the registrar service principal (make registrar); otherwise as the deployer (databricks.yml default)
+        v["registrar_run_as"] = {"service_principal_name": reg}
     v.update(compute_vars(env))
     v.update(llm_vars(env))
     return v

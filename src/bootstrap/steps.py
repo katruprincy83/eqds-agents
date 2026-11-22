@@ -291,15 +291,63 @@ def model_services_teardown(ctx) -> None:
 
 
 # ── app grants (UC + Lakebase) ───────────────────────────────────────────────────────────────────
+def access_of(sp: dict) -> dict:
+    """Access spec for one specialist: its declared grants plus its Lakebase schema and Vector Search indexes."""
+    indexes = [i["name"] for t in sp.get("tools", []) if t.get("type") == "vector_search" for i in t.get("indexes", [])]
+    return {**(sp.get("access") or {}), "lakebase": ["mem"], "vector_indexes": indexes}
+
+
 def _components(ctx) -> dict[str, dict]:
     """component -> access spec (apps that exist)."""
     access = yaml.safe_load(_read(ctx, "bootstrap/app_access.yaml"))
     comps = {k: v for k, v in access.items()}
     for f in sorted(glob.glob(os.path.join(ctx.root, "agents", "specialists", "*", "specialist.yaml"))):
         sp = yaml.safe_load(open(f))
-        indexes = [i["name"] for t in sp.get("tools", []) if t.get("type") == "vector_search" for i in t.get("indexes", [])]
-        comps[f"sp-{sp['key']}"] = {**(sp.get("access") or {}), "lakebase": ["mem"], "vector_indexes": indexes}
+        comps[f"sp-{sp['key']}"] = access_of(sp)
     return comps
+
+
+def _lakebase_role(ctx, conn, comp: str, sp: str) -> None:
+    """The app's service principal needs a Postgres role (OAuth) before it can be granted anything."""
+    try:
+        conn.execute("CREATE EXTENSION IF NOT EXISTS databricks_auth")
+        exists = conn.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (sp,)).fetchone()
+        if not exists:
+            conn.execute("SELECT databricks_create_role(%s, 'service_principal')", (sp,))
+            ctx.say(f"lakebase role created for {comp}")
+    except Exception as e:  # noqa: BLE001
+        ctx.say(f"lakebase role for {comp} not created: {str(e)[:100]}")
+
+
+def apply_component_grants(ctx, conn, comp: str, sp: str, spec: dict) -> None:
+    """Unity Catalog, model service, embedding and Lakebase grants for one app's service principal."""
+    uc = ctx.env.uc
+    cat = ctx.env.catalog
+    stmts = [f"GRANT USE CATALOG ON CATALOG {cat} TO `{sp}`", f"GRANT USE SCHEMA ON SCHEMA {uc} TO `{sp}`"]
+    stmts += [f"GRANT SELECT ON TABLE {uc}.{t} TO `{sp}`" for t in spec.get("tables", [])]
+    stmts += [f"GRANT EXECUTE ON FUNCTION {uc}.{f} TO `{sp}`" for f in spec.get("functions", [])]
+    stmts += [f"GRANT READ VOLUME ON VOLUME {uc}.{v} TO `{sp}`" for v in spec.get("volumes", [])]
+    stmts += [f"GRANT SELECT ON TABLE {uc}.{ix} TO `{sp}`" for ix in spec.get("vector_indexes", [])]
+    for s in stmts:
+        try:
+            ctx.sql(s)
+        except Exception as e:  # noqa: BLE001
+            ctx.say(f"grant failed ({s[:70]}...): {str(e)[:100]}")
+    if comp != "bridge-mcp":  # the bridge makes no LLM calls
+        _grant_model_services(ctx, sp)
+    if spec.get("vector_indexes"):  # managed Vector Search embeds the query on the embedding endpoint as the caller
+        _grant_embedding_endpoint(ctx, sp)
+    if conn is not None:
+        _lakebase_role(ctx, conn, comp, sp)
+        for s in spec.get("lakebase", []):
+            for q in (f'GRANT USAGE ON SCHEMA {s} TO "{sp}"', f'GRANT ALL ON ALL TABLES IN SCHEMA {s} TO "{sp}"',
+                      f'GRANT ALL ON ALL SEQUENCES IN SCHEMA {s} TO "{sp}"', f'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA {s} TO "{sp}"'):
+                try:
+                    conn.execute(q)
+                except Exception as e:  # noqa: BLE001
+                    ctx.say(f"lakebase grant skipped for {comp}.{s}: {str(e)[:90]}")
+                    break
+    ctx.say(f"grants applied for {comp} ({sp})")
 
 
 def app_grants_apply(ctx) -> None:
@@ -310,8 +358,6 @@ def app_grants_apply(ctx) -> None:
         conn = lakebase.connect(_lb_target(ctx))
     except Exception as e:  # noqa: BLE001
         ctx.say(f"lakebase unavailable, skipping role grants: {str(e)[:80]}")
-    uc = ctx.env.uc
-    cat, sch = ctx.env.catalog, ctx.env.schema
     comps_all = _components(ctx)
     for comp, spec in comps_all.items():
         try:
@@ -319,43 +365,15 @@ def app_grants_apply(ctx) -> None:
         except Exception:  # noqa: BLE001
             ctx.say(f"app {ctx.env.app_name(comp)} not deployed yet: skipped")
             continue
-        sp = app.service_principal_client_id
-        stmts = [f"GRANT USE CATALOG ON CATALOG {cat} TO `{sp}`", f"GRANT USE SCHEMA ON SCHEMA {uc} TO `{sp}`"]
-        stmts += [f"GRANT SELECT ON TABLE {uc}.{t} TO `{sp}`" for t in spec.get("tables", [])]
-        stmts += [f"GRANT EXECUTE ON FUNCTION {uc}.{f} TO `{sp}`" for f in spec.get("functions", [])]
-        stmts += [f"GRANT READ VOLUME ON VOLUME {uc}.{v} TO `{sp}`" for v in spec.get("volumes", [])]
-        stmts += [f"GRANT SELECT ON TABLE {uc}.{ix} TO `{sp}`" for ix in spec.get("vector_indexes", [])]
-        for s in stmts:
-            try:
-                ctx.sql(s)
-            except Exception as e:  # noqa: BLE001
-                ctx.say(f"grant failed ({s[:70]}...): {str(e)[:100]}")
-        if comp != "bridge-mcp":  # the bridge makes no LLM calls
-            _grant_model_services(ctx, sp)
-        if spec.get("vector_indexes"):  # managed Vector Search embeds the query on the embedding endpoint as the caller
-            _grant_embedding_endpoint(ctx, sp)
-        if conn is not None:
-            try:  # the app's service principal needs a Postgres role (OAuth) before it can be granted anything
-                conn.execute("CREATE EXTENSION IF NOT EXISTS databricks_auth")
-                exists = conn.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (sp,)).fetchone()
-                if not exists:
-                    conn.execute("SELECT databricks_create_role(%s, 'service_principal')", (sp,))
-                    ctx.say(f"lakebase role created for {comp}")
-            except Exception as e:  # noqa: BLE001
-                ctx.say(f"lakebase role for {comp} not created: {str(e)[:100]}")
-            for s in spec.get("lakebase", []):
-                for q in (f'GRANT USAGE ON SCHEMA {s} TO "{sp}"', f'GRANT ALL ON ALL TABLES IN SCHEMA {s} TO "{sp}"',
-                          f'GRANT ALL ON ALL SEQUENCES IN SCHEMA {s} TO "{sp}"', f'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA {s} TO "{sp}"'):
-                    try:
-                        conn.execute(q)
-                    except Exception as e:  # noqa: BLE001
-                        ctx.say(f"lakebase grant skipped for {comp}.{s}: {str(e)[:90]}")
-                        break
-        ctx.say(f"grants applied for {comp} ({sp})")
+        apply_component_grants(ctx, conn, comp, app.service_principal_client_id, spec)
     if conn is not None:
         conn.close()
     _grant_app_use(ctx, "bridge-mcp", [c for c in comps_all if c.startswith("sp-")])
+    for c in comps_all:  # the UI runs the registration contract check against each specialist (its identity can call apps)
+        if c.startswith("sp-"):
+            _grant_app_use(ctx, c, ["ui"])
     _grant_job_caller(ctx)
+    registrar_grants(ctx)
 
 
 def _model_service_names(ctx) -> list[str]:
@@ -426,6 +444,82 @@ def _grant_app_use(ctx, callee: str, callers: list[str]) -> None:
             ctx.say(f"CAN_USE on {callee_name} granted to {comp}")
         except Exception as e:  # noqa: BLE001
             ctx.say(f"app grant {comp} -> {callee_name} skipped: {str(e)[:100]}")
+
+
+def registrar_grants(ctx) -> None:
+    """Grants for the registrar service principal (`make registrar`), which runs the registration job (resources/jobs/registry.yml).
+
+    The job can only do what registration needs: read the catalog and grant on its objects (MANAGE on the catalog), use the
+    warehouse, manage the specialist apps and the bridge it wires (CAN_MANAGE), manage the embedding endpoint and the model
+    services (so it can grant them), and write `registry.specialists`. The deployer sets this up; the job never escalates itself.
+    """
+    from databricks.sdk.service.apps import AppAccessControlRequest, AppPermissionLevel
+    from databricks.sdk.service.serving import ServingEndpointAccessControlRequest, ServingEndpointPermissionLevel
+    from databricks.sdk.service.sql import WarehouseAccessControlRequest, WarehousePermissionLevel
+
+    from eqds_agentkit import lakebase
+
+    sp = (ctx.env.get("service_principals") or {}).get("registrar") or ""
+    if not sp:
+        ctx.say("registrar not configured (service_principals.registrar): run `make registrar` first")
+        return
+    cat = ctx.env.catalog
+    # USE SCHEMA is needed to grant on objects inside a schema (MANAGE alone is not enough)
+    for s in (f"GRANT USE CATALOG ON CATALOG {cat} TO `{sp}`", f"GRANT USE SCHEMA ON CATALOG {cat} TO `{sp}`", f"GRANT MANAGE ON CATALOG {cat} TO `{sp}`"):
+        try:
+            ctx.sql(s)
+        except Exception as e:  # noqa: BLE001
+            ctx.say(f"registrar grant failed ({s[:60]}...): {str(e)[:100]}")
+    try:
+        ctx.w.warehouses.set_permissions(warehouse_id=ctx.warehouse_id(),
+                                         access_control_list=[WarehouseAccessControlRequest(service_principal_name=sp, permission_level=WarehousePermissionLevel.CAN_USE)])
+    except Exception as e:  # noqa: BLE001
+        ctx.say(f"registrar warehouse CAN_USE not granted: {str(e)[:100]}")
+    for comp in _components(ctx):
+        if not (comp.startswith("sp-") or comp == "bridge-mcp"):  # only the apps registration wires
+            continue
+        name = ctx.env.app_name(comp)
+        for attempt in range(4):
+            try:
+                ctx.w.apps.update_permissions(app_name=name, access_control_list=[AppAccessControlRequest(service_principal_name=sp, permission_level=AppPermissionLevel.CAN_MANAGE)])
+                ctx.say(f"CAN_MANAGE on {name} granted to the registrar")
+                break
+            except Exception as e:  # noqa: BLE001
+                if "CONFLICT" in str(e) and attempt < 3:
+                    time.sleep(2 + attempt * 2)
+                    continue
+                ctx.say(f"registrar CAN_MANAGE on {name} not granted: {str(e)[:100]}")
+                break
+    try:
+        ep = ctx.w.serving_endpoints.get(f"{ctx.env.prefix}-embed{ctx.env.suffix}")
+        ctx.w.serving_endpoints.update_permissions(serving_endpoint_id=ep.id,
+                                                   access_control_list=[ServingEndpointAccessControlRequest(service_principal_name=sp, permission_level=ServingEndpointPermissionLevel.CAN_MANAGE)])
+    except Exception as e:  # noqa: BLE001
+        ctx.say(f"registrar CAN_MANAGE on the embedding endpoint not granted: {str(e)[:100]}")
+    for full in _model_service_names(ctx):
+        try:
+            ctx.w.api_client.do("PATCH", f"/api/2.1/unity-catalog/permissions/model_service/{full}",
+                                body={"changes": [{"principal": sp, "add": ["MANAGE"]}]})
+        except Exception as e:  # noqa: BLE001
+            ctx.say(f"registrar MANAGE on model service {full} not granted: {str(e)[:100]}")
+    conn = lakebase.connect(_lb_target(ctx))
+    try:
+        _lakebase_role(ctx, conn, "registrar", sp)
+        conn.execute(f'ALTER ROLE "{sp}" CREATEROLE')  # it creates the Postgres role of each newly registered agent
+        conn.execute(f'GRANT USAGE ON SCHEMA registry TO "{sp}"')
+        conn.execute(f'GRANT SELECT, INSERT, UPDATE, DELETE ON registry.specialists TO "{sp}"')
+        ctx.say("registrar: registry.specialists read/write granted")
+        # the registrar grants each new agent's role access to `mem`; it does not own those objects, so it needs the grant option
+        for q in (f'GRANT USAGE ON SCHEMA mem TO "{sp}" WITH GRANT OPTION',
+                  f'GRANT ALL ON ALL TABLES IN SCHEMA mem TO "{sp}" WITH GRANT OPTION',
+                  f'GRANT ALL ON ALL SEQUENCES IN SCHEMA mem TO "{sp}" WITH GRANT OPTION',
+                  f'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA mem TO "{sp}" WITH GRANT OPTION'):
+            conn.execute(q)
+        ctx.say("registrar: mem grant option applied")
+    except Exception as e:  # noqa: BLE001
+        ctx.say(f"registrar registry grant failed: {str(e)[:100]}")
+    finally:
+        conn.close()
 
 
 def app_grants_teardown(ctx) -> None:

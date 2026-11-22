@@ -1,0 +1,28 @@
+# Self-service specialist registration. The UI triggers this job with the agent key. It runs as service_principals.registrar
+# (`make registrar`) when set, otherwise as the deployer. It runs the same code as `scripts/register_specialist.py register <key>`.
+resources:
+  jobs:
+    register_specialist:
+      name: ${var.name_prefix}-register-specialist-${var.target_name}
+      description: Registers one specialist agent (UI-triggered). Runs as the registrar service principal when configured, else the deployer.
+      max_concurrent_runs: 4
+      parameters:
+        - {name: target, default: "${var.target_name}"}
+        - {name: key, default: ""}
+        - {name: requested_by, default: ""}
+        - {name: contract_checked, default: "false"}
+        - {name: spec_b64, default: ""}
+      run_as: ${var.registrar_run_as}
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "${var.serverless_env_version}"
+            dependencies: [pandas, numpy, pyyaml, pydantic>=2.6, "psycopg[binary,pool]>=3.1", httpx, "databricks-sdk>=0.50"]
+      tasks:
+        - task_key: register
+          environment_key: default
+          spark_python_task:
+            python_file: ../../src/jobs/register_specialist.py
+            parameters: ["--target", "{{job.parameters.target}}", "--root", "${workspace.file_path}",
+                         "--key", "{{job.parameters.key}}", "--requested-by", "{{job.parameters.requested_by}}",
+                         "--contract-checked", "{{job.parameters.contract_checked}}", "--spec-b64", "{{job.parameters.spec_b64}}"]

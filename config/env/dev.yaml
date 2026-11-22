@@ -34,7 +34,7 @@ policies: {bridge: "", ingest: ""}      # cluster policy IDs/names; "" = no poli
 node_types: {bridge: md-fleet.xlarge, ingest: md-fleet.xlarge}
 spark_version: 17.3.x-scala2.13
 secret_scope: eqds-bridge
-service_principals: {ci: "", bridge: "", ingest: "", wiki: "", seed: ""}   # "" = run as deployer (demo)
+service_principals: {ci: "", bridge: "", ingest: "", wiki: "", seed: "", registrar: ""}   # "" = run as deployer; registrar: `make registrar`
 models_config: config/models.dev.yaml
 model_serving:                  # embedding endpoint for Vector Search (the only serving endpoint) + AI Gateway model-service limits
   scale_to_zero: true

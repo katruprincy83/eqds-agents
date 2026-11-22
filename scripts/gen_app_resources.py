@@ -46,7 +46,7 @@ def write(fname, apps):
 
 keys = sorted(os.path.basename(os.path.dirname(f)) for f in glob.glob(str(ROOT / "agents/specialists/*/specialist.yaml")))
 bridge_ref = {"name": "bridge-mcp", "app": {"name": "${resources.apps.bridge_mcp.name}", "permission": "CAN_USE"}}
-jobs = [("wiki_refresh", "WIKI_REFRESH"), ("validate_seed", "VALIDATE_SEED"), ("eval", "EVAL"), ("bridge_worker", "BRIDGE_WORKER"), ("ingest_news", "INGEST_NEWS")]
+jobs = [("wiki_refresh", "WIKI_REFRESH"), ("validate_seed", "VALIDATE_SEED"), ("eval", "EVAL"), ("bridge_worker", "BRIDGE_WORKER"), ("ingest_news", "INGEST_NEWS"), ("register_specialist", "REGISTER_SPECIALIST")]
 
 write("bridge_mcp.yml", {"bridge_mcp": app("bridge_mcp", "MCP server that queues allowlisted bridge requests for the classic worker", "bridge_mcp", [], [])})
 write("moderator.yml", {"moderator": app("moderator", "LangGraph moderator: async run API, SSE, durable resume", "moderator", [],

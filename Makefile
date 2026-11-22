@@ -3,10 +3,11 @@
 # Secrets: export EQDS_AZURE_SQL_USER / EQDS_AZURE_SQL_PASSWORD before `make infra` (they only ever land in the secret scope).
 TARGET ?= demo
 PY ?= python
-APPS := bridge_mcp sp_broker sp_earnings sp_efm sp_emquant sp_experts sp_georev sp_news sp_ours sp_research moderator ui
+# specialist apps come from the agents/specialists/* folders
+APPS := bridge_mcp $(addprefix sp_,$(patsubst agents/specialists/%/specialist.yaml,%,$(wildcard agents/specialists/*/specialist.yaml))) moderator ui
 JOBS_SEED := seed_uc seed_docs seed_azure validate_seed
 
-.PHONY: all vars infra build deploy bootstrap apps outputs preflight seed docs test manifest destroy teardown ask
+.PHONY: all vars infra build deploy bootstrap apps outputs preflight seed docs test manifest destroy teardown ask register registrar
 
 all: vars infra build deploy bootstrap apps outputs
 
@@ -51,6 +52,15 @@ manifest:
 
 test:
 	$(PY) -m pytest -q tests
+
+# self-service: make register KEY=news | make register ACTION=disable KEY=news | make register ACTION=list
+ACTION ?= register
+register:
+	$(PY) scripts/register_specialist.py $(ACTION) $(KEY) --target $(TARGET)
+
+# one-time: the identity that runs UI-triggered registration (creates the SP, records its id, applies its grants)
+registrar:
+	$(PY) scripts/registrar.py --target $(TARGET)
 
 ask:
 	@TOK=$$(databricks auth token -o json | $(PY) -c "import json,sys;print(json.load(sys.stdin)['access_token'])"); \

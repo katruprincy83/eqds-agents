@@ -40,6 +40,8 @@ resources:
           value: ${resources.jobs.bridge_worker.id}
         - name: JOB_ID_INGEST_NEWS
           value: ${resources.jobs.ingest_news.id}
+        - name: JOB_ID_REGISTER_SPECIALIST
+          value: ${resources.jobs.register_specialist.id}
       resources:
       - name: experiment
         experiment:
@@ -76,5 +78,9 @@ resources:
       - name: job-ingest-news
         job:
           id: ${resources.jobs.ingest_news.id}
+          permission: CAN_MANAGE_RUN
+      - name: job-register-specialist
+        job:
+          id: ${resources.jobs.register_specialist.id}
           permission: CAN_MANAGE_RUN
       permissions: ${var.ui_permissions}

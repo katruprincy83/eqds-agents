@@ -86,6 +86,7 @@ variables:
     type: complex
     default: []
   sp_ci:              {default: ""}
+  registrar_run_as:   {type: complex, default: {user_name: "${workspace.current_user.userName}"}}   # registration job identity: the deployer until `make registrar` is granted; then the registrar SP
 
 artifacts: {}
 

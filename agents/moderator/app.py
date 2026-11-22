@@ -89,6 +89,13 @@ async def specialists():
     return [s.__dict__ for s in M.reg.all(include_disabled=True)]
 
 
+@app.post("/registry/refresh")
+async def registry_refresh():
+    """Apply a registry change now instead of waiting for the 60 s cache."""
+    M.reg.refresh()
+    return [{"key": s.key, "enabled": s.enabled} for s in M.reg.all(include_disabled=True)]
+
+
 def _create(req: RunReq, user: str) -> tuple[str, str]:
     run_id = "r-" + uuid.uuid4().hex[:12]
     conv = req.conversation_id or "c-" + uuid.uuid4().hex[:8]

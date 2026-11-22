@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import pathlib
+import re
 import time
 
 import httpx
@@ -491,25 +492,142 @@ class RegReq(BaseModel):
 async def dev_registry_post(r: RegReq, request: Request):
     await dev(request)
     e = get_env()
+    out = await _registry_change(r, e)
+    try:  # apply now: the moderator would otherwise keep its cached roster for up to 60 s
+        async with httpx.AsyncClient(timeout=20) as c:
+            await c.post(f"{moderator_url()}/registry/refresh", headers=mod_headers(request))
+        out["applied"] = True
+    except Exception as ex:  # noqa: BLE001
+        out["applied"] = False
+        out["note"] = f"moderator refresh failed, it will pick the change up within 60 s: {str(ex)[:80]}"
+    return out
+
+
+async def _registry_change(r: "RegReq", e):
+    """enable / disable only. Registering a new agent goes through the registration job (grants + contract check)."""
+    def go():
+        if r.action not in ("enable", "disable"):
+            raise HTTPException(400, "unknown action (use the registration form to register an agent)")
+        with pool().connection() as c:
+            c.execute("UPDATE registry.specialists SET enabled = %s, updated_at = now() WHERE key = %s", (r.action == "enable", r.key))
+        return {"ok": True}
+
+    return await asyncio.to_thread(go)
+
+
+class SubmitReq(BaseModel):
+    key: str
+
+
+def _check_agent_contract(key: str, want_info: bool = False, live: bool = True) -> dict | None:
+    """One call to the agent the way the moderator makes it. Runs with the UI's identity, which the agent apps accept.
+    With want_info, also returns the agent's /info (a standalone agent's spec lives in its own app)."""
+    from eqds_agentkit import contract
+
+    e = get_env()
+    w = W()
+    try:
+        url = w.apps.get(e.app_name(f"sp-{key}")).url
+    except Exception as ex:  # noqa: BLE001
+        raise HTTPException(409, f"the agent app {e.app_name(f'sp-{key}')} is not deployed: {str(ex)[:120]}")
+    if not url:
+        raise HTTPException(409, f"the agent app sp-{key} has no URL yet")
+    h = auth.bearer(w)
+    url = url.rstrip("/")
+    info = None
+    try:
+        hz = httpx.get(f"{url}/healthz", headers=h, timeout=60, follow_redirects=False)
+        if hz.status_code != 200:
+            raise HTTPException(422, f"{url}/healthz returned {hz.status_code} (does the UI have CAN_USE on the app?)")
+        if want_info:
+            ir = httpx.get(f"{url}/info", headers=h, timeout=60, follow_redirects=False)
+            if ir.status_code != 200:
+                raise HTTPException(422, f"{url}/info returned {ir.status_code}")
+            info = ir.json()
+        if not live:  # before registration the agent has no access to its data yet, so a real call cannot work
+            return info
+        body = contract.request("Registration check. Answer in one short sentence that you are ready.", run_id=f"register-{int(time.time())}",
+                                round=1, key=key, caller="registration")
+        r = httpx.post(f"{url}/invocations", json=body, headers=h, timeout=240, follow_redirects=False)
+        if r.status_code != 200:
+            raise HTTPException(422, f"{url}/invocations returned {r.status_code}")
+        out = contract.parse_response(r.json())
+        if not (out.text or out.claims):
+            raise HTTPException(422, "the agent returned no text and no claims")
+    except HTTPException:
+        raise
+    except Exception as ex:  # noqa: BLE001
+        raise HTTPException(422, f"the agent did not follow the contract: {str(ex)[:160]}")
+    return info
+
+
+@app.post("/api/dev/registry/submit")
+async def dev_registry_submit(r: SubmitReq, request: Request):
+    """Federate an agent: check its contract with the UI's identity, then start the registration job (grants + registry row) as the
+    registrar. An agent that is not in this repo (deployed on its own) is read from its own /info."""
+    import base64
+
+    from eqds_agentkit import specs
+
+    await dev(request)
+    if not re.fullmatch(r"[a-z][a-z0-9_]{1,30}", r.key or ""):
+        raise HTTPException(400, "key must be lowercase letters, digits and underscores")
+    job = os.environ.get("JOB_ID_REGISTER_SPECIALIST")
+    if not job:
+        raise HTTPException(503, "registration job not configured")
+    in_repo = (ROOT / "agents" / "specialists" / r.key / "specialist.yaml").exists()
+    info = await asyncio.to_thread(_check_agent_contract, r.key, not in_repo, False)
+    params = {"key": r.key, "requested_by": auth.user_from_headers(request.headers), "contract_checked": "true"}
+    if not in_repo:
+        try:
+            spec = specs.spec_from_info(info, r.key)
+        except specs.RegistrationError as ex:
+            raise HTTPException(422, str(ex))
+        params["spec_b64"] = base64.b64encode(json.dumps(spec).encode()).decode()
+    run = await asyncio.to_thread(lambda: W().jobs.run_now(int(job), job_parameters=params))
+    return {"run_id": run.run_id, "key": r.key, "source": "repo" if in_repo else "agent /info"}
+
+
+@app.post("/api/dev/registry/activate")
+async def dev_registry_activate(r: SubmitReq, request: Request):
+    """Second half of registration: once the job has granted access, make one real call to the agent with the UI's identity and
+    enable it only if that works. A failing agent stays registered but disabled."""
+    await dev(request)
+    def live():
+        # a new Postgres role and the new grants take up to a minute to take effect, so a first failure is retried
+        for attempt in range(4):
+            try:
+                return _check_agent_contract(r.key, False, True)
+            except HTTPException as ex:
+                if ex.status_code != 422 or attempt == 3:
+                    raise
+                time.sleep(15)
+
+    await asyncio.to_thread(live)
+    out = await dev_registry_post(RegReq(action="enable", key=r.key), request)
+    return {"key": r.key, "enabled": True, **out}
+
+
+@app.get("/api/dev/registry/runs/{run_id}")
+async def dev_registry_run(run_id: int, request: Request):
+    """Status of one registration run: lifecycle, result, and the job's log tail (the FAILED reason when it fails)."""
+    await dev(request)
 
     def go():
-        if r.action in ("enable", "disable"):
-            with pool().connection() as c:
-                c.execute("UPDATE registry.specialists SET enabled = %s, updated_at = now() WHERE key = %s", (r.action == "enable", r.key))
-            return {"ok": True}
-        if r.action == "register":
-            f = ROOT / "agents" / "specialists" / r.key / "specialist.yaml"
-            if not f.exists():
-                raise HTTPException(404, f"no specialist.yaml for {r.key}")
-            sp = yaml.safe_load(f.read_text())
-            app_name = e.app_name(f"sp-{r.key}")
-            url = W().apps.get(app_name).url
-            from eqds_agentkit.registry import upsert_specialist
-
-            with pool().connection() as c:
-                upsert_specialist(c, sp, url, e.target, app_name)
-            return {"ok": True, "url": url}
-        raise HTTPException(400, "unknown action")
+        run = W().jobs.get_run(run_id)
+        task = (run.tasks or [None])[0]
+        logs, error = "", ""
+        if task is not None and run.state and run.state.life_cycle_state and run.state.life_cycle_state.value in ("TERMINATED", "INTERNAL_ERROR"):
+            try:
+                out = W().jobs.get_run_output(task.run_id)
+                logs, error = (out.logs or ""), (out.error or "")
+            except Exception as ex:  # noqa: BLE001
+                error = str(ex)[:200]
+        st = run.state
+        return {"life": st.life_cycle_state.value if st and st.life_cycle_state else None,
+                "result": st.result_state.value if st and st.result_state else None,
+                "message": (st.state_message if st else "") or error,
+                "logs": logs[-1500:]}
 
     return await asyncio.to_thread(go)
 

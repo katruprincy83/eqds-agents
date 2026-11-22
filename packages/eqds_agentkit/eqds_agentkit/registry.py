@@ -44,9 +44,15 @@ class Registry:
                 self._load()
             return [s for s in self._rows.values() if include_disabled or s.enabled]
 
-    def get(self, key: str) -> SpecialistInfo | None:
+    def get(self, key: str, include_disabled: bool = False) -> SpecialistInfo | None:
+        """A disabled specialist does not resolve: it cannot be called even if a stale brief or probe names it."""
         self.all()
-        return self._rows.get(key)
+        s = self._rows.get(key)
+        return s if s and (include_disabled or s.enabled) else None
+
+    def refresh(self) -> None:
+        """Reload now (used after an enable/disable/register so the change applies immediately, not after the TTL)."""
+        self.all(force=True)
 
 
 def upsert_specialist(conn, sp: dict, url: str, env_name: str, app_name: str) -> None:

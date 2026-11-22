@@ -59,7 +59,9 @@ class SpecialistAgent:
     def info(self) -> dict:
         c = self.cfg
         return {k: c.get(k) for k in ("key", "display_name", "tag_prefix", "description", "domains", "model_tier", "skill", "version", "owner", "timeout_s")} | {
-            "contract_version": contract.CONTRACT_VERSION, "tools": c.get("tools_summary", "")}
+            "contract_version": contract.CONTRACT_VERSION, "tools": c.get("tools_summary", ""),
+            # what registration needs to grant the agent its access when it is deployed outside the platform repo
+            "tools_summary": c.get("tools_summary", ""), "tool_config": c.get("tools") or [], "access": c.get("access") or {}}
 
     # ── invocation ─────────────────────────────────────────────────────────────────────────
     async def invoke(self, body: dict, user: str = "anonymous") -> InvocationOutputs:
