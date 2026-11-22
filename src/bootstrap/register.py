@@ -1,17 +1,15 @@
 """Self-service specialist registration (no moderator code change, no moderator redeploy, no approval step for the demo).
 
-A specialist is an app named `<prefix>-sp-<key><suffix>` plus `agents/specialists/<key>/specialist.yaml`.
-`register` checks it, grants it the access it declares, lets the moderator call it and writes its registry row.
+A specialist is an app named `<prefix>-sp-<key><suffix>` with its own codebase and bundle (scripts/new_agent.py creates one).
+Its spec is what the running app serves at /info. `register` checks it, grants it the access it declares, lets the moderator call it and writes its registry row.
 The moderator reads the registry, so the agent is available as soon as the moderator refreshes (60 s cache, or at once
 through the UI's registration page or `POST /registry/refresh`).
 """
 from __future__ import annotations
 
-import os
 import time
 
 import httpx
-import yaml
 
 from eqds_agentkit import contract, lakebase
 from eqds_agentkit.registry import upsert_specialist
@@ -19,13 +17,6 @@ from eqds_agentkit.registry import upsert_specialist
 from eqds_agentkit.specs import REQUIRED, RegistrationError, spec_from_info, validate_spec  # noqa: F401
 
 from . import steps
-
-
-def load_spec(root: str, key: str) -> dict:
-    f = os.path.join(root, "agents", "specialists", key, "specialist.yaml")
-    if not os.path.exists(f):
-        raise RegistrationError(f"no specialist.yaml for '{key}' (expected agents/specialists/{key}/specialist.yaml)")
-    return validate_spec(yaml.safe_load(open(f)), key)
 
 
 def spec_from_app(ctx, key: str) -> dict:
@@ -60,9 +51,7 @@ def check_contract(ctx, key: str, url: str) -> str:
 
 def register(ctx, key: str, *, contract_checked: bool = False, spec: dict | None = None) -> dict:
     say = ctx.say
-    if spec is None and not os.path.exists(os.path.join(ctx.root, "agents", "specialists", key, "specialist.yaml")):
-        spec = spec_from_app(ctx, key)  # standalone agent: its own app is the source of truth
-    sp = validate_spec(spec, key) if spec is not None else load_spec(ctx.root, key)
+    sp = validate_spec(spec if spec is not None else spec_from_app(ctx, key), key)  # the agent's own app is the source of truth
     comp = f"sp-{key}"
     name = ctx.env.app_name(comp)
     try:

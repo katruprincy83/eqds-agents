@@ -37,39 +37,3 @@ resources:
         sql_warehouse:
           id: ${resources.sql_warehouses.wh_main.id}
           permission: CAN_USE
-      - name: sp-broker
-        app:
-          name: ${resources.apps.sp_broker.name}
-          permission: CAN_USE
-      - name: sp-earnings
-        app:
-          name: ${resources.apps.sp_earnings.name}
-          permission: CAN_USE
-      - name: sp-efm
-        app:
-          name: ${resources.apps.sp_efm.name}
-          permission: CAN_USE
-      - name: sp-emquant
-        app:
-          name: ${resources.apps.sp_emquant.name}
-          permission: CAN_USE
-      - name: sp-experts
-        app:
-          name: ${resources.apps.sp_experts.name}
-          permission: CAN_USE
-      - name: sp-georev
-        app:
-          name: ${resources.apps.sp_georev.name}
-          permission: CAN_USE
-      - name: sp-news
-        app:
-          name: ${resources.apps.sp_news.name}
-          permission: CAN_USE
-      - name: sp-ours
-        app:
-          name: ${resources.apps.sp_ours.name}
-          permission: CAN_USE
-      - name: sp-research
-        app:
-          name: ${resources.apps.sp_research.name}
-          permission: CAN_USE

@@ -38,22 +38,28 @@ def test_disabled_specialist_is_hidden_and_not_callable():
     assert reg.get("news", include_disabled=True) is not None  # the registration page still lists it
 
 
-def test_shipped_specs_pass_registration_checks():
-    for k in sorted(os.listdir(os.path.join(ROOT, "agents", "specialists"))):
-        if os.path.isdir(os.path.join(ROOT, "agents", "specialists", k)):
-            R.load_spec(ROOT, k)
+def _template_spec(key="fx", tag="FX"):
+    import yaml
+    t = open(os.path.join(ROOT, "templates", "agent", "specialist.yaml")).read()
+    for k, v in {"KEY": key, "DISPLAY": "Fx", "TAG": tag, "OWNER": "o"}.items():
+        t = t.replace("{{" + k + "}}", v)
+    return yaml.safe_load(t)
 
 
-def test_bad_specs_are_rejected(tmp_path):
-    d = tmp_path / "agents" / "specialists" / "bad"; d.mkdir(parents=True)
-    (d / "specialist.yaml").write_text("key: bad\ndisplay_name: Bad\ntag_prefix: toolong\ndescription: x\ndomains: [a]\nowner: o\nversion: '1'\ncontract_version: '1'\ntimeout_s: 60\n")
-    with pytest.raises(R.RegistrationError, match="tag_prefix"):
-        R.load_spec(str(tmp_path), "bad")
-    (d / "specialist.yaml").write_text("key: other\n")
-    with pytest.raises(R.RegistrationError, match="missing"):
-        R.load_spec(str(tmp_path), "bad")
-    with pytest.raises(R.RegistrationError, match="no specialist.yaml"):
-        R.load_spec(str(tmp_path), "nope")
+def test_new_agent_template_passes_registration_checks():
+    from eqds_agentkit import specs
+    specs.validate_spec(_template_spec(), "fx")
+
+
+def test_bad_specs_are_rejected():
+    from eqds_agentkit import specs
+    bad = _template_spec("bad", "TOOLONG")
+    with pytest.raises(specs.RegistrationError, match="tag_prefix"):
+        specs.validate_spec(bad, "bad")
+    with pytest.raises(specs.RegistrationError, match="missing"):
+        specs.validate_spec({"key": "bad"}, "bad")
+    with pytest.raises(specs.RegistrationError, match="does not match"):
+        specs.validate_spec(_template_spec(), "other")
 
 
 INFO = {"key": "px", "display_name": "Px", "tag_prefix": "PX", "description": "d", "domains": ["a"], "owner": "o", "version": "1.0.0", "timeout_s": 90,

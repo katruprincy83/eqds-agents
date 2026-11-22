@@ -19,17 +19,6 @@ def test_citation_validator():
     assert not bad["ok"] and bad["bad_tags"] == ["US9"] and len(bad["uncited"]) == 2
 
 
-def test_fixture_registry_matches_specialist_definitions():
-    fx = json.load(open(os.path.join(ROOT, "demo", "eqds_demo_fixtures.json")))
-    defs = {}
-    for f in glob.glob(os.path.join(ROOT, "agents", "specialists", "*", "specialist.yaml")):
-        y = yaml.safe_load(open(f))
-        defs[y["key"]] = y
-    for r in fx["registry"]:
-        assert r["key"] in defs, r["key"]
-        assert defs[r["key"]]["tag_prefix"] == r["tag_prefix"]
-
-
 def test_bridge_render_allowlist_and_parameterisation():
     from bridge_worker.render import render
 

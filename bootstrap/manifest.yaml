@@ -44,15 +44,6 @@ apps:        # keys of resources.apps.*
   - ui
   - moderator
   - bridge_mcp
-  - sp_efm
-  - sp_ours
-  - sp_emquant
-  - sp_broker
-  - sp_experts
-  - sp_news
-  - sp_research
-  - sp_earnings
-  - sp_georev
 
 assets:
   - {id: uc_catalog,        defined_in: scripts/infra.py,                       created_by: "infra",                      recreate: make infra, teardown: manual (catalog may hold customer data)}
@@ -72,8 +63,9 @@ assets:
   - {id: embed_endpoint,    defined_in: resources/serving/embed.yml,            created_by: "dab (embedding endpoint for Vector Search only)", recreate: bundle deploy, teardown: bundle destroy}
   - {id: model_tiers,       defined_in: config/models.demo.yaml,                created_by: "app config",                 recreate: bundle deploy}
   - {id: lakebase_schemas,  defined_in: bootstrap/lakebase/migrations,          created_by: "bootstrap:lakebase",          recreate: re-run bootstrap, teardown: bootstrap:lakebase, state: "memory and run history -> job_state_export/import"}
-  - {id: registry_rows,     defined_in: agents/specialists,                     created_by: "bootstrap:registry",         recreate: re-run bootstrap, teardown: bootstrap:registry, state: "Git is the source of truth; seed/registry_demo.yaml for runtime registrations"}
-  - {id: skills_prompts,    defined_in: skills,                                 created_by: "bootstrap:skills",           recreate: re-run bootstrap, teardown: bootstrap:skills}
+  - {id: registry_rows,     defined_in: src/bootstrap/register.py,              created_by: "registration (UI registry page / make register)", recreate: register each agent again, teardown: bootstrap:registry, state: "each agent's spec lives in its own repo and is read from its app's /info"}
+  - {id: agent_template,    defined_in: templates/agent,                        created_by: "scripts/new_agent.py",       recreate: "n/a (scaffolding for specialist agent repos)"}
+  - {id: skills_prompts,    defined_in: prompts,                                created_by: "bootstrap:skills",           recreate: re-run bootstrap, teardown: bootstrap:skills, state: "platform prompts only; agent skills ship inside each agent's app"}
   - {id: vector_indexes,    defined_in: bootstrap/vector_search.yaml,           created_by: "bootstrap:vector_search",    recreate: re-run bootstrap, teardown: bootstrap:vector_search}
   - {id: genie_space,       defined_in: bootstrap/genie/eqds_research_data.json, created_by: "bootstrap:genie",          recreate: re-run bootstrap, teardown: bootstrap:genie}
   - {id: mlflow_experiment, defined_in: resources/experiments/experiment.yml,   created_by: "dab",                        recreate: bundle deploy, state: "traces are environment-local; eval datasets and feedback are exported"}

@@ -1,6 +1,8 @@
-"""Developer helper: run all specialists in ONE local process (`/sp/<key>/invocations`) and register them in the
+"""Developer helper: run specialist agents in ONE local process (`/sp/<key>/invocations`) and register them in the
 Lakebase registry with localhost URLs, so the moderator / UI can be exercised locally against the live workspace.
-usage: python scripts/local_stack.py [--port 8830] [--keys efm,ours,...]   (re-run `make bootstrap` to restore app URLs)"""
+Agents come from their own project folders (default: the sibling ../eqds-agent-* checkouts), built with `make build` there.
+usage: python scripts/local_stack.py [--port 8830] [--agents ../eqds-agent-news,../eqds-agent-ours]
+(register the agents again on the UI registry page afterwards to restore their app URLs)"""
 import argparse, glob, os, sys, yaml
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 for p in (root, os.path.join(root, "src"), os.path.join(root, "packages", "eqds_agentkit"), os.path.join(root, "packages", "eqds_llm")):
@@ -16,17 +18,20 @@ from eqds_agentkit.memory import Store
 from agents.specialist_base.agent import SpecialistAgent
 from apps.common import pool
 
-ap = argparse.ArgumentParser(); ap.add_argument("--port", type=int, default=8830); ap.add_argument("--keys", default="")
+ap = argparse.ArgumentParser(); ap.add_argument("--port", type=int, default=8830); ap.add_argument("--agents", default="")
 ap.add_argument("--target", default="demo"); a = ap.parse_args()
 env = Env.from_target(a.target, root)
 env.raw["flags"]["use_managed_mcp"] = bool(env.get("flags.use_managed_mcp", False))
 w = WorkspaceClient(); store = Store(pool())
-keys = a.keys.split(",") if a.keys else env.get("specialists_registered", [])
+projects = a.agents.split(",") if a.agents else sorted(glob.glob(os.path.join(os.path.dirname(root), "eqds-agent-*")))
 app = FastAPI(); agents = {}
-for f in sorted(glob.glob(os.path.join(root, "agents/specialists/*/specialist.yaml"))):
+for proj in projects:
+    built = glob.glob(os.path.join(proj, "app", "agents", "specialists", "*", "specialist.yaml"))  # ./app from the project's `make build`
+    if not built:
+        print(f"skipped {proj}: not built (run `make build` there)"); continue
+    f = built[0]
     cfg = yaml.safe_load(open(f))
-    if cfg["key"] not in keys: continue
-    ag = SpecialistAgent(f, env, w, store, root=root); agents[cfg["key"]] = ag
+    ag = SpecialistAgent(f, env, w, store, root=os.path.join(proj, "app")); agents[cfg["key"]] = ag
     def make(ag):
         async def inv(req: Request):
             return JSONResponse(contract.response(await ag.invoke(await req.json(), auth.user_from_headers(req.headers))))

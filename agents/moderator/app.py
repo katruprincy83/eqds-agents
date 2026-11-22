@@ -106,6 +106,8 @@ def _create(req: RunReq, user: str) -> tuple[str, str]:
 @app.post("/runs", status_code=202)
 async def create_run(req: RunReq, request: Request):
     user = auth.user_from_headers(request.headers)
+    if not await asyncio.to_thread(M.reg.all):
+        raise HTTPException(409, "no specialist agents are registered: register one on the Specialist registry page")
     run_id, conv = await asyncio.to_thread(_create, req, user)
     spawn(M.run_new, run_id)
     return {"run_id": run_id, "conversation_id": conv}

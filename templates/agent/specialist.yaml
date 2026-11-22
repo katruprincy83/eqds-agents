@@ -1,0 +1,27 @@
+# {{DISPLAY}} agent. The orchestrator reads this from the running app's /info when you register the agent.
+key: {{KEY}}
+display_name: {{DISPLAY}}
+tag_prefix: {{TAG}}                 # citation tag prefix, unique across agents (1-3 capital letters)
+owner: {{OWNER}}
+version: 0.1.0
+description: 'TODO: one or two sentences on what this agent answers. The moderator picks agents by this text.'
+domains:
+- TODO
+model_tier: fast
+skill:
+  name: {{KEY}}
+  version: 0.1.0
+tools:
+- type: uc_functions           # uc_functions | vector_search | bridge_mcp
+  allow:
+  - company_lookup
+tools_summary: UC Functions MCP · company_lookup
+access:                        # names inside the platform schema; only what the agent needs
+  tables:
+  - ref_companies
+  functions:
+  - company_lookup
+  volumes: []
+max_tool_calls: 6
+timeout_s: 90
+contract_version: '1'

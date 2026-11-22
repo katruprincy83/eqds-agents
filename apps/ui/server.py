@@ -563,8 +563,8 @@ def _check_agent_contract(key: str, want_info: bool = False, live: bool = True) 
 
 @app.post("/api/dev/registry/submit")
 async def dev_registry_submit(r: SubmitReq, request: Request):
-    """Federate an agent: check its contract with the UI's identity, then start the registration job (grants + registry row) as the
-    registrar. An agent that is not in this repo (deployed on its own) is read from its own /info."""
+    """Federate an agent: check /healthz and read its spec from /info with the UI's identity, then start the registration job
+    (grants + registry row, disabled) as the registrar. The UI enables it after a real call (/api/dev/registry/activate)."""
     import base64
 
     from eqds_agentkit import specs
@@ -575,17 +575,15 @@ async def dev_registry_submit(r: SubmitReq, request: Request):
     job = os.environ.get("JOB_ID_REGISTER_SPECIALIST")
     if not job:
         raise HTTPException(503, "registration job not configured")
-    in_repo = (ROOT / "agents" / "specialists" / r.key / "specialist.yaml").exists()
-    info = await asyncio.to_thread(_check_agent_contract, r.key, not in_repo, False)
-    params = {"key": r.key, "requested_by": auth.user_from_headers(request.headers), "contract_checked": "true"}
-    if not in_repo:
-        try:
-            spec = specs.spec_from_info(info, r.key)
-        except specs.RegistrationError as ex:
-            raise HTTPException(422, str(ex))
-        params["spec_b64"] = base64.b64encode(json.dumps(spec).encode()).decode()
+    info = await asyncio.to_thread(_check_agent_contract, r.key, True, False)
+    try:
+        spec = specs.spec_from_info(info, r.key)
+    except specs.RegistrationError as ex:
+        raise HTTPException(422, str(ex))
+    params = {"key": r.key, "requested_by": auth.user_from_headers(request.headers), "contract_checked": "true",
+              "spec_b64": base64.b64encode(json.dumps(spec).encode()).decode()}
     run = await asyncio.to_thread(lambda: W().jobs.run_now(int(job), job_parameters=params))
-    return {"run_id": run.run_id, "key": r.key, "source": "repo" if in_repo else "agent /info"}
+    return {"run_id": run.run_id, "key": r.key, "source": "agent /info"}
 
 
 @app.post("/api/dev/registry/activate")

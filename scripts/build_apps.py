@@ -2,7 +2,7 @@
 """Assemble deployable Databricks App source directories under build/apps/<key>/ (design §12.2, E4).
 
 Each app gets only what it needs: the vendored shared packages (eqds_agentkit, eqds_llm), apps/common.py, its own module,
-the agent code, skills/prompts, the environment profile for the target and pinned requirements. `databricks bundle deploy`
+the agent code, prompts, the environment profile for the target and pinned requirements. `databricks bundle deploy`
 uploads these directories (resources/apps/*.yml `source_code_path`). Re-runnable and deterministic.
 
     python scripts/build_apps.py --target demo [--only ui,moderator]
@@ -10,7 +10,6 @@ uploads these directories (resources/apps/*.yml `source_code_path`). Re-runnable
 from __future__ import annotations
 
 import argparse
-import glob
 import os
 import pathlib
 import shutil
@@ -34,16 +33,12 @@ REQ = {
     "ui": BASE + ["openai", "langchain-core", "langchain-mcp-adapters"],
     "moderator": BASE + ["sse-starlette", "openai", "langchain-core", "langgraph", "langgraph-checkpoint-postgres"],
     "bridge_mcp": BASE + ["mcp"],
-    "specialist": BASE + ["openai", "langchain-core", "langchain-mcp-adapters", "langgraph", "databricks-langchain"],
+    "specialist": BASE + ["openai", "langchain-core", "langchain-mcp-adapters", "langgraph", "databricks-langchain"],  # used by templates/agent/scripts/build.py
 }
 CMD = {  # uvicorn on the platform port (Apps default 8000)
     "ui": "apps.ui.server:app", "moderator": "agents.moderator.app:app", "bridge_mcp": "apps.bridge_mcp.server:app", "specialist": "agents.specialist_base.app:app",
 }
 IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc", ".pytest_cache", "tests")
-
-
-def specialist_keys() -> list[str]:
-    return sorted(os.path.basename(os.path.dirname(f)) for f in glob.glob(str(ROOT / "agents/specialists/*/specialist.yaml")))
 
 
 def copy(src: str, dst: pathlib.Path) -> None:
@@ -67,21 +62,14 @@ def build(app: str, kind: str, out: pathlib.Path, env: Env, models_cfg: str) -> 
     shutil.copy2(ROOT / "apps/common.py", out / "apps/common.py")
     if kind == "ui":
         shutil.copytree(ROOT / "apps/ui", out / "apps/ui", ignore=IGNORE)
-        copy("agents/specialists", out)
     elif kind == "bridge_mcp":
         shutil.copytree(ROOT / "apps/bridge_mcp", out / "apps/bridge_mcp", ignore=IGNORE)
     else:
         (out / "agents").mkdir()
         shutil.copy2(ROOT / "agents/__init__.py", out / "agents/__init__.py")
-        shutil.copytree(ROOT / ("agents/moderator" if kind == "moderator" else "agents/specialist_base"), out / "agents" / ("moderator" if kind == "moderator" else "specialist_base"), ignore=IGNORE)
-        if kind == "specialist":
-            key = app.removeprefix("sp_")
-            dst = out / "agents/specialists" / key
-            dst.mkdir(parents=True)
-            shutil.copy2(ROOT / f"agents/specialists/{key}/specialist.yaml", dst / "specialist.yaml")
-    if kind in ("moderator", "specialist", "ui"):
+        shutil.copytree(ROOT / "agents/moderator", out / "agents/moderator", ignore=IGNORE)
+    if kind in ("moderator", "ui"):
         copy("prompts", out)
-        copy("skills", out)
     (out / "config/env").mkdir(parents=True)
     shutil.copy2(ROOT / "config/env" / f"{env.target}.yaml", out / "config/env" / f"{env.target}.yaml")
     shutil.copy2(ROOT / models_cfg, out / models_cfg) if (ROOT / models_cfg).exists() else None
@@ -100,7 +88,7 @@ def main() -> int:
     a = ap.parse_args()
     env = Env.from_target(a.target)
     models_cfg = env.get("models_config", f"config/models.{env.target}.yaml")
-    apps = {"ui": "ui", "moderator": "moderator", "bridge_mcp": "bridge_mcp", **{f"sp_{k}": "specialist" for k in specialist_keys()}}
+    apps = {"ui": "ui", "moderator": "moderator", "bridge_mcp": "bridge_mcp"}  # specialist agents build in their own repos (templates/agent)
     only = set(filter(None, a.only.split(",")))
     for name, kind in apps.items():
         if only and name not in only:

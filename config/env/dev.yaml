@@ -66,5 +66,4 @@ schedules:
   ingest_news_cron: "0 */15 * * * ?"
 experiment_path: /Shared/eqds/dev
 specialists_deploy: [efm, ours, emquant, broker, experts, news, research, earnings, georev]
-specialists_registered: [efm, ours, emquant, broker, experts, news, research, earnings]   # georev is registered live (demo step 8)
 github_repo_url: ""

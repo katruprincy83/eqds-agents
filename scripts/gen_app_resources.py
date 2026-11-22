@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Generate resources/apps/*.yml (one per app group) so the 13 apps cannot drift from each other. Commit the output.
-Cross-app calls use the `app` resource type (CAN_USE) where each callee has one caller (ui->moderator, moderator->specialists). Many callers of ONE app (specialists->bridge-mcp) are granted by the bootstrap step `app_grants`: concurrent ACL updates on the same app fail with RESOURCE_CONFLICT.
+"""Generate resources/apps/*.yml for the platform apps (ui, moderator, bridge-mcp) so they cannot drift from each other. Commit the output.
+Specialist agents are not part of this bundle: each has its own repo and bundle (scripts/new_agent.py), and registration grants the
+moderator CAN_USE on it and it CAN_USE on bridge-mcp.
     python scripts/gen_app_resources.py"""
-import glob
-import os
 import pathlib
 
 import yaml
@@ -44,18 +43,15 @@ def write(fname, apps):
     (ROOT / "resources/apps" / fname).write_text(H + yaml.safe_dump({"resources": {"apps": apps}}, sort_keys=False, width=200))
 
 
-keys = sorted(os.path.basename(os.path.dirname(f)) for f in glob.glob(str(ROOT / "agents/specialists/*/specialist.yaml")))
 bridge_ref = {"name": "bridge-mcp", "app": {"name": "${resources.apps.bridge_mcp.name}", "permission": "CAN_USE"}}
 jobs = [("wiki_refresh", "WIKI_REFRESH"), ("validate_seed", "VALIDATE_SEED"), ("eval", "EVAL"), ("bridge_worker", "BRIDGE_WORKER"), ("ingest_news", "INGEST_NEWS"), ("register_specialist", "REGISTER_SPECIALIST")]
 
 write("bridge_mcp.yml", {"bridge_mcp": app("bridge_mcp", "MCP server that queues allowlisted bridge requests for the classic worker", "bridge_mcp", [], [])})
-write("moderator.yml", {"moderator": app("moderator", "LangGraph moderator: async run API, SSE, durable resume", "moderator", [],
-                                          [{"name": f"sp-{k}", "app": {"name": f"${{resources.apps.sp_{k}.name}}", "permission": "CAN_USE"}} for k in keys])})
+write("moderator.yml", {"moderator": app("moderator", "LangGraph moderator: async run API, SSE, durable resume", "moderator", [], [])})
 write("ui.yml", {"ui": app("ui", "EQDS research UI", "ui",
                            [e("GENIE_SPACE_ID", "${var.genie_space_id}")]
                            + [e(f"JOB_ID_{u}", f"${{resources.jobs.{k}.id}}") for k, u in jobs],
                            [{"name": "moderator", "app": {"name": "${resources.apps.moderator.name}", "permission": "CAN_USE"}}, bridge_ref]
                            + [{"name": f"job-{k.replace('_', '-')}", "job": {"id": f"${{resources.jobs.{k}.id}}", "permission": "CAN_MANAGE_RUN"}} for k, _ in jobs],
                            perms="${var.ui_permissions}")})
-write("specialists.yml", {f"sp_{k}": app(f"sp_{k}", f"Specialist agent: {k}", "specialist", [e("SPECIALIST_CONFIG", f"agents/specialists/{k}/specialist.yaml")], []) for k in keys})  # CAN_USE on bridge-mcp: bootstrap app_grants, sequentially
-print("wrote resources/apps/*.yml for", ["ui", "moderator", "bridge_mcp", *[f"sp_{k}" for k in keys]])
+print("wrote resources/apps/*.yml for", ["ui", "moderator", "bridge_mcp"])

@@ -3,11 +3,11 @@
 # Secrets: export EQDS_AZURE_SQL_USER / EQDS_AZURE_SQL_PASSWORD before `make infra` (they only ever land in the secret scope).
 TARGET ?= demo
 PY ?= python
-# specialist apps come from the agents/specialists/* folders
-APPS := bridge_mcp $(addprefix sp_,$(patsubst agents/specialists/%/specialist.yaml,%,$(wildcard agents/specialists/*/specialist.yaml))) moderator ui
+# platform apps only: specialist agents have their own repos (python scripts/new_agent.py <key>) and are registered on the UI
+APPS := bridge_mcp moderator ui
 JOBS_SEED := seed_uc seed_docs seed_azure validate_seed
 
-.PHONY: all vars infra build deploy bootstrap apps outputs preflight seed docs test manifest destroy teardown ask register registrar
+.PHONY: all vars infra build deploy bootstrap apps outputs preflight seed docs test manifest destroy teardown ask register registrar agent
 
 all: vars infra build deploy bootstrap apps outputs
 
@@ -54,9 +54,13 @@ test:
 	$(PY) -m pytest -q tests
 
 # self-service: make register KEY=news | make register ACTION=disable KEY=news | make register ACTION=list
+# new agent project: make agent KEY=fx  (writes ../eqds-agent-fx)
 ACTION ?= register
 register:
 	$(PY) scripts/register_specialist.py $(ACTION) $(KEY) --target $(TARGET)
+
+agent:
+	$(PY) scripts/new_agent.py $(KEY) --target $(TARGET)
 
 # one-time: the identity that runs UI-triggered registration (creates the SP, records its id, applies its grants)
 registrar:

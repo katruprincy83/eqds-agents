@@ -14,11 +14,9 @@ sync:
     - seed/**
     - src/**
     - bootstrap/**
-    - skills/**
     - prompts/**
     - eval/**
     - packages/**
-    - agents/**/specialist.yaml
     - build/apps/**       # produced by scripts/build_apps.py; app resources point here
   exclude:
     - "**/__pycache__/**"

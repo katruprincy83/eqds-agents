@@ -298,13 +298,8 @@ def access_of(sp: dict) -> dict:
 
 
 def _components(ctx) -> dict[str, dict]:
-    """component -> access spec (apps that exist)."""
-    access = yaml.safe_load(_read(ctx, "bootstrap/app_access.yaml"))
-    comps = {k: v for k, v in access.items()}
-    for f in sorted(glob.glob(os.path.join(ctx.root, "agents", "specialists", "*", "specialist.yaml"))):
-        sp = yaml.safe_load(open(f))
-        comps[f"sp-{sp['key']}"] = access_of(sp)
-    return comps
+    """platform component -> access spec. Specialist agents live in their own repos; registration grants their access."""
+    return dict(yaml.safe_load(_read(ctx, "bootstrap/app_access.yaml")))
 
 
 def _lakebase_role(ctx, conn, comp: str, sp: str) -> None:
@@ -368,10 +363,6 @@ def app_grants_apply(ctx) -> None:
         apply_component_grants(ctx, conn, comp, app.service_principal_client_id, spec)
     if conn is not None:
         conn.close()
-    _grant_app_use(ctx, "bridge-mcp", [c for c in comps_all if c.startswith("sp-")])
-    for c in comps_all:  # the UI runs the registration contract check against each specialist (its identity can call apps)
-        if c.startswith("sp-"):
-            _grant_app_use(ctx, c, ["ui"])
     _grant_job_caller(ctx)
     registrar_grants(ctx)
 
@@ -527,28 +518,14 @@ def app_grants_teardown(ctx) -> None:
 
 
 # ── specialist registry ──────────────────────────────────────────────────────────────────────────
-def _registry_rows(ctx) -> list[dict]:
-    reg_keys = set(ctx.env.get("specialists_registered", []) or [])
-    rows = []
-    for f in sorted(glob.glob(os.path.join(ctx.root, "agents", "specialists", "*", "specialist.yaml"))):
-        sp = yaml.safe_load(open(f))
-        if reg_keys and sp["key"] not in reg_keys:
-            continue
-        rows.append(sp)
-    return rows
-
-
 def registry_apply(ctx) -> None:
+    """Rows are written by registration only (UI registry page or `make register`); bootstrap reports what is there."""
     from eqds_agentkit import lakebase
-    from eqds_agentkit.registry import upsert_specialist
 
     conn = lakebase.connect(_lb_target(ctx))
-    for sp in _registry_rows(ctx):
-        app_name = ctx.env.app_name(f"sp-{sp['key']}")
-        url = ctx.app_url(f"sp-{sp['key']}") or ""
-        upsert_specialist(conn, sp, url, ctx.env.target, app_name)
-        ctx.say(f"registry: {sp['key']} -> {url or '(app not deployed yet)'}")
+    rows = conn.execute("SELECT key, enabled FROM registry.specialists ORDER BY key").fetchall()
     conn.close()
+    ctx.say("registry: " + (", ".join(f"{r['key']}{'' if r['enabled'] else ' (disabled)'}" for r in rows) or "empty (register agents on the UI registry page)"))
 
 
 def registry_teardown(ctx) -> None:

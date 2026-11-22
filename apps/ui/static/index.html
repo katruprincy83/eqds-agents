@@ -411,9 +411,9 @@ LIMIT 10;</pre>
       <div class="row"><h3>Specialist registry</h3><span class="muted small">Lakebase <code>registry.specialists</code> · the moderator caches it for 60 s · no moderator redeploy needed</span>
       </div>
       <div class="row" style="margin-top:12px;gap:8px;align-items:center">
-        <input id="regKey" placeholder="agent key, e.g. georev" style="max-width:240px" />
+        <input id="regKey" placeholder="agent key, e.g. news" style="max-width:240px" />
         <button class="btn sm" id="regSubmit" onclick="submitRegister()">Register agent</button>
-        <span class="muted small" id="regMsg">Checks the agent's contract and grants its access, then enables it. Runs as the registrar service principal.</span>
+        <span class="muted small" id="regMsg">Finds the app <code>eqds-sp-&lt;key&gt;</code>, reads its spec from <code>/info</code>, grants the access it declares (registrar service principal), then enables it after one real call.</span>
       </div>
       <table class="t" style="margin-top:12px"><thead><tr><th>Key</th><th>Name</th><th>Tag</th><th>Tools</th><th>App</th><th>Version</th><th>Owner</th><th>Status</th><th></th></tr></thead><tbody id="regBody"></tbody></table>
     </div>
