@@ -1,0 +1,4 @@
+resources:
+  experiments:
+    exp_main:
+      name: ${var.experiment_path}

@@ -1,0 +1,13 @@
+# CI / release gate (design §11.2). `smoke` = PR gate subset at 1 round; `full` = nightly at 3 rounds.
+# A metric also fails when it is more than `baseline_drop` below the previous passing run on the same experiment.
+thresholds:
+  correctness: 0.75               # fraction of expected facts recovered in the answer (LLM judge, fast tier)
+  citation_validity: 0.95         # every [TAG] in the answer resolves to a returned source
+  claim_citation_coverage: 0.95   # factual sentences that carry a tag (NFR-12)
+  within_budget: 0.90             # <= 480 s and <= USD 2.00 per run (NFR-01/04)
+baseline_drop: 0.05
+budget: {seconds_max: 480, cost_usd_max: 2.0}
+smoke:
+  per_group: {headline: 3, deep_dive: 3, gaps: 4}   # 10 questions
+  rounds: 1
+full: {rounds: 3}

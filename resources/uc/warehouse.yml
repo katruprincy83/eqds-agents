@@ -1,0 +1,11 @@
+# Serverless SQL warehouse: Genie, the SQL statement API used by bootstrap/dev tools, and the serverless-probe in the dev console.
+resources:
+  sql_warehouses:
+    wh_main:
+      name: ${var.name_prefix}-wh${var.suffix}
+      cluster_size: 2X-Small
+      min_num_clusters: 1
+      max_num_clusters: 1
+      auto_stop_mins: 10
+      enable_serverless_compute: true
+      warehouse_type: PRO

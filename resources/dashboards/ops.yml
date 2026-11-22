@@ -1,0 +1,8 @@
+resources:
+  dashboards:
+    eqds_ops:
+      display_name: "EQDS platform health (${var.target_name})"
+      file_path: ./eqds_ops.lvdash.json
+      warehouse_id: ${resources.sql_warehouses.wh_main.id}
+      dataset_catalog: ${var.catalog}
+      dataset_schema: ${var.schema}

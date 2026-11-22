@@ -1,0 +1,89 @@
+# Asset inventory manifest (design §4.2): the machine-readable list of EVERY asset.
+# job_env_bootstrap / job_env_teardown iterate `bootstrap_steps`; `scripts/manifest_check.py` (CI) fails when
+#  - a job in resources/jobs/*.yml or an app in resources/apps/*.yml is missing from `jobs` / `apps`,
+#  - a bootstrap step has no implementation in src/bootstrap/steps.py,
+#  - an asset's `defined_in` path does not exist.
+# Rule for new assets: repo definition + idempotent create path + teardown path + an entry here.
+version: 1
+
+# Ordered. `when` is evaluated against the environment profile. `apply`/`teardown` are functions in src/bootstrap/steps.py.
+bootstrap_steps:
+  - {id: federation,    apply: federation_apply,    teardown: federation_teardown,    when: {external_db_mode: [bridge, direct]}}
+  - {id: uc_functions,  apply: uc_functions_apply,  teardown: uc_functions_teardown}
+  - {id: lakebase,      apply: lakebase_apply,      teardown: lakebase_teardown}
+  - {id: skills,        apply: skills_apply,        teardown: skills_teardown}
+  - {id: vector_search, apply: vector_search_apply, teardown: vector_search_teardown}
+  - {id: genie,         apply: genie_apply,         teardown: genie_teardown}
+  - {id: app_grants,    apply: app_grants_apply,    teardown: app_grants_teardown}
+  - {id: model_services, apply: model_services_apply, teardown: model_services_teardown}
+  - {id: registry,      apply: registry_apply,      teardown: registry_teardown}
+  - {id: grants,        apply: grants_apply,        teardown: grants_teardown}
+  - {id: outputs,       apply: outputs_apply,       teardown: outputs_teardown}
+
+jobs:        # keys of resources.jobs.* (all must be listed)
+  seed_uc:         {compute: serverless, profile: synthetic}
+  seed_docs:       {compute: serverless, profile: synthetic}
+  seed_azure:      {compute: bridge_compute, profile: synthetic}
+  validate_seed:   {compute: bridge_compute, profile: synthetic}
+  build_eval:      {compute: serverless, profile: synthetic}
+  demo_reset:      {compute: orchestrator, profile: synthetic}
+  news_generator:  {compute: bridge_compute, profile: synthetic, optional: true}
+  env_bootstrap:   {compute: serverless}
+  env_preflight:   {compute: serverless}
+  env_teardown:    {compute: serverless}
+  state_export:    {compute: serverless}
+  state_import:    {compute: serverless}
+  ingest_news:     {compute: bridge_compute}
+  docs_index:      {compute: serverless}
+  bridge_worker:   {compute: bridge_compute}
+  wiki_refresh:    {compute: serverless}
+  eval:            {compute: serverless}
+
+apps:        # keys of resources.apps.*
+  - ui
+  - moderator
+  - bridge_mcp
+  - sp_efm
+  - sp_ours
+  - sp_emquant
+  - sp_broker
+  - sp_experts
+  - sp_news
+  - sp_research
+  - sp_earnings
+  - sp_georev
+
+assets:
+  - {id: uc_catalog,        defined_in: scripts/infra.py,                       created_by: "infra",                      recreate: make infra, teardown: manual (catalog may hold customer data)}
+  - {id: secret_scope,      defined_in: scripts/infra.py,                       created_by: "infra",                      recreate: make infra, teardown: scripts/infra.py --destroy-secrets, state: "values come from env vars, never the repo"}
+  - {id: lakebase_project,  defined_in: scripts/infra.py,                       created_by: "infra",                      recreate: make infra, teardown: manual}
+  - {id: vs_endpoint,       defined_in: scripts/infra.py,                       created_by: "infra",                      recreate: make infra, teardown: bootstrap:vector_search}
+  - {id: uc_schema_volumes, defined_in: resources/uc/schemas.yml,               created_by: "dab",                        recreate: bundle deploy, teardown: bundle destroy}
+  - {id: sql_warehouse,     defined_in: resources/uc/warehouse.yml,             created_by: "dab",                        recreate: bundle deploy, teardown: bundle destroy}
+  - {id: uc_connection,     defined_in: bootstrap/sql/10_federation.sql,        created_by: "bootstrap:federation",       recreate: re-run bootstrap, teardown: bootstrap:federation}
+  - {id: grants,            defined_in: bootstrap/sql/20_grants.sql,            created_by: "bootstrap:grants,app_grants", recreate: re-run bootstrap, teardown: bootstrap:grants}
+  - {id: uc_functions,      defined_in: src/uc_functions,                       created_by: "bootstrap:uc_functions",     recreate: re-run bootstrap, teardown: bootstrap:uc_functions}
+  - {id: bridge_templates,  defined_in: src/bridge_worker/templates,            created_by: "dab (synced with the worker job)", recreate: bundle deploy, state: versioned in Git}
+  - {id: jobs,              defined_in: resources/jobs,                         created_by: "dab",                        recreate: bundle deploy, teardown: bundle destroy, state: run history is not migrated}
+  - {id: apps,              defined_in: resources/apps,                         created_by: "dab",                        recreate: bundle deploy, teardown: bundle destroy, state: stateless}
+  - {id: packages,          defined_in: packages,                               created_by: "scripts/build_apps.py (vendored) / CI wheels", recreate: make build}
+  - {id: model_services,    defined_in: resources/serving/llm.yml,              created_by: "dab (Unity AI Gateway model services + inference tables)", recreate: bundle deploy, teardown: "bundle destroy; bootstrap:model_services drops inference tables", state: "EXECUTE granted by bootstrap:app_grants"}
+  - {id: embed_endpoint,    defined_in: resources/serving/embed.yml,            created_by: "dab (embedding endpoint for Vector Search only)", recreate: bundle deploy, teardown: bundle destroy}
+  - {id: model_tiers,       defined_in: config/models.demo.yaml,                created_by: "app config",                 recreate: bundle deploy}
+  - {id: lakebase_schemas,  defined_in: bootstrap/lakebase/migrations,          created_by: "bootstrap:lakebase",          recreate: re-run bootstrap, teardown: bootstrap:lakebase, state: "memory and run history -> job_state_export/import"}
+  - {id: registry_rows,     defined_in: agents/specialists,                     created_by: "bootstrap:registry",         recreate: re-run bootstrap, teardown: bootstrap:registry, state: "Git is the source of truth; seed/registry_demo.yaml for runtime registrations"}
+  - {id: skills_prompts,    defined_in: skills,                                 created_by: "bootstrap:skills",           recreate: re-run bootstrap, teardown: bootstrap:skills}
+  - {id: vector_indexes,    defined_in: bootstrap/vector_search.yaml,           created_by: "bootstrap:vector_search",    recreate: re-run bootstrap, teardown: bootstrap:vector_search}
+  - {id: genie_space,       defined_in: bootstrap/genie/eqds_research_data.json, created_by: "bootstrap:genie",          recreate: re-run bootstrap, teardown: bootstrap:genie}
+  - {id: mlflow_experiment, defined_in: resources/experiments/experiment.yml,   created_by: "dab",                        recreate: bundle deploy, state: "traces are environment-local; eval datasets and feedback are exported"}
+  - {id: eval_assets,       defined_in: eval/thresholds.yaml,                   created_by: "seed:build_eval",            recreate: job_demo_reset}
+  - {id: dashboard,         defined_in: resources/dashboards,                   created_by: "dab",                        recreate: bundle deploy}
+  - {id: synthetic_uc,      defined_in: seed/gen_uc,                            created_by: "seed:seed_uc",               recreate: job_demo_reset, state: "deterministic (seed 42, DEMO_AS_OF)"}
+  - {id: synthetic_docs,    defined_in: seed/gen_docs,                          created_by: "seed:seed_docs",             recreate: job_demo_reset, state: deterministic}
+  - {id: synthetic_azure,   defined_in: seed/gen_azure/ddl.sql,                 created_by: "seed:seed_azure",            recreate: job_demo_reset, state: "customer profile never writes to the external DB"}
+  - {id: news_generator,    defined_in: src/jobs/news_generator.py,                 created_by: "job news_generator",         recreate: start/stop job}
+  - {id: landed_data,       defined_in: src/jobs/ingest_news.py,                            created_by: "job ingest_news / docs_index", recreate: re-run (backfill)}
+  - {id: wiki_pages,        defined_in: src/wiki,                               created_by: "job wiki_refresh; seed/wiki", recreate: job_demo_reset or full rebuild}
+  - {id: seed_validation,   defined_in: seed/validate/checks.yaml,              created_by: "seed:validate_seed",         recreate: re-run}
+  - {id: ci,                defined_in: .github/workflows,                      created_by: github}
+  - {id: validation_docs,   defined_in: docs,                                   created_by: "preflight + manual",          recreate: re-run preflight}

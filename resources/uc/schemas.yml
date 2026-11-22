@@ -1,0 +1,7 @@
+# UC schema for the environment (design §4.2). The catalog itself is created by `make infra`.
+resources:
+  schemas:
+    uc_main:
+      catalog_name: ${var.catalog}
+      name: ${var.schema}
+      comment: "EQDS ${var.target_name} data (agents, reference data, documents, wiki, eval)"

@@ -1,0 +1,35 @@
+# Specialist definition (design §5.3). Source of truth for the registry row, the app and its access grants.
+key: emquant
+display_name: EM Quant
+tag_prefix: EQ
+owner: EQDS · quant
+version: 1.0.3
+description: EM quant score, quintile and drivers for MSCI EM names at month-end; states clearly when a name is outside the quant universe.
+domains:
+- quant
+- score
+- quintile
+- factors
+model_tier: standard
+skill:
+  name: emquant
+  version: 1.0.3
+tools:
+- type: uc_functions
+  allow:
+  - quant_rank
+  - company_lookup
+tools_summary: UC Functions MCP · quant_rank
+access:
+  tables:
+  - ref_companies
+  - em_quant_scores
+  functions:
+  - quant_rank
+  - company_lookup
+  volumes:
+  - skills
+  - prompts
+max_tool_calls: 8
+timeout_s: 150
+contract_version: '1'

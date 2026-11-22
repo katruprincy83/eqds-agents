@@ -1,0 +1,22 @@
+# LLM access (design §8.0): one Unity AI Gateway MODEL SERVICE per tier, created in the environment's schema.
+# Each service has: primary + fallback destinations (config/models.<target>.yaml), rate limits (profile
+# `model_serving.rate_limits`) and an inference table `<service>_payload` capturing every request/response.
+# Agents call `<catalog>.<schema>.<service>` through the AI Gateway (packages/eqds_llm); there are no LLM serving endpoints.
+# Callers need EXECUTE on the service: granted to the app service principals by bootstrap step `app_grants`.
+resources:
+  model_services:
+    llm_reasoning:
+      parent: schemas/${resources.schemas.uc_main.id}
+      model_service_id: ${var.llm_reasoning_id}
+      comment: "EQDS reasoning tier (${var.target_name})"
+      config: ${var.llm_reasoning_config}
+    llm_standard:
+      parent: schemas/${resources.schemas.uc_main.id}
+      model_service_id: ${var.llm_standard_id}
+      comment: "EQDS standard tier (${var.target_name})"
+      config: ${var.llm_standard_config}
+    llm_fast:
+      parent: schemas/${resources.schemas.uc_main.id}
+      model_service_id: ${var.llm_fast_id}
+      comment: "EQDS fast tier (${var.target_name})"
+      config: ${var.llm_fast_config}

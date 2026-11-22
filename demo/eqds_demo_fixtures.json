@@ -1,0 +1,4639 @@
+{
+  "fixture_version": "1",
+  "generated_for": "EQDS_Target_State_Design.md v0.4 §6 contracts",
+  "note": "SYNTHETIC DEMO DATA",
+  "registry": [
+    {
+      "key": "efm",
+      "display_name": "External managers",
+      "tag_prefix": "EF",
+      "tools": "UC Functions MCP · efm_buy_basket",
+      "app": "eqds-sp-efm",
+      "version": "1.1.0",
+      "owner": "EQDS · data science"
+    },
+    {
+      "key": "ours",
+      "display_name": "Our trades",
+      "tag_prefix": "US",
+      "tools": "Bridge MCP · oms_* → Azure SQL (in place)",
+      "app": "eqds-sp-ours",
+      "version": "1.2.0",
+      "owner": "EQDS · data science"
+    },
+    {
+      "key": "emquant",
+      "display_name": "EM Quant",
+      "tag_prefix": "EQ",
+      "tools": "UC Functions MCP · quant_rank",
+      "app": "eqds-sp-emquant",
+      "version": "1.0.3",
+      "owner": "EQDS · quant"
+    },
+    {
+      "key": "broker",
+      "display_name": "Brokers",
+      "tag_prefix": "B",
+      "tools": "Vector Search MCP · broker_chunks",
+      "app": "eqds-sp-broker",
+      "version": "1.0.1",
+      "owner": "EQDS · research"
+    },
+    {
+      "key": "experts",
+      "display_name": "Expert calls",
+      "tag_prefix": "X",
+      "tools": "Vector Search MCP · expert_chunks",
+      "app": "eqds-sp-experts",
+      "version": "1.0.0",
+      "owner": "EQDS · research"
+    },
+    {
+      "key": "research",
+      "display_name": "GIC research",
+      "tag_prefix": "R",
+      "tools": "Bridge MCP · research_* → Azure SQL (in place)",
+      "app": "eqds-sp-research",
+      "version": "0.9.0",
+      "owner": "EQDS · research"
+    },
+    {
+      "key": "earnings",
+      "display_name": "Earnings calls",
+      "tag_prefix": "EC",
+      "tools": "Vector Search MCP · earnings_chunks",
+      "app": "eqds-sp-earnings",
+      "version": "0.9.0",
+      "owner": "EQDS · research"
+    },
+    {
+      "key": "news",
+      "display_name": "News",
+      "tag_prefix": "N",
+      "tools": "Bridge MCP · news_latest, web_search (live)",
+      "app": "eqds-sp-news",
+      "version": "0.8.0",
+      "owner": "EQDS · platform"
+    },
+    {
+      "key": "georev",
+      "display_name": "Geographic revenue",
+      "tag_prefix": "G",
+      "tools": "UC Functions MCP · geo_revenue",
+      "app": "eqds-sp-georev",
+      "version": "0.1.0",
+      "owner": "EQDS · data science"
+    }
+  ],
+  "model_tiers": {
+    "reasoning": {
+      "use": "Moderator map, verdicts, synthesis",
+      "primary": "eqds-llm-reasoning",
+      "serves": "claude-opus-5-5",
+      "kind": "pay_per_token_proxy",
+      "fallback": "databricks-glm-5-3"
+    },
+    "standard": {
+      "use": "Specialist analysis",
+      "primary": "eqds-llm-standard",
+      "serves": "system.ai.glm-5-3",
+      "kind": "provisioned_throughput",
+      "fallback": "databricks-claude-sonnet-5-5"
+    },
+    "fast": {
+      "use": "Reformulate, select, suggest-next",
+      "primary": "eqds-llm-fast",
+      "serves": "claude-haiku-5-5",
+      "kind": "pay_per_token_proxy",
+      "fallback": "databricks-glm-5-3"
+    },
+    "embed": {
+      "use": "Vector Search embeddings",
+      "primary": "eqds-embed",
+      "serves": "system.ai.gte-large-en",
+      "kind": "provisioned_throughput",
+      "fallback": null
+    },
+    "note": "primary endpoints are created by the deployment (design §8.0); names use name_prefix"
+  },
+  "budget": {
+    "cost": 2,
+    "secs": 480
+  },
+  "link_patterns": {
+    "app": "{host}/apps/{name}{suffix}",
+    "table": "{host}/explore/data/{catalog}/{schema}/{table}",
+    "lineage": "{host}/explore/data/{catalog}/{schema}/{table}?activeTab=lineage",
+    "foreign": "{host}/explore/data/azure_oms/{schema}/{table}",
+    "connection": "{host}/explore/connections/{connection}",
+    "experiment": "{host}/ml/experiments/{experiment_id}/traces",
+    "genie": "{host}/genie/rooms/{space_id}",
+    "lakebase": "{host}/compute/database-instances/{instance}",
+    "endpoint": "{host}/ml/endpoints/{name}",
+    "job": "{host}/jobs/{job_id}",
+    "volume": "{host}/explore/data/volumes/{catalog}/{schema}/{volume}"
+  },
+  "scenarios": [
+    {
+      "name": "headline",
+      "request": {
+        "question": "What are the best external managers buying now, and do we own or trade any of it?",
+        "rounds": 3,
+        "specialists": null,
+        "caller": "ui"
+      },
+      "run_result": {
+        "run_id": "r-fixture-headline",
+        "question": "What are the best external managers buying now, and do we own or trade any of it?",
+        "rounds_run": 3,
+        "answer": {
+          "stance": "Mostly against them, though not firmly.",
+          "text": "Our largest active trades sell what the better external managers bought, chiefly Kioxia and Weichai Power. Each of those ideas rests on two buyers at most [EF1] [US2].\n\nKioxia is the clearest clash. We net sold USD 83 million across seven accounts, while two others bought [US2]. The better half of managers bought it in each of the last three month-ends, and it sits in their tested top-50 basket [EF1]. Renesas (USD 86.2 million sold), Resonac (USD 42.5 million) and Murata (USD 25.5 million) follow the same pattern [US2]. We also sold USD 31 million of Weichai Power A shares [US2]. JD Health is the one confirm: our EMA Active strategy bought USD 36.6 million, and the stock was up 6.8% a month later [US4]. Across the book, 56 strong conflicts worth USD 4,024 million slightly outweigh 45 strong confirms worth USD 3,722 million [US2].\n\nOn Kioxia, outside research leans against our selling. Every broker rates it a buy [B6] [B7] [B4]. Brokers put it at two to three times earnings for the year to March 2028, against three to five times for peers [B6] [B7] [B11]. Capacity for 2027 is sold out [B1], and management said on 13 November that data-centre demand exceeds supply through 2027 [EC1]. A former Kioxia insider said it meets only about half of data-centre demand, but warned that selling only flash memory leaves it exposed to rivals who can cross-subsidise [X1].\n\nWeichai stays open. GIC's analyst cut it from 60 to 30 basis points overweight in September 2026, citing a US order banning Chinese equipment from data centres [R1] [R6]. The managers' case is a 14% rise in third-quarter recurring profit [B12], genset shipments climbing from 500 to 1,300 units [B13] and a valuation of about 9 times 2027 earnings with a 5% yield [B20]. Since then, four brokers have cut their targets [B27] [B26] [B21] [B28], and October heavy-truck sales fell 13% [B22].\n\nThe quant score backs only some buys. Laurus ranks top fifth [EQ2], and our small sell has lost as the stock rose 5.7% [US3]. Bilibili and Z.AI rank bottom fifth [EQ7] [EQ6]; one of our accounts bought USD 12.9 million of Z.AI before it fell 46.9% [US10]. Quant scores cover MSCI emerging-markets stocks only, at 31 October [EQ1]. Timing gains are raw price moves, not risk-adjusted [US4].\n\nTwo things would change this view: a US ruling on Chinese power equipment, expected around late December [B29] [N1], and evidence that our Japan technology selling was rebalancing rather than a deliberate view."
+        },
+        "points": [
+          {
+            "id": "p1",
+            "verdict": "ONE_SOURCE",
+            "status": "RESOLVED",
+            "claim": "The best external managers' buy list is real but thin. The eight score-3 names, all in the tested top-50 basket, are Laurus Labs, Adani Energy Solutions, Haitian Intl, Weichai Power A, JD Health, Komatsu, CR Beer and Kioxia. No name has more than 2 distinct buyers. India and China lead, and Industrials and Staples are the main sectors.",
+            "text": "The buy list is real but thin. Eight names score 3 at the Oct-26 month-end [EF1]. Two of the eight cannot be quant-checked: Haitian Intl was not found in the EM universe after three attempts [EQ1] [EQ8] [EQ9], and Komatsu is a Japan (developed-market) stock, outside the quant universe by design. Read this as a few managers' ideas, not broad consensus.",
+            "stances": {
+              "efm": "support",
+              "ours": "not_addressed",
+              "emquant": "not_addressed"
+            }
+          },
+          {
+            "id": "p2",
+            "verdict": "ONE_SOURCE",
+            "status": "RESOLVED",
+            "claim": "Over the last 30 days we have no confirming trades in the top-50 EM-buy basket, only conflicts. Across all names: 56 strong conflicts (USD 4.0bn) and 45 strong confirms (USD 3.7bn).",
+            "text": "The 'no confirms' claim is corrected: JD Health is a confirm. EMA Active net bought +USD 36.6m and the stock is up +6.8% one month later, while the managers' buys are down −3.4% [US4]. The other score-3 China and India conflicts (Laurus, Adani, Haitian, CR Beer) are tiny NC EM Replication sells of USD 0.1–0.5m, likely index rebalancing [US3] [US5] [US6] [US7]. Komatsu had no trades [US8]. The real active conflicts are larger: Weichai and the Japan tech names [US2].",
+            "stances": {
+              "ours": "support",
+              "efm": "not_addressed",
+              "emquant": "not_addressed"
+            }
+          },
+          {
+            "id": "p3",
+            "verdict": "CONSENSUS",
+            "status": "RESOLVED",
+            "claim": "Kioxia is the clearest clash: managers bought it 3x and it sits in the top-50 basket, while we net sold USD 83m across 7 accounts. Japan tech names Renesas (−86m), Resonac (−42m) and Murata (−25m) are similar.",
+            "text": "Kioxia is the clearest active clash, and the research leans against our selling. We net sold USD 83m, with 7 accounts selling and 2 buying, so part of it is rebalancing [US2]. Every broker rates it Buy, with targets of ¥24,000–43,500 and FY3/28E P/E of 2–3x versus peers at 3–5x [B6] [B7] [B4] [B11]. Capacity is sold out for CY27 [B1] and management says data-centre eSSD demand exceeds supply through 2027 [EC1]. An expert says Kioxia meets only about 50% of data-centre demand [X1]. Risks: one broker's target cut and its call that prices fall from 2H CY27 [B6]; Kioxia sells only NAND, so it cannot cross-subsidise like its memory rivals [X1]; concern that AI capex may not last [B9].",
+            "stances": {
+              "efm": "support",
+              "ours": "support",
+              "emquant": "not_addressed",
+              "broker": "support",
+              "experts": "partial"
+            }
+          },
+          {
+            "id": "p4",
+            "verdict": "CONSENSUS",
+            "status": "OPEN",
+            "claim": "Weichai Power A (score 3): we sold USD 31m across EMA Active, GEM Focus and NC EM Replication, while the quant book net bought +0.2m.",
+            "text": "Still open: our USD 31m Weichai sell matches GIC's own call. Analysts trimmed it from 60 to 30 bps overweight in Sep-26 on the US ban on Chinese data-centre equipment and the pause in data-centre genset orders [R1] [R6]. The managers' case is a 14% rise in Q3 recurring profit [B12], genset shipments up from 500 to 1,300 units [B13] and about 9x 2027 earnings with a 5% yield [B20]. Since then, four brokers have cut targets [B27] [B26] [B21] [B28] and October heavy-truck sales fell 13% [B22]. A US ruling on Chinese power equipment is expected in late December [B29] [N1].",
+            "stances": {
+              "efm": "support",
+              "ours": "support",
+              "research": "support",
+              "broker": "partial",
+              "news": "support"
+            }
+          },
+          {
+            "id": "p5",
+            "verdict": "CONSENSUS",
+            "status": "RESOLVED",
+            "claim": "The quant score backs only some of the buys.",
+            "text": "Laurus ranks in the top fifth [EQ2], and our small sell has lost as the stock rose 5.7% [US3]. Adani, CR Beer and JD Health are middle fifths, so the quant score does not confirm them [EQ3] [EQ4] [EQ5]. Bilibili and Z.AI rank in the bottom fifth [EQ7] [EQ6]; one of our accounts bought USD 12.9m of Z.AI before it fell 46.9% [US10].",
+            "stances": {
+              "emquant": "support",
+              "ours": "support",
+              "efm": "partial"
+            }
+          },
+          {
+            "id": "p6",
+            "verdict": "CONSENSUS",
+            "status": "RESOLVED",
+            "claim": "The evidence is limited in three ways: thin buyer counts, no quant score for Japan or developed-market names, and two-way account trading that blurs the net direction.",
+            "text": "The evidence has five limits. Each name has at most 2 buyers [EF1]. Quant scores cover MSCI EM only, at one month-end, so there are none for Japan or Haitian [EQ1]. Two-way account trading and index-replication flows blur the net direction [US2]. Timing edges are raw price moves, not risk-adjusted [US4]. PM names are not populated, so trades cannot be tied to decision-makers [US1].",
+            "stances": {
+              "efm": "support",
+              "emquant": "support",
+              "ours": "support"
+            }
+          }
+        ],
+        "messages": [
+          {
+            "round": 1,
+            "from": "moderator",
+            "to": [
+              "efm",
+              "ours",
+              "emquant"
+            ],
+            "text": "Identify the names the higher-quality external managers bought at each of the last three month-ends, then check whether GIC funds (NGC85) own or trade them, using the EM quant score as a second check."
+          },
+          {
+            "round": 1,
+            "from": "emquant",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "I do not have a tool that returns external managers' buy lists or any recent purchase data from outside NGC2383.",
+            "text": "Give me the names and I will score them. Quant scores cover MSCI EM only, at the 2026-10-31 month-end [EQ1].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Give me the names and I will score them.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": []
+              },
+              {
+                "id": "c2",
+                "text": "Quant scores cover MSCI EM only, at the 2026-10-31 month-end.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EQ1"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "UC Functions MCP · quant_rank",
+                "zone": "serverless"
+              }
+            ]
+          },
+          {
+            "round": 1,
+            "from": "efm",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Here are the four strongest points from the EFM data:",
+            "text": "1. Eight names score 3 at the Oct-26 month-end and sit in the tested top-50 basket [EF1].\n2. No name has more than 2 distinct buyers [EF1].\n3. India and China lead; Industrials and Staples are the main sectors [EF1].\n4. Kioxia was bought by the better half of managers at each of the last three month-ends [EF1].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Eight names score 3 at the Oct-26 month-end and sit in the tested top-50 basket.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EF1"
+                ]
+              },
+              {
+                "id": "c2",
+                "text": "No name has more than 2 distinct buyers.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EF1"
+                ]
+              },
+              {
+                "id": "c3",
+                "text": "India and China lead; Industrials and Staples are the main sectors.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EF1"
+                ]
+              },
+              {
+                "id": "c4",
+                "text": "Kioxia was bought by the better half of managers at each of the last three month-ends.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EF1"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "UC Functions MCP · efm_buy_basket",
+                "zone": "serverless"
+              }
+            ]
+          },
+          {
+            "round": 1,
+            "from": "ours",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Here are the four strongest points from our data, strongest first.",
+            "text": "1. Kioxia: we net sold USD 83m across seven accounts while two bought [US2].\n2. Renesas (USD 86.2m sold), Resonac (42.5m) and Murata (25.5m) follow the same pattern [US2].\n3. Weichai Power A: sold USD 31m [US2].\n4. Across the book, 56 strong conflicts (USD 4,024m) slightly outweigh 45 strong confirms (USD 3,722m) [US2].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Kioxia: we net sold USD 83m across seven accounts while two bought.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "US2"
+                ]
+              },
+              {
+                "id": "c2",
+                "text": "Renesas (USD 86.2m sold), Resonac (42.5m) and Murata (25.5m) follow the same pattern.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "US2"
+                ]
+              },
+              {
+                "id": "c3",
+                "text": "Weichai Power A: sold USD 31m.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "US2"
+                ]
+              },
+              {
+                "id": "c4",
+                "text": "Across the book, 56 strong conflicts (USD 4,024m) slightly outweigh 45 strong confirms (USD 3,722m).",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "US2"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Bridge MCP · oms_confirm_conflict@1 → azure_oms.oms.trades (Azure SQL) · 2.8 s",
+                "zone": "external"
+              }
+            ]
+          },
+          {
+            "round": 2,
+            "from": "moderator",
+            "to": [
+              "ours",
+              "emquant"
+            ],
+            "text": "For the score-3 names not yet reported (Laurus Labs, Adani Energy Solutions, Haitian Intl, JD Health, CR Beer, Komatsu), plus Bilibili and Z.AI: what did we trade in the last 30 days, and by strategy? For the EM members, what is the quant rank and what drives it?"
+          },
+          {
+            "round": 2,
+            "from": "ours",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Seven of eight are conflicts; JD Health is the sole confirm, and the best-timed trade.",
+            "text": "JD Health: EMA Active net bought +USD 36.6m; +6.8% one month later [US4]. Laurus, Adani, Haitian, CR Beer: NC EM Replication sells of USD 0.1–0.5m flagged as rebalancing [US3] [US5] [US6] [US7]. Komatsu: no trades [US8]. Z.AI: one account bought USD 12.9m before a −46.9% fall [US10].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "JD Health: EMA Active net bought +USD 36.6m; +6.8% one month later.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "US4"
+                ]
+              },
+              {
+                "id": "c2",
+                "text": "Laurus, Adani, Haitian, CR Beer: NC EM Replication sells of USD 0.1–0.5m flagged as rebalancing.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "US3",
+                  "US5",
+                  "US6",
+                  "US7"
+                ]
+              },
+              {
+                "id": "c3",
+                "text": "Komatsu: no trades.",
+                "stance": "gap",
+                "confidence": 0.8,
+                "citations": [
+                  "US8"
+                ]
+              },
+              {
+                "id": "c4",
+                "text": "Z.AI: one account bought USD 12.9m before a −46.9% fall.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "US10"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Bridge MCP · oms_trade_flows@1, oms_post_trade_move@1 → Azure SQL · 3.4 s",
+                "zone": "external"
+              }
+            ]
+          },
+          {
+            "round": 2,
+            "from": "emquant",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "EM Quant check on the seven names: 2026-10-31 month-end, NGC2383 window.",
+            "text": "Laurus: top quintile [EQ2]. Adani, CR Beer, JD Health: middle fifths [EQ3] [EQ4] [EQ5]. Bilibili and Z.AI: bottom quintile [EQ7] [EQ6]. Haitian Intl: not found after three attempts [EQ1] [EQ8] [EQ9]. Komatsu: outside the universe (Japan, developed market).",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Laurus: top quintile.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EQ2"
+                ]
+              },
+              {
+                "id": "c2",
+                "text": "Adani, CR Beer, JD Health: middle fifths.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EQ3",
+                  "EQ4",
+                  "EQ5"
+                ]
+              },
+              {
+                "id": "c3",
+                "text": "Bilibili and Z.AI: bottom quintile.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EQ7",
+                  "EQ6"
+                ]
+              },
+              {
+                "id": "c4",
+                "text": "Haitian Intl: not found after three attempts.",
+                "stance": "gap",
+                "confidence": 0.8,
+                "citations": [
+                  "EQ1",
+                  "EQ8",
+                  "EQ9"
+                ]
+              },
+              {
+                "id": "c5",
+                "text": "Komatsu: outside the universe (Japan, developed market).",
+                "stance": "gap",
+                "confidence": 0.8,
+                "citations": []
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "UC Functions MCP · quant_rank ×3",
+                "zone": "serverless"
+              }
+            ]
+          },
+          {
+            "round": 3,
+            "from": "moderator",
+            "to": [
+              "broker",
+              "experts",
+              "earnings"
+            ],
+            "text": "Does the outlook for Kioxia justify selling a name the managers are buying?"
+          },
+          {
+            "round": 3,
+            "from": "experts",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "FOR (supports owning): the supply constraint is real and demand-led.",
+            "text": "A former insider says Kioxia meets about half of data-centre demand, but NAND-only exposure leaves it vulnerable to rivals who can cross-subsidise [X1].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "A former insider says Kioxia meets about half of data-centre demand, but NAND-only exposure leaves it vulnerable to rivals who can cross-subsidise.",
+                "stance": "support",
+                "confidence": 0.6,
+                "citations": [
+                  "X1"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Vector Search MCP · expert_chunks",
+                "zone": "serverless"
+              }
+            ]
+          },
+          {
+            "round": 3,
+            "from": "broker",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "NAND pricing & AI/DC demand: bullish consensus, diverging conviction.",
+            "text": "All major brokers agree the NAND upcycle is intact through CY27–28, driven by AI/DC eSSD demand [B1] [B4] [B7] [B11]. One broker cut its target and calls price falls from 2H CY27 [B6]; another flags AI-capex durability [B9].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "All major brokers agree the NAND upcycle is intact through CY27–28, driven by AI/DC eSSD demand.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "B1",
+                  "B4",
+                  "B7",
+                  "B11"
+                ]
+              },
+              {
+                "id": "c2",
+                "text": "One broker cut its target and calls price falls from 2H CY27; another flags AI-capex durability.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "B6",
+                  "B9"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Vector Search MCP · broker_chunks (filter company_id=C0101)",
+                "zone": "serverless"
+              }
+            ]
+          },
+          {
+            "round": 3,
+            "from": "earnings",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Q2 FY3/27 call (13 Nov): management says eSSD demand exceeds supply through 2027.",
+            "text": "Results date 2026-11-13; the call and results note are landed, so the Kioxia wiki refresh is due [EC1].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Results date 2026-11-13; the call and results note are landed, so the Kioxia wiki refresh is due.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EC1"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Vector Search MCP · earnings_chunks",
+                "zone": "serverless"
+              }
+            ]
+          },
+          {
+            "round": 3,
+            "from": "moderator",
+            "to": [
+              "research",
+              "broker",
+              "news"
+            ],
+            "text": "What has changed on Weichai Power A since GIC's September view cut, and what would change the view?"
+          },
+          {
+            "round": 3,
+            "from": "research",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Our view: trimmed from 60 to 30 bps overweight on 15 Sep 2026.",
+            "text": "Rationale: the US order banning Chinese equipment in data centres and a pause in data-centre genset orders [R1] [R6].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Rationale: the US order banning Chinese equipment in data centres and a pause in data-centre genset orders.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "R1",
+                  "R6"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Bridge MCP · research_views@1 → azure_oms.research (Azure SQL) · 1.9 s",
+                "zone": "external"
+              }
+            ]
+          },
+          {
+            "round": 3,
+            "from": "broker",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Managers' case vs target cuts.",
+            "text": "Q3 recurring profit +14% [B12], genset shipments 500 → 1,300 [B13], ~9x 2027 earnings with a 5% yield [B20]; four brokers have since cut targets [B21] [B26] [B27] [B28]; October heavy-truck sales −13% [B22]; US ruling expected late December [B29].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Q3 recurring profit +14%, genset shipments 500 → 1,300, ~9x 2027 earnings with a 5% yield; four brokers have since cut targets; October heavy-truck sales −13%; US ruling expected late December.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "B12",
+                  "B13",
+                  "B20",
+                  "B21",
+                  "B26",
+                  "B27",
+                  "B28",
+                  "B22",
+                  "B29"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Vector Search MCP · broker_chunks",
+                "zone": "serverless"
+              }
+            ]
+          },
+          {
+            "round": 3,
+            "from": "news",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Live: the US ruling on Chinese power equipment is still expected in late December.",
+            "text": "Latest wire, 2026-11-12 [N1]. Nothing newer in the last 48 hours; web search returns no newer filings.",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Latest wire, 2026-11-12.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "N1"
+                ]
+              },
+              {
+                "id": "c2",
+                "text": "Nothing newer in the last 48 hours; web search returns no newer filings.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": []
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Bridge MCP · news_latest (live) + web_search → azure_oms.feeds · 1.2 s",
+                "zone": "external"
+              }
+            ]
+          }
+        ],
+        "sources": {
+          "EQ1": {
+            "id": "EQ1",
+            "type": "uc_function",
+            "ref": "eqds_demo.prod.quant_rank",
+            "as_of": "2026-11-20"
+          },
+          "EF1": {
+            "id": "EF1",
+            "type": "uc_function",
+            "ref": "eqds_demo.prod.efm_buy_basket",
+            "as_of": "2026-11-20"
+          },
+          "US2": {
+            "id": "US2",
+            "type": "external_db",
+            "ref": "azure_oms.oms.trades ⋈ efm_buy_basket",
+            "as_of": "2026-11-20",
+            "system": "azure_sql",
+            "template": "oms_confirm_conflict@1"
+          },
+          "EQ8": {
+            "id": "EQ8",
+            "type": "uc_function",
+            "ref": "eqds_demo.prod.quant_rank",
+            "as_of": "2026-11-20"
+          },
+          "EQ9": {
+            "id": "EQ9",
+            "type": "uc_function",
+            "ref": "eqds_demo.prod.quant_rank",
+            "as_of": "2026-11-20"
+          },
+          "US4": {
+            "id": "US4",
+            "type": "external_db",
+            "ref": "azure_oms.oms.trades",
+            "as_of": "2026-11-20",
+            "system": "azure_sql",
+            "template": "oms_post_trade_move@1"
+          },
+          "US3": {
+            "id": "US3",
+            "type": "external_db",
+            "ref": "azure_oms.oms.trades",
+            "as_of": "2026-11-20",
+            "system": "azure_sql",
+            "template": "oms_post_trade_move@1"
+          },
+          "US5": {
+            "id": "US5",
+            "type": "external_db",
+            "ref": "azure_oms.oms.trades",
+            "as_of": "2026-11-20",
+            "system": "azure_sql",
+            "template": "oms_trade_flows@1"
+          },
+          "US6": {
+            "id": "US6",
+            "type": "external_db",
+            "ref": "azure_oms.oms.trades",
+            "as_of": "2026-11-20",
+            "system": "azure_sql",
+            "template": "oms_trade_flows@1"
+          },
+          "US7": {
+            "id": "US7",
+            "type": "external_db",
+            "ref": "azure_oms.oms.trades",
+            "as_of": "2026-11-20",
+            "system": "azure_sql",
+            "template": "oms_trade_flows@1"
+          },
+          "US8": {
+            "id": "US8",
+            "type": "external_db",
+            "ref": "azure_oms.oms.trades",
+            "as_of": "2026-11-20",
+            "system": "azure_sql",
+            "template": "oms_trade_flows@1"
+          },
+          "B6": {
+            "id": "B6",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B7": {
+            "id": "B7",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B4": {
+            "id": "B4",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B11": {
+            "id": "B11",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B1": {
+            "id": "B1",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "EC1": {
+            "id": "EC1",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.earnings_chunks",
+            "as_of": "2026-11-20"
+          },
+          "X1": {
+            "id": "X1",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.expert_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B9": {
+            "id": "B9",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "R1": {
+            "id": "R1",
+            "type": "external_db",
+            "ref": "azure_oms.research.analyst_views",
+            "as_of": "2026-11-20",
+            "system": "azure_sql",
+            "template": "research_views@1"
+          },
+          "R6": {
+            "id": "R6",
+            "type": "external_db",
+            "ref": "azure_oms.research.analyst_views",
+            "as_of": "2026-11-20",
+            "system": "azure_sql",
+            "template": "research_views@1"
+          },
+          "B12": {
+            "id": "B12",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B13": {
+            "id": "B13",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B20": {
+            "id": "B20",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B27": {
+            "id": "B27",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B26": {
+            "id": "B26",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B21": {
+            "id": "B21",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B28": {
+            "id": "B28",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B22": {
+            "id": "B22",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B29": {
+            "id": "B29",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "N1": {
+            "id": "N1",
+            "type": "external_db",
+            "ref": "azure_oms.feeds.news_wire",
+            "as_of": "2026-11-20",
+            "system": "azure_sql",
+            "template": "news_latest (live)"
+          },
+          "EQ2": {
+            "id": "EQ2",
+            "type": "uc_function",
+            "ref": "eqds_demo.prod.quant_rank",
+            "as_of": "2026-11-20"
+          },
+          "EQ3": {
+            "id": "EQ3",
+            "type": "uc_function",
+            "ref": "eqds_demo.prod.quant_rank",
+            "as_of": "2026-11-20"
+          },
+          "EQ4": {
+            "id": "EQ4",
+            "type": "uc_function",
+            "ref": "eqds_demo.prod.quant_rank",
+            "as_of": "2026-11-20"
+          },
+          "EQ5": {
+            "id": "EQ5",
+            "type": "uc_function",
+            "ref": "eqds_demo.prod.quant_rank",
+            "as_of": "2026-11-20"
+          },
+          "EQ7": {
+            "id": "EQ7",
+            "type": "uc_function",
+            "ref": "eqds_demo.prod.quant_rank",
+            "as_of": "2026-11-20"
+          },
+          "EQ6": {
+            "id": "EQ6",
+            "type": "uc_function",
+            "ref": "eqds_demo.prod.quant_rank",
+            "as_of": "2026-11-20"
+          },
+          "US10": {
+            "id": "US10",
+            "type": "external_db",
+            "ref": "azure_oms.oms.trades",
+            "as_of": "2026-11-20",
+            "system": "azure_sql",
+            "template": "oms_post_trade_move@1"
+          },
+          "US1": {
+            "id": "US1",
+            "type": "external_db",
+            "ref": "azure_oms.oms.trades",
+            "as_of": "2026-11-20",
+            "system": "azure_sql",
+            "template": "oms_trade_flows@1"
+          }
+        },
+        "ask_next": [
+          "Which account bought USD 12.9m of Z.AI, a bottom-fifth quant name, before its −46.9% fall, and was that an active view?",
+          "Is the USD 83m Kioxia sell (and Renesas, Resonac, Murata) a deliberate Japan-tech view or rebalancing, given unanimous broker Buys at 2–3x forward P/E?",
+          "Should we keep Weichai at 30bps overweight into the late-December US ruling, or wait for clarity before adding or cutting further?"
+        ],
+        "usage": {
+          "cost_usd": 1.94,
+          "duration_s": "4 min 56 s",
+          "tokens": "410K in · 38K out"
+        },
+        "trace_id": "tr-fixture"
+      },
+      "sse_events": [
+        {
+          "id": 1,
+          "event": "status",
+          "data": {
+            "status": "RUNNING"
+          }
+        },
+        {
+          "id": 2,
+          "event": "stage",
+          "data": {
+            "stage": "who_opens",
+            "status": "active"
+          }
+        },
+        {
+          "id": 3,
+          "event": "who_opens",
+          "data": {
+            "reformulated": "Identify the names the higher-quality external managers bought at each of the last three month-ends, then check whether GIC funds (NGC85) own or trade them, using the EM quant score as a second check.",
+            "selected": [
+              "efm",
+              "ours",
+              "emquant"
+            ],
+            "briefs": {
+              "efm": "The question is about what the best external managers are buying now.",
+              "ours": "Checks whether our NGC85 funds own or trade the names the top external managers are buying.",
+              "emquant": "Adds the EM quant score as a second check on the external managers' buys."
+            },
+            "selection": "auto"
+          }
+        },
+        {
+          "id": 4,
+          "event": "stage",
+          "data": {
+            "stage": "who_opens",
+            "status": "done"
+          }
+        },
+        {
+          "id": 5,
+          "event": "stage",
+          "data": {
+            "stage": "opening_round",
+            "status": "active"
+          }
+        },
+        {
+          "id": 6,
+          "event": "activity",
+          "data": {
+            "component": "eqds-sp-emquant",
+            "zone": "serverless",
+            "label": "POST /invocations",
+            "detail": "UC Functions MCP · quant_rank",
+            "link": {
+              "kind": "app",
+              "ref": "eqds-sp-emquant"
+            }
+          }
+        },
+        {
+          "id": 7,
+          "event": "message",
+          "data": {
+            "round": 1,
+            "from": "emquant",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "I do not have a tool that returns external managers' buy lists or any recent purchase data from outside NGC2383.",
+            "text": "Give me the names and I will score them. Quant scores cover MSCI EM only, at the 2026-10-31 month-end [EQ1].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Give me the names and I will score them.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": []
+              },
+              {
+                "id": "c2",
+                "text": "Quant scores cover MSCI EM only, at the 2026-10-31 month-end.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EQ1"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "UC Functions MCP · quant_rank",
+                "zone": "serverless"
+              }
+            ]
+          }
+        },
+        {
+          "id": 8,
+          "event": "activity",
+          "data": {
+            "component": "eqds-sp-efm",
+            "zone": "serverless",
+            "label": "POST /invocations",
+            "detail": "UC Functions MCP · efm_buy_basket",
+            "link": {
+              "kind": "app",
+              "ref": "eqds-sp-efm"
+            }
+          }
+        },
+        {
+          "id": 9,
+          "event": "message",
+          "data": {
+            "round": 1,
+            "from": "efm",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Here are the four strongest points from the EFM data:",
+            "text": "1. Eight names score 3 at the Oct-26 month-end and sit in the tested top-50 basket [EF1].\n2. No name has more than 2 distinct buyers [EF1].\n3. India and China lead; Industrials and Staples are the main sectors [EF1].\n4. Kioxia was bought by the better half of managers at each of the last three month-ends [EF1].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Eight names score 3 at the Oct-26 month-end and sit in the tested top-50 basket.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EF1"
+                ]
+              },
+              {
+                "id": "c2",
+                "text": "No name has more than 2 distinct buyers.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EF1"
+                ]
+              },
+              {
+                "id": "c3",
+                "text": "India and China lead; Industrials and Staples are the main sectors.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EF1"
+                ]
+              },
+              {
+                "id": "c4",
+                "text": "Kioxia was bought by the better half of managers at each of the last three month-ends.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EF1"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "UC Functions MCP · efm_buy_basket",
+                "zone": "serverless"
+              }
+            ]
+          }
+        },
+        {
+          "id": 10,
+          "event": "activity",
+          "data": {
+            "component": "eqds-sp-ours",
+            "zone": "external",
+            "label": "POST /invocations",
+            "detail": "Bridge MCP · oms_confirm_conflict@1 → azure_oms.oms.trades (Azure SQL) · 2.8 s",
+            "link": {
+              "kind": "app",
+              "ref": "eqds-sp-ours"
+            }
+          }
+        },
+        {
+          "id": 11,
+          "event": "message",
+          "data": {
+            "round": 1,
+            "from": "ours",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Here are the four strongest points from our data, strongest first.",
+            "text": "1. Kioxia: we net sold USD 83m across seven accounts while two bought [US2].\n2. Renesas (USD 86.2m sold), Resonac (42.5m) and Murata (25.5m) follow the same pattern [US2].\n3. Weichai Power A: sold USD 31m [US2].\n4. Across the book, 56 strong conflicts (USD 4,024m) slightly outweigh 45 strong confirms (USD 3,722m) [US2].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Kioxia: we net sold USD 83m across seven accounts while two bought.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "US2"
+                ]
+              },
+              {
+                "id": "c2",
+                "text": "Renesas (USD 86.2m sold), Resonac (42.5m) and Murata (25.5m) follow the same pattern.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "US2"
+                ]
+              },
+              {
+                "id": "c3",
+                "text": "Weichai Power A: sold USD 31m.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "US2"
+                ]
+              },
+              {
+                "id": "c4",
+                "text": "Across the book, 56 strong conflicts (USD 4,024m) slightly outweigh 45 strong confirms (USD 3,722m).",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "US2"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Bridge MCP · oms_confirm_conflict@1 → azure_oms.oms.trades (Azure SQL) · 2.8 s",
+                "zone": "external"
+              }
+            ]
+          }
+        },
+        {
+          "id": 12,
+          "event": "stage",
+          "data": {
+            "stage": "opening_round",
+            "status": "done"
+          }
+        },
+        {
+          "id": 13,
+          "event": "stage",
+          "data": {
+            "stage": "map",
+            "status": "active"
+          }
+        },
+        {
+          "id": 14,
+          "event": "map",
+          "data": {
+            "points": [
+              {
+                "id": "p1",
+                "verdict": "ONE_SOURCE",
+                "status": "RESOLVED",
+                "claim": "The best external managers' buy list is real but thin. The eight score-3 names, all in the tested top-50 basket, are Laurus Labs, Adani Energy Solutions, Haitian Intl, Weichai Power A, JD Health, Komatsu, CR Beer and Kioxia. No name has more than 2 distinct buyers. India and China lead, and Industrials and Staples are the main sectors.",
+                "stances": {
+                  "efm": "support",
+                  "ours": "not_addressed",
+                  "emquant": "not_addressed"
+                }
+              },
+              {
+                "id": "p2",
+                "verdict": "ONE_SOURCE",
+                "status": "RESOLVED",
+                "claim": "Over the last 30 days we have no confirming trades in the top-50 EM-buy basket, only conflicts. Across all names: 56 strong conflicts (USD 4.0bn) and 45 strong confirms (USD 3.7bn).",
+                "stances": {
+                  "ours": "support",
+                  "efm": "not_addressed",
+                  "emquant": "not_addressed"
+                }
+              },
+              {
+                "id": "p3",
+                "verdict": "CONSENSUS",
+                "status": "RESOLVED",
+                "claim": "Kioxia is the clearest clash: managers bought it 3x and it sits in the top-50 basket, while we net sold USD 83m across 7 accounts. Japan tech names Renesas (−86m), Resonac (−42m) and Murata (−25m) are similar.",
+                "stances": {
+                  "efm": "support",
+                  "ours": "support",
+                  "emquant": "not_addressed",
+                  "broker": "support",
+                  "experts": "partial"
+                }
+              },
+              {
+                "id": "p4",
+                "verdict": "CONSENSUS",
+                "status": "OPEN",
+                "claim": "Weichai Power A (score 3): we sold USD 31m across EMA Active, GEM Focus and NC EM Replication, while the quant book net bought +0.2m.",
+                "stances": {
+                  "efm": "support",
+                  "ours": "support",
+                  "research": "support",
+                  "broker": "partial",
+                  "news": "support"
+                }
+              },
+              {
+                "id": "p5",
+                "verdict": "CONSENSUS",
+                "status": "RESOLVED",
+                "claim": "The quant score backs only some of the buys.",
+                "stances": {
+                  "emquant": "support",
+                  "ours": "support",
+                  "efm": "partial"
+                }
+              },
+              {
+                "id": "p6",
+                "verdict": "CONSENSUS",
+                "status": "RESOLVED",
+                "claim": "The evidence is limited in three ways: thin buyer counts, no quant score for Japan or developed-market names, and two-way account trading that blurs the net direction.",
+                "stances": {
+                  "efm": "support",
+                  "emquant": "support",
+                  "ours": "support"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": 15,
+          "event": "stage",
+          "data": {
+            "stage": "map",
+            "status": "done"
+          }
+        },
+        {
+          "id": 16,
+          "event": "stage",
+          "data": {
+            "stage": "deep_dive",
+            "status": "active"
+          }
+        },
+        {
+          "id": 17,
+          "event": "message",
+          "data": {
+            "round": 2,
+            "from": "moderator",
+            "to": [
+              "ours",
+              "emquant"
+            ],
+            "text": "For the score-3 names not yet reported (Laurus Labs, Adani Energy Solutions, Haitian Intl, JD Health, CR Beer, Komatsu), plus Bilibili and Z.AI: what did we trade in the last 30 days, and by strategy? For the EM members, what is the quant rank and what drives it?"
+          }
+        },
+        {
+          "id": 18,
+          "event": "message",
+          "data": {
+            "round": 2,
+            "from": "ours",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Seven of eight are conflicts; JD Health is the sole confirm, and the best-timed trade.",
+            "text": "JD Health: EMA Active net bought +USD 36.6m; +6.8% one month later [US4]. Laurus, Adani, Haitian, CR Beer: NC EM Replication sells of USD 0.1–0.5m flagged as rebalancing [US3] [US5] [US6] [US7]. Komatsu: no trades [US8]. Z.AI: one account bought USD 12.9m before a −46.9% fall [US10].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "JD Health: EMA Active net bought +USD 36.6m; +6.8% one month later.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "US4"
+                ]
+              },
+              {
+                "id": "c2",
+                "text": "Laurus, Adani, Haitian, CR Beer: NC EM Replication sells of USD 0.1–0.5m flagged as rebalancing.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "US3",
+                  "US5",
+                  "US6",
+                  "US7"
+                ]
+              },
+              {
+                "id": "c3",
+                "text": "Komatsu: no trades.",
+                "stance": "gap",
+                "confidence": 0.8,
+                "citations": [
+                  "US8"
+                ]
+              },
+              {
+                "id": "c4",
+                "text": "Z.AI: one account bought USD 12.9m before a −46.9% fall.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "US10"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Bridge MCP · oms_trade_flows@1, oms_post_trade_move@1 → Azure SQL · 3.4 s",
+                "zone": "external"
+              }
+            ]
+          }
+        },
+        {
+          "id": 19,
+          "event": "message",
+          "data": {
+            "round": 2,
+            "from": "emquant",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "EM Quant check on the seven names: 2026-10-31 month-end, NGC2383 window.",
+            "text": "Laurus: top quintile [EQ2]. Adani, CR Beer, JD Health: middle fifths [EQ3] [EQ4] [EQ5]. Bilibili and Z.AI: bottom quintile [EQ7] [EQ6]. Haitian Intl: not found after three attempts [EQ1] [EQ8] [EQ9]. Komatsu: outside the universe (Japan, developed market).",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Laurus: top quintile.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EQ2"
+                ]
+              },
+              {
+                "id": "c2",
+                "text": "Adani, CR Beer, JD Health: middle fifths.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EQ3",
+                  "EQ4",
+                  "EQ5"
+                ]
+              },
+              {
+                "id": "c3",
+                "text": "Bilibili and Z.AI: bottom quintile.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EQ7",
+                  "EQ6"
+                ]
+              },
+              {
+                "id": "c4",
+                "text": "Haitian Intl: not found after three attempts.",
+                "stance": "gap",
+                "confidence": 0.8,
+                "citations": [
+                  "EQ1",
+                  "EQ8",
+                  "EQ9"
+                ]
+              },
+              {
+                "id": "c5",
+                "text": "Komatsu: outside the universe (Japan, developed market).",
+                "stance": "gap",
+                "confidence": 0.8,
+                "citations": []
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "UC Functions MCP · quant_rank ×3",
+                "zone": "serverless"
+              }
+            ]
+          }
+        },
+        {
+          "id": 20,
+          "event": "message",
+          "data": {
+            "round": 3,
+            "from": "moderator",
+            "to": [
+              "broker",
+              "experts",
+              "earnings"
+            ],
+            "text": "Does the outlook for Kioxia justify selling a name the managers are buying?"
+          }
+        },
+        {
+          "id": 21,
+          "event": "message",
+          "data": {
+            "round": 3,
+            "from": "experts",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "FOR (supports owning): the supply constraint is real and demand-led.",
+            "text": "A former insider says Kioxia meets about half of data-centre demand, but NAND-only exposure leaves it vulnerable to rivals who can cross-subsidise [X1].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "A former insider says Kioxia meets about half of data-centre demand, but NAND-only exposure leaves it vulnerable to rivals who can cross-subsidise.",
+                "stance": "support",
+                "confidence": 0.6,
+                "citations": [
+                  "X1"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Vector Search MCP · expert_chunks",
+                "zone": "serverless"
+              }
+            ]
+          }
+        },
+        {
+          "id": 22,
+          "event": "message",
+          "data": {
+            "round": 3,
+            "from": "broker",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "NAND pricing & AI/DC demand: bullish consensus, diverging conviction.",
+            "text": "All major brokers agree the NAND upcycle is intact through CY27–28, driven by AI/DC eSSD demand [B1] [B4] [B7] [B11]. One broker cut its target and calls price falls from 2H CY27 [B6]; another flags AI-capex durability [B9].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "All major brokers agree the NAND upcycle is intact through CY27–28, driven by AI/DC eSSD demand.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "B1",
+                  "B4",
+                  "B7",
+                  "B11"
+                ]
+              },
+              {
+                "id": "c2",
+                "text": "One broker cut its target and calls price falls from 2H CY27; another flags AI-capex durability.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "B6",
+                  "B9"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Vector Search MCP · broker_chunks (filter company_id=C0101)",
+                "zone": "serverless"
+              }
+            ]
+          }
+        },
+        {
+          "id": 23,
+          "event": "message",
+          "data": {
+            "round": 3,
+            "from": "earnings",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Q2 FY3/27 call (13 Nov): management says eSSD demand exceeds supply through 2027.",
+            "text": "Results date 2026-11-13; the call and results note are landed, so the Kioxia wiki refresh is due [EC1].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Results date 2026-11-13; the call and results note are landed, so the Kioxia wiki refresh is due.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EC1"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Vector Search MCP · earnings_chunks",
+                "zone": "serverless"
+              }
+            ]
+          }
+        },
+        {
+          "id": 24,
+          "event": "message",
+          "data": {
+            "round": 3,
+            "from": "moderator",
+            "to": [
+              "research",
+              "broker",
+              "news"
+            ],
+            "text": "What has changed on Weichai Power A since GIC's September view cut, and what would change the view?"
+          }
+        },
+        {
+          "id": 25,
+          "event": "message",
+          "data": {
+            "round": 3,
+            "from": "research",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Our view: trimmed from 60 to 30 bps overweight on 15 Sep 2026.",
+            "text": "Rationale: the US order banning Chinese equipment in data centres and a pause in data-centre genset orders [R1] [R6].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Rationale: the US order banning Chinese equipment in data centres and a pause in data-centre genset orders.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "R1",
+                  "R6"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Bridge MCP · research_views@1 → azure_oms.research (Azure SQL) · 1.9 s",
+                "zone": "external"
+              }
+            ]
+          }
+        },
+        {
+          "id": 26,
+          "event": "message",
+          "data": {
+            "round": 3,
+            "from": "broker",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Managers' case vs target cuts.",
+            "text": "Q3 recurring profit +14% [B12], genset shipments 500 → 1,300 [B13], ~9x 2027 earnings with a 5% yield [B20]; four brokers have since cut targets [B21] [B26] [B27] [B28]; October heavy-truck sales −13% [B22]; US ruling expected late December [B29].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Q3 recurring profit +14%, genset shipments 500 → 1,300, ~9x 2027 earnings with a 5% yield; four brokers have since cut targets; October heavy-truck sales −13%; US ruling expected late December.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "B12",
+                  "B13",
+                  "B20",
+                  "B21",
+                  "B26",
+                  "B27",
+                  "B28",
+                  "B22",
+                  "B29"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Vector Search MCP · broker_chunks",
+                "zone": "serverless"
+              }
+            ]
+          }
+        },
+        {
+          "id": 27,
+          "event": "message",
+          "data": {
+            "round": 3,
+            "from": "news",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Live: the US ruling on Chinese power equipment is still expected in late December.",
+            "text": "Latest wire, 2026-11-12 [N1]. Nothing newer in the last 48 hours; web search returns no newer filings.",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Latest wire, 2026-11-12.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "N1"
+                ]
+              },
+              {
+                "id": "c2",
+                "text": "Nothing newer in the last 48 hours; web search returns no newer filings.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": []
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Bridge MCP · news_latest (live) + web_search → azure_oms.feeds · 1.2 s",
+                "zone": "external"
+              }
+            ]
+          }
+        },
+        {
+          "id": 28,
+          "event": "stage",
+          "data": {
+            "stage": "deep_dive",
+            "status": "done"
+          }
+        },
+        {
+          "id": 29,
+          "event": "stage",
+          "data": {
+            "stage": "verdicts",
+            "status": "active"
+          }
+        },
+        {
+          "id": 30,
+          "event": "verdict",
+          "data": {
+            "point_id": "p1",
+            "verdict": "ONE_SOURCE",
+            "status": "RESOLVED",
+            "text": "The buy list is real but thin. Eight names score 3 at the Oct-26 month-end [EF1]. Two of the eight cannot be quant-checked: Haitian Intl was not found in the EM universe after three attempts [EQ1] [EQ8] [EQ9], and Komatsu is a Japan (developed-market) stock, outside the quant universe by design. Read this as a few managers' ideas, not broad consensus."
+          }
+        },
+        {
+          "id": 31,
+          "event": "verdict",
+          "data": {
+            "point_id": "p2",
+            "verdict": "ONE_SOURCE",
+            "status": "RESOLVED",
+            "text": "The 'no confirms' claim is corrected: JD Health is a confirm. EMA Active net bought +USD 36.6m and the stock is up +6.8% one month later, while the managers' buys are down −3.4% [US4]. The other score-3 China and India conflicts (Laurus, Adani, Haitian, CR Beer) are tiny NC EM Replication sells of USD 0.1–0.5m, likely index rebalancing [US3] [US5] [US6] [US7]. Komatsu had no trades [US8]. The real active conflicts are larger: Weichai and the Japan tech names [US2]."
+          }
+        },
+        {
+          "id": 32,
+          "event": "verdict",
+          "data": {
+            "point_id": "p3",
+            "verdict": "CONSENSUS",
+            "status": "RESOLVED",
+            "text": "Kioxia is the clearest active clash, and the research leans against our selling. We net sold USD 83m, with 7 accounts selling and 2 buying, so part of it is rebalancing [US2]. Every broker rates it Buy, with targets of ¥24,000–43,500 and FY3/28E P/E of 2–3x versus peers at 3–5x [B6] [B7] [B4] [B11]. Capacity is sold out for CY27 [B1] and management says data-centre eSSD demand exceeds supply through 2027 [EC1]. An expert says Kioxia meets only about 50% of data-centre demand [X1]. Risks: one broker's target cut and its call that prices fall from 2H CY27 [B6]; Kioxia sells only NAND, so it cannot cross-subsidise like its memory rivals [X1]; concern that AI capex may not last [B9]."
+          }
+        },
+        {
+          "id": 33,
+          "event": "verdict",
+          "data": {
+            "point_id": "p4",
+            "verdict": "CONSENSUS",
+            "status": "OPEN",
+            "text": "Still open: our USD 31m Weichai sell matches GIC's own call. Analysts trimmed it from 60 to 30 bps overweight in Sep-26 on the US ban on Chinese data-centre equipment and the pause in data-centre genset orders [R1] [R6]. The managers' case is a 14% rise in Q3 recurring profit [B12], genset shipments up from 500 to 1,300 units [B13] and about 9x 2027 earnings with a 5% yield [B20]. Since then, four brokers have cut targets [B27] [B26] [B21] [B28] and October heavy-truck sales fell 13% [B22]. A US ruling on Chinese power equipment is expected in late December [B29] [N1]."
+          }
+        },
+        {
+          "id": 34,
+          "event": "verdict",
+          "data": {
+            "point_id": "p5",
+            "verdict": "CONSENSUS",
+            "status": "RESOLVED",
+            "text": "Laurus ranks in the top fifth [EQ2], and our small sell has lost as the stock rose 5.7% [US3]. Adani, CR Beer and JD Health are middle fifths, so the quant score does not confirm them [EQ3] [EQ4] [EQ5]. Bilibili and Z.AI rank in the bottom fifth [EQ7] [EQ6]; one of our accounts bought USD 12.9m of Z.AI before it fell 46.9% [US10]."
+          }
+        },
+        {
+          "id": 35,
+          "event": "verdict",
+          "data": {
+            "point_id": "p6",
+            "verdict": "CONSENSUS",
+            "status": "RESOLVED",
+            "text": "The evidence has five limits. Each name has at most 2 buyers [EF1]. Quant scores cover MSCI EM only, at one month-end, so there are none for Japan or Haitian [EQ1]. Two-way account trading and index-replication flows blur the net direction [US2]. Timing edges are raw price moves, not risk-adjusted [US4]. PM names are not populated, so trades cannot be tied to decision-makers [US1]."
+          }
+        },
+        {
+          "id": 36,
+          "event": "stage",
+          "data": {
+            "stage": "verdicts",
+            "status": "done"
+          }
+        },
+        {
+          "id": 37,
+          "event": "stage",
+          "data": {
+            "stage": "answer",
+            "status": "active"
+          }
+        },
+        {
+          "id": 38,
+          "event": "answer",
+          "data": {
+            "stance": "Mostly against them, though not firmly.",
+            "paragraphs": [
+              "Our largest active trades sell what the better external managers bought, chiefly Kioxia and Weichai Power. Each of those ideas rests on two buyers at most [EF1] [US2].",
+              "Kioxia is the clearest clash. We net sold USD 83 million across seven accounts, while two others bought [US2]. The better half of managers bought it in each of the last three month-ends, and it sits in their tested top-50 basket [EF1]. Renesas (USD 86.2 million sold), Resonac (USD 42.5 million) and Murata (USD 25.5 million) follow the same pattern [US2]. We also sold USD 31 million of Weichai Power A shares [US2]. JD Health is the one confirm: our EMA Active strategy bought USD 36.6 million, and the stock was up 6.8% a month later [US4]. Across the book, 56 strong conflicts worth USD 4,024 million slightly outweigh 45 strong confirms worth USD 3,722 million [US2].",
+              "On Kioxia, outside research leans against our selling. Every broker rates it a buy [B6] [B7] [B4]. Brokers put it at two to three times earnings for the year to March 2028, against three to five times for peers [B6] [B7] [B11]. Capacity for 2027 is sold out [B1], and management said on 13 November that data-centre demand exceeds supply through 2027 [EC1]. A former Kioxia insider said it meets only about half of data-centre demand, but warned that selling only flash memory leaves it exposed to rivals who can cross-subsidise [X1].",
+              "Weichai stays open. GIC's analyst cut it from 60 to 30 basis points overweight in September 2026, citing a US order banning Chinese equipment from data centres [R1] [R6]. The managers' case is a 14% rise in third-quarter recurring profit [B12], genset shipments climbing from 500 to 1,300 units [B13] and a valuation of about 9 times 2027 earnings with a 5% yield [B20]. Since then, four brokers have cut their targets [B27] [B26] [B21] [B28], and October heavy-truck sales fell 13% [B22].",
+              "The quant score backs only some buys. Laurus ranks top fifth [EQ2], and our small sell has lost as the stock rose 5.7% [US3]. Bilibili and Z.AI rank bottom fifth [EQ7] [EQ6]; one of our accounts bought USD 12.9 million of Z.AI before it fell 46.9% [US10]. Quant scores cover MSCI emerging-markets stocks only, at 31 October [EQ1]. Timing gains are raw price moves, not risk-adjusted [US4].",
+              "Two things would change this view: a US ruling on Chinese power equipment, expected around late December [B29] [N1], and evidence that our Japan technology selling was rebalancing rather than a deliberate view."
+            ]
+          }
+        },
+        {
+          "id": 39,
+          "event": "ask_next",
+          "data": {
+            "questions": [
+              "Which account bought USD 12.9m of Z.AI, a bottom-fifth quant name, before its −46.9% fall, and was that an active view?",
+              "Is the USD 83m Kioxia sell (and Renesas, Resonac, Murata) a deliberate Japan-tech view or rebalancing, given unanimous broker Buys at 2–3x forward P/E?",
+              "Should we keep Weichai at 30bps overweight into the late-December US ruling, or wait for clarity before adding or cutting further?"
+            ]
+          }
+        },
+        {
+          "id": 40,
+          "event": "usage",
+          "data": {
+            "cost_usd": 1.94,
+            "duration": "4 min 56 s",
+            "tokens": "410K in · 38K out",
+            "budget": {
+              "cost_usd_max": 2,
+              "seconds_max": 480
+            }
+          }
+        },
+        {
+          "id": 41,
+          "event": "stage",
+          "data": {
+            "stage": "answer",
+            "status": "done"
+          }
+        },
+        {
+          "id": 42,
+          "event": "status",
+          "data": {
+            "status": "DONE"
+          }
+        },
+        {
+          "id": 43,
+          "event": "done",
+          "data": {
+            "run_id": "r-fixture-headline",
+            "trace_id": "tr-fixture"
+          }
+        }
+      ],
+      "specialist_invocations": [
+        {
+          "specialist": "emquant",
+          "round": 1,
+          "request": {
+            "input": [
+              {
+                "role": "user",
+                "content": "Adds the EM quant score as a second check on the external managers' buys."
+              }
+            ],
+            "custom_inputs": {
+              "contract_version": "1",
+              "conversation_id": "c-7f3a",
+              "run_id": "r-fixture-headline",
+              "round": 1,
+              "caller": "moderator",
+              "user_id": "pm.demo@gic.example",
+              "company_id": null,
+              "model_tier": "standard",
+              "idempotency_key": "r-fixture-headline:1:emquant",
+              "prior_findings": []
+            }
+          },
+          "response": {
+            "output": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "I do not have a tool that returns external managers' buy lists or any recent purchase data from outside NGC2383."
+                  }
+                ]
+              }
+            ],
+            "custom_outputs": {
+              "specialist": "emquant",
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "Give me the names and I will score them.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": []
+                },
+                {
+                  "id": "c2",
+                  "text": "Quant scores cover MSCI EM only, at the 2026-10-31 month-end.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "EQ1"
+                  ]
+                }
+              ],
+              "sources": [
+                {
+                  "id": "EQ1",
+                  "type": "uc_function",
+                  "ref": "eqds_demo.prod.quant_rank",
+                  "as_of": "2026-11-20"
+                }
+              ],
+              "tool_calls": [
+                {
+                  "tool": "UC Functions MCP · quant_rank",
+                  "zone": "serverless"
+                }
+              ],
+              "trace_id": "tr-emquant-1",
+              "usage": {
+                "input_tokens": 6957,
+                "output_tokens": 779,
+                "cost_usd": 0.056,
+                "latency_ms": 12000
+              }
+            }
+          }
+        },
+        {
+          "specialist": "efm",
+          "round": 1,
+          "request": {
+            "input": [
+              {
+                "role": "user",
+                "content": "The question is about what the best external managers are buying now."
+              }
+            ],
+            "custom_inputs": {
+              "contract_version": "1",
+              "conversation_id": "c-7f3a",
+              "run_id": "r-fixture-headline",
+              "round": 1,
+              "caller": "moderator",
+              "user_id": "pm.demo@gic.example",
+              "company_id": null,
+              "model_tier": "standard",
+              "idempotency_key": "r-fixture-headline:1:efm",
+              "prior_findings": []
+            }
+          },
+          "response": {
+            "output": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "Here are the four strongest points from the EFM data:"
+                  }
+                ]
+              }
+            ],
+            "custom_outputs": {
+              "specialist": "efm",
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "Eight names score 3 at the Oct-26 month-end and sit in the tested top-50 basket.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "EF1"
+                  ]
+                },
+                {
+                  "id": "c2",
+                  "text": "No name has more than 2 distinct buyers.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "EF1"
+                  ]
+                },
+                {
+                  "id": "c3",
+                  "text": "India and China lead; Industrials and Staples are the main sectors.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "EF1"
+                  ]
+                },
+                {
+                  "id": "c4",
+                  "text": "Kioxia was bought by the better half of managers at each of the last three month-ends.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "EF1"
+                  ]
+                }
+              ],
+              "sources": [
+                {
+                  "id": "EF1",
+                  "type": "uc_function",
+                  "ref": "eqds_demo.prod.efm_buy_basket",
+                  "as_of": "2026-11-20"
+                }
+              ],
+              "tool_calls": [
+                {
+                  "tool": "UC Functions MCP · efm_buy_basket",
+                  "zone": "serverless"
+                }
+              ],
+              "trace_id": "tr-efm-1",
+              "usage": {
+                "input_tokens": 4574,
+                "output_tokens": 760,
+                "cost_usd": 0.046,
+                "latency_ms": 15000
+              }
+            }
+          }
+        },
+        {
+          "specialist": "ours",
+          "round": 1,
+          "request": {
+            "input": [
+              {
+                "role": "user",
+                "content": "Checks whether our NGC85 funds own or trade the names the top external managers are buying."
+              }
+            ],
+            "custom_inputs": {
+              "contract_version": "1",
+              "conversation_id": "c-7f3a",
+              "run_id": "r-fixture-headline",
+              "round": 1,
+              "caller": "moderator",
+              "user_id": "pm.demo@gic.example",
+              "company_id": null,
+              "model_tier": "standard",
+              "idempotency_key": "r-fixture-headline:1:ours",
+              "prior_findings": []
+            }
+          },
+          "response": {
+            "output": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "Here are the four strongest points from our data, strongest first."
+                  }
+                ]
+              }
+            ],
+            "custom_outputs": {
+              "specialist": "ours",
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "Kioxia: we net sold USD 83m across seven accounts while two bought.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "US2"
+                  ]
+                },
+                {
+                  "id": "c2",
+                  "text": "Renesas (USD 86.2m sold), Resonac (42.5m) and Murata (25.5m) follow the same pattern.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "US2"
+                  ]
+                },
+                {
+                  "id": "c3",
+                  "text": "Weichai Power A: sold USD 31m.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "US2"
+                  ]
+                },
+                {
+                  "id": "c4",
+                  "text": "Across the book, 56 strong conflicts (USD 4,024m) slightly outweigh 45 strong confirms (USD 3,722m).",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "US2"
+                  ]
+                }
+              ],
+              "sources": [
+                {
+                  "id": "US2",
+                  "type": "external_db",
+                  "ref": "azure_oms.oms.trades ⋈ efm_buy_basket",
+                  "as_of": "2026-11-20",
+                  "system": "azure_sql",
+                  "template": "oms_confirm_conflict@1"
+                }
+              ],
+              "tool_calls": [
+                {
+                  "tool": "Bridge MCP · oms_confirm_conflict@1 → azure_oms.oms.trades (Azure SQL) · 2.8 s",
+                  "zone": "external"
+                }
+              ],
+              "trace_id": "tr-ours-1",
+              "usage": {
+                "input_tokens": 5485,
+                "output_tokens": 613,
+                "cost_usd": 0.059,
+                "latency_ms": 21000
+              }
+            }
+          }
+        },
+        {
+          "specialist": "ours",
+          "round": 2,
+          "request": {
+            "input": [
+              {
+                "role": "user",
+                "content": "For the score-3 names not yet reported (Laurus Labs, Adani Energy Solutions, Haitian Intl, JD Health, CR Beer, Komatsu), plus Bilibili and Z.AI: what did we trade in the last 30 days, and by strategy? For the EM members, what is the quant rank and what drives it?"
+              }
+            ],
+            "custom_inputs": {
+              "contract_version": "1",
+              "conversation_id": "c-7f3a",
+              "run_id": "r-fixture-headline",
+              "round": 2,
+              "caller": "moderator",
+              "user_id": "pm.demo@gic.example",
+              "company_id": null,
+              "model_tier": "standard",
+              "idempotency_key": "r-fixture-headline:2:ours",
+              "prior_findings": []
+            }
+          },
+          "response": {
+            "output": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "Seven of eight are conflicts; JD Health is the sole confirm, and the best-timed trade."
+                  }
+                ]
+              }
+            ],
+            "custom_outputs": {
+              "specialist": "ours",
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "JD Health: EMA Active net bought +USD 36.6m; +6.8% one month later.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "US4"
+                  ]
+                },
+                {
+                  "id": "c2",
+                  "text": "Laurus, Adani, Haitian, CR Beer: NC EM Replication sells of USD 0.1–0.5m flagged as rebalancing.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "US3",
+                    "US5",
+                    "US6",
+                    "US7"
+                  ]
+                },
+                {
+                  "id": "c3",
+                  "text": "Komatsu: no trades.",
+                  "stance": "gap",
+                  "confidence": 0.8,
+                  "citations": [
+                    "US8"
+                  ]
+                },
+                {
+                  "id": "c4",
+                  "text": "Z.AI: one account bought USD 12.9m before a −46.9% fall.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "US10"
+                  ]
+                }
+              ],
+              "sources": [
+                {
+                  "id": "US4",
+                  "type": "external_db",
+                  "ref": "azure_oms.oms.trades",
+                  "as_of": "2026-11-20",
+                  "system": "azure_sql",
+                  "template": "oms_post_trade_move@1"
+                },
+                {
+                  "id": "US3",
+                  "type": "external_db",
+                  "ref": "azure_oms.oms.trades",
+                  "as_of": "2026-11-20",
+                  "system": "azure_sql",
+                  "template": "oms_post_trade_move@1"
+                },
+                {
+                  "id": "US5",
+                  "type": "external_db",
+                  "ref": "azure_oms.oms.trades",
+                  "as_of": "2026-11-20",
+                  "system": "azure_sql",
+                  "template": "oms_trade_flows@1"
+                },
+                {
+                  "id": "US6",
+                  "type": "external_db",
+                  "ref": "azure_oms.oms.trades",
+                  "as_of": "2026-11-20",
+                  "system": "azure_sql",
+                  "template": "oms_trade_flows@1"
+                },
+                {
+                  "id": "US7",
+                  "type": "external_db",
+                  "ref": "azure_oms.oms.trades",
+                  "as_of": "2026-11-20",
+                  "system": "azure_sql",
+                  "template": "oms_trade_flows@1"
+                },
+                {
+                  "id": "US8",
+                  "type": "external_db",
+                  "ref": "azure_oms.oms.trades",
+                  "as_of": "2026-11-20",
+                  "system": "azure_sql",
+                  "template": "oms_trade_flows@1"
+                },
+                {
+                  "id": "US10",
+                  "type": "external_db",
+                  "ref": "azure_oms.oms.trades",
+                  "as_of": "2026-11-20",
+                  "system": "azure_sql",
+                  "template": "oms_post_trade_move@1"
+                }
+              ],
+              "tool_calls": [
+                {
+                  "tool": "Bridge MCP · oms_trade_flows@1, oms_post_trade_move@1 → Azure SQL · 3.4 s",
+                  "zone": "external"
+                }
+              ],
+              "trace_id": "tr-ours-2",
+              "usage": {
+                "input_tokens": 4022,
+                "output_tokens": 600,
+                "cost_usd": 0.032,
+                "latency_ms": 13000
+              }
+            }
+          }
+        },
+        {
+          "specialist": "emquant",
+          "round": 2,
+          "request": {
+            "input": [
+              {
+                "role": "user",
+                "content": "For the score-3 names not yet reported (Laurus Labs, Adani Energy Solutions, Haitian Intl, JD Health, CR Beer, Komatsu), plus Bilibili and Z.AI: what did we trade in the last 30 days, and by strategy? For the EM members, what is the quant rank and what drives it?"
+              }
+            ],
+            "custom_inputs": {
+              "contract_version": "1",
+              "conversation_id": "c-7f3a",
+              "run_id": "r-fixture-headline",
+              "round": 2,
+              "caller": "moderator",
+              "user_id": "pm.demo@gic.example",
+              "company_id": null,
+              "model_tier": "standard",
+              "idempotency_key": "r-fixture-headline:2:emquant",
+              "prior_findings": []
+            }
+          },
+          "response": {
+            "output": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "EM Quant check on the seven names: 2026-10-31 month-end, NGC2383 window."
+                  }
+                ]
+              }
+            ],
+            "custom_outputs": {
+              "specialist": "emquant",
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "Laurus: top quintile.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "EQ2"
+                  ]
+                },
+                {
+                  "id": "c2",
+                  "text": "Adani, CR Beer, JD Health: middle fifths.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "EQ3",
+                    "EQ4",
+                    "EQ5"
+                  ]
+                },
+                {
+                  "id": "c3",
+                  "text": "Bilibili and Z.AI: bottom quintile.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "EQ7",
+                    "EQ6"
+                  ]
+                },
+                {
+                  "id": "c4",
+                  "text": "Haitian Intl: not found after three attempts.",
+                  "stance": "gap",
+                  "confidence": 0.8,
+                  "citations": [
+                    "EQ1",
+                    "EQ8",
+                    "EQ9"
+                  ]
+                },
+                {
+                  "id": "c5",
+                  "text": "Komatsu: outside the universe (Japan, developed market).",
+                  "stance": "gap",
+                  "confidence": 0.8,
+                  "citations": []
+                }
+              ],
+              "sources": [
+                {
+                  "id": "EQ2",
+                  "type": "uc_function",
+                  "ref": "eqds_demo.prod.quant_rank",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "EQ3",
+                  "type": "uc_function",
+                  "ref": "eqds_demo.prod.quant_rank",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "EQ4",
+                  "type": "uc_function",
+                  "ref": "eqds_demo.prod.quant_rank",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "EQ5",
+                  "type": "uc_function",
+                  "ref": "eqds_demo.prod.quant_rank",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "EQ7",
+                  "type": "uc_function",
+                  "ref": "eqds_demo.prod.quant_rank",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "EQ6",
+                  "type": "uc_function",
+                  "ref": "eqds_demo.prod.quant_rank",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "EQ1",
+                  "type": "uc_function",
+                  "ref": "eqds_demo.prod.quant_rank",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "EQ8",
+                  "type": "uc_function",
+                  "ref": "eqds_demo.prod.quant_rank",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "EQ9",
+                  "type": "uc_function",
+                  "ref": "eqds_demo.prod.quant_rank",
+                  "as_of": "2026-11-20"
+                }
+              ],
+              "tool_calls": [
+                {
+                  "tool": "UC Functions MCP · quant_rank ×3",
+                  "zone": "serverless"
+                }
+              ],
+              "trace_id": "tr-emquant-2",
+              "usage": {
+                "input_tokens": 4152,
+                "output_tokens": 632,
+                "cost_usd": 0.033,
+                "latency_ms": 13000
+              }
+            }
+          }
+        },
+        {
+          "specialist": "experts",
+          "round": 3,
+          "request": {
+            "input": [
+              {
+                "role": "user",
+                "content": "Does the outlook for Kioxia justify selling a name the managers are buying?"
+              }
+            ],
+            "custom_inputs": {
+              "contract_version": "1",
+              "conversation_id": "c-7f3a",
+              "run_id": "r-fixture-headline",
+              "round": 3,
+              "caller": "moderator",
+              "user_id": "pm.demo@gic.example",
+              "company_id": null,
+              "model_tier": "standard",
+              "idempotency_key": "r-fixture-headline:3:experts",
+              "prior_findings": []
+            }
+          },
+          "response": {
+            "output": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "FOR (supports owning): the supply constraint is real and demand-led."
+                  }
+                ]
+              }
+            ],
+            "custom_outputs": {
+              "specialist": "experts",
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "A former insider says Kioxia meets about half of data-centre demand, but NAND-only exposure leaves it vulnerable to rivals who can cross-subsidise.",
+                  "stance": "support",
+                  "confidence": 0.6,
+                  "citations": [
+                    "X1"
+                  ]
+                }
+              ],
+              "sources": [
+                {
+                  "id": "X1",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.expert_chunks",
+                  "as_of": "2026-11-20"
+                }
+              ],
+              "tool_calls": [
+                {
+                  "tool": "Vector Search MCP · expert_chunks",
+                  "zone": "serverless"
+                }
+              ],
+              "trace_id": "tr-experts-3",
+              "usage": {
+                "input_tokens": 5465,
+                "output_tokens": 477,
+                "cost_usd": 0.058,
+                "latency_ms": 13000
+              }
+            }
+          }
+        },
+        {
+          "specialist": "broker",
+          "round": 3,
+          "request": {
+            "input": [
+              {
+                "role": "user",
+                "content": "Does the outlook for Kioxia justify selling a name the managers are buying?"
+              }
+            ],
+            "custom_inputs": {
+              "contract_version": "1",
+              "conversation_id": "c-7f3a",
+              "run_id": "r-fixture-headline",
+              "round": 3,
+              "caller": "moderator",
+              "user_id": "pm.demo@gic.example",
+              "company_id": null,
+              "model_tier": "standard",
+              "idempotency_key": "r-fixture-headline:3:broker",
+              "prior_findings": []
+            }
+          },
+          "response": {
+            "output": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "NAND pricing & AI/DC demand: bullish consensus, diverging conviction."
+                  }
+                ]
+              }
+            ],
+            "custom_outputs": {
+              "specialist": "broker",
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "All major brokers agree the NAND upcycle is intact through CY27–28, driven by AI/DC eSSD demand.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "B1",
+                    "B4",
+                    "B7",
+                    "B11"
+                  ]
+                },
+                {
+                  "id": "c2",
+                  "text": "One broker cut its target and calls price falls from 2H CY27; another flags AI-capex durability.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "B6",
+                    "B9"
+                  ]
+                }
+              ],
+              "sources": [
+                {
+                  "id": "B1",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B4",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B7",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B11",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B6",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B9",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                }
+              ],
+              "tool_calls": [
+                {
+                  "tool": "Vector Search MCP · broker_chunks (filter company_id=C0101)",
+                  "zone": "serverless"
+                }
+              ],
+              "trace_id": "tr-broker-3",
+              "usage": {
+                "input_tokens": 5716,
+                "output_tokens": 563,
+                "cost_usd": 0.048,
+                "latency_ms": 13000
+              }
+            }
+          }
+        },
+        {
+          "specialist": "earnings",
+          "round": 3,
+          "request": {
+            "input": [
+              {
+                "role": "user",
+                "content": "Does the outlook for Kioxia justify selling a name the managers are buying?"
+              }
+            ],
+            "custom_inputs": {
+              "contract_version": "1",
+              "conversation_id": "c-7f3a",
+              "run_id": "r-fixture-headline",
+              "round": 3,
+              "caller": "moderator",
+              "user_id": "pm.demo@gic.example",
+              "company_id": null,
+              "model_tier": "standard",
+              "idempotency_key": "r-fixture-headline:3:earnings",
+              "prior_findings": []
+            }
+          },
+          "response": {
+            "output": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "Q2 FY3/27 call (13 Nov): management says eSSD demand exceeds supply through 2027."
+                  }
+                ]
+              }
+            ],
+            "custom_outputs": {
+              "specialist": "earnings",
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "Results date 2026-11-13; the call and results note are landed, so the Kioxia wiki refresh is due.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "EC1"
+                  ]
+                }
+              ],
+              "sources": [
+                {
+                  "id": "EC1",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.earnings_chunks",
+                  "as_of": "2026-11-20"
+                }
+              ],
+              "tool_calls": [
+                {
+                  "tool": "Vector Search MCP · earnings_chunks",
+                  "zone": "serverless"
+                }
+              ],
+              "trace_id": "tr-earnings-3",
+              "usage": {
+                "input_tokens": 5824,
+                "output_tokens": 706,
+                "cost_usd": 0.048,
+                "latency_ms": 13000
+              }
+            }
+          }
+        },
+        {
+          "specialist": "research",
+          "round": 3,
+          "request": {
+            "input": [
+              {
+                "role": "user",
+                "content": "What has changed on Weichai Power A since GIC's September view cut, and what would change the view?"
+              }
+            ],
+            "custom_inputs": {
+              "contract_version": "1",
+              "conversation_id": "c-7f3a",
+              "run_id": "r-fixture-headline",
+              "round": 3,
+              "caller": "moderator",
+              "user_id": "pm.demo@gic.example",
+              "company_id": null,
+              "model_tier": "standard",
+              "idempotency_key": "r-fixture-headline:3:research",
+              "prior_findings": []
+            }
+          },
+          "response": {
+            "output": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "Our view: trimmed from 60 to 30 bps overweight on 15 Sep 2026."
+                  }
+                ]
+              }
+            ],
+            "custom_outputs": {
+              "specialist": "research",
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "Rationale: the US order banning Chinese equipment in data centres and a pause in data-centre genset orders.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "R1",
+                    "R6"
+                  ]
+                }
+              ],
+              "sources": [
+                {
+                  "id": "R1",
+                  "type": "external_db",
+                  "ref": "azure_oms.research.analyst_views",
+                  "as_of": "2026-11-20",
+                  "system": "azure_sql",
+                  "template": "research_views@1"
+                },
+                {
+                  "id": "R6",
+                  "type": "external_db",
+                  "ref": "azure_oms.research.analyst_views",
+                  "as_of": "2026-11-20",
+                  "system": "azure_sql",
+                  "template": "research_views@1"
+                }
+              ],
+              "tool_calls": [
+                {
+                  "tool": "Bridge MCP · research_views@1 → azure_oms.research (Azure SQL) · 1.9 s",
+                  "zone": "external"
+                }
+              ],
+              "trace_id": "tr-research-3",
+              "usage": {
+                "input_tokens": 4779,
+                "output_tokens": 411,
+                "cost_usd": 0.059,
+                "latency_ms": 13000
+              }
+            }
+          }
+        },
+        {
+          "specialist": "broker",
+          "round": 3,
+          "request": {
+            "input": [
+              {
+                "role": "user",
+                "content": "What has changed on Weichai Power A since GIC's September view cut, and what would change the view?"
+              }
+            ],
+            "custom_inputs": {
+              "contract_version": "1",
+              "conversation_id": "c-7f3a",
+              "run_id": "r-fixture-headline",
+              "round": 3,
+              "caller": "moderator",
+              "user_id": "pm.demo@gic.example",
+              "company_id": null,
+              "model_tier": "standard",
+              "idempotency_key": "r-fixture-headline:3:broker",
+              "prior_findings": []
+            }
+          },
+          "response": {
+            "output": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "Managers' case vs target cuts."
+                  }
+                ]
+              }
+            ],
+            "custom_outputs": {
+              "specialist": "broker",
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "Q3 recurring profit +14%, genset shipments 500 → 1,300, ~9x 2027 earnings with a 5% yield; four brokers have since cut targets; October heavy-truck sales −13%; US ruling expected late December.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "B12",
+                    "B13",
+                    "B20",
+                    "B21",
+                    "B26",
+                    "B27",
+                    "B28",
+                    "B22",
+                    "B29"
+                  ]
+                }
+              ],
+              "sources": [
+                {
+                  "id": "B12",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B13",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B20",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B21",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B26",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B27",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B28",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B22",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B29",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                }
+              ],
+              "tool_calls": [
+                {
+                  "tool": "Vector Search MCP · broker_chunks",
+                  "zone": "serverless"
+                }
+              ],
+              "trace_id": "tr-broker-3",
+              "usage": {
+                "input_tokens": 4531,
+                "output_tokens": 721,
+                "cost_usd": 0.051,
+                "latency_ms": 13000
+              }
+            }
+          }
+        },
+        {
+          "specialist": "news",
+          "round": 3,
+          "request": {
+            "input": [
+              {
+                "role": "user",
+                "content": "What has changed on Weichai Power A since GIC's September view cut, and what would change the view?"
+              }
+            ],
+            "custom_inputs": {
+              "contract_version": "1",
+              "conversation_id": "c-7f3a",
+              "run_id": "r-fixture-headline",
+              "round": 3,
+              "caller": "moderator",
+              "user_id": "pm.demo@gic.example",
+              "company_id": null,
+              "model_tier": "standard",
+              "idempotency_key": "r-fixture-headline:3:news",
+              "prior_findings": []
+            }
+          },
+          "response": {
+            "output": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "Live: the US ruling on Chinese power equipment is still expected in late December."
+                  }
+                ]
+              }
+            ],
+            "custom_outputs": {
+              "specialist": "news",
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "Latest wire, 2026-11-12.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "N1"
+                  ]
+                },
+                {
+                  "id": "c2",
+                  "text": "Nothing newer in the last 48 hours; web search returns no newer filings.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": []
+                }
+              ],
+              "sources": [
+                {
+                  "id": "N1",
+                  "type": "external_db",
+                  "ref": "azure_oms.feeds.news_wire",
+                  "as_of": "2026-11-20",
+                  "system": "azure_sql",
+                  "template": "news_latest (live)"
+                }
+              ],
+              "tool_calls": [
+                {
+                  "tool": "Bridge MCP · news_latest (live) + web_search → azure_oms.feeds · 1.2 s",
+                  "zone": "external"
+                }
+              ],
+              "trace_id": "tr-news-3",
+              "usage": {
+                "input_tokens": 6617,
+                "output_tokens": 585,
+                "cost_usd": 0.051,
+                "latency_ms": 13000
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "weichai_followup_with_georev",
+      "request": {
+        "question": "Should we keep Weichai at 30bps overweight into the late-December US ruling, or wait for clarity before adding or cutting further?",
+        "rounds": 1,
+        "specialists": null,
+        "caller": "ui"
+      },
+      "run_result": {
+        "run_id": "r-fixture-weichai_followup_with_georev",
+        "question": "Should we keep Weichai at 30bps overweight into the late-December US ruling, or wait for clarity before adding or cutting further?",
+        "rounds_run": 1,
+        "answer": {
+          "stance": "Hold at 30 bps; don't add before the ruling.",
+          "text": "GIC already cut Weichai to 30 bps overweight for this risk [R1] [R6]. The operating case keeps improving: Q3 recurring profit rose 14% [B12] and genset shipments grew from 500 to 1,300 units [B13]. But four brokers have cut targets since [B21] [B26] [B27] [B28].\n\nThe new geographic-revenue specialist adds the key fact: North America is now 14% of revenue, up from 6% in FY2023, mostly data-centre gensets [G1]. A negative ruling would hit the fastest-growing part of the business, so adding before late December takes on binary risk.\n\nNothing new has come out since 12 November [N1]. Revisit after the ruling."
+        },
+        "points": [
+          {
+            "id": "p1",
+            "verdict": "CONSENSUS",
+            "status": "OPEN",
+            "claim": "Holding at 30 bps is defensible; adding before the ruling is not supported.",
+            "text": "US revenue exposure has risen to 14% [G1], so the ruling matters more than when the view was cut [R1]. Fundamentals are improving [B12] [B13] but brokers are cutting targets [B27] [B28]. No new information since 12 Nov [N1].",
+            "stances": {
+              "research": "support",
+              "georev": "support",
+              "broker": "support",
+              "news": "support"
+            }
+          }
+        ],
+        "messages": [
+          {
+            "round": 1,
+            "from": "moderator",
+            "to": [
+              "research",
+              "georev",
+              "broker",
+              "news"
+            ],
+            "text": "Assess whether to hold Weichai Power A at 30 bps overweight into the late-December US ruling, weighing GIC's view, broker evidence, US revenue exposure and the latest news."
+          },
+          {
+            "round": 1,
+            "from": "research",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "GIC view: 30 bps overweight since 15 Sep 2026 (cut from 60).",
+            "text": "Rationale: US data-centre equipment ban; genset order pause [R1] [R6].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Rationale: US data-centre equipment ban; genset order pause.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "R1",
+                  "R6"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Bridge MCP · research_views@1 → Azure SQL · 1.8 s",
+                "zone": "external"
+              }
+            ]
+          },
+          {
+            "round": 1,
+            "from": "georev",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "US exposure has more than doubled.",
+            "text": "North America share of Weichai revenue: 6% (FY2023) → 14% (FY2026), driven by data-centre gensets [G1]. A negative ruling hits the fastest-growing segment.",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "North America share of Weichai revenue: 6% (FY2023) → 14% (FY2026), driven by data-centre gensets.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "G1"
+                ]
+              },
+              {
+                "id": "c2",
+                "text": "A negative ruling hits the fastest-growing segment.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": []
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "UC Functions MCP · geo_revenue",
+                "zone": "serverless"
+              }
+            ]
+          },
+          {
+            "round": 1,
+            "from": "broker",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Fundamentals still improving, but targets are being cut.",
+            "text": "Q3 recurring profit +14% [B12]; gensets 500 → 1,300 units [B13]; four target cuts since [B21] [B26] [B27] [B28].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Q3 recurring profit +14%; gensets 500 → 1,300 units; four target cuts since.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "B12",
+                  "B13",
+                  "B21",
+                  "B26",
+                  "B27",
+                  "B28"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Vector Search MCP · broker_chunks",
+                "zone": "serverless"
+              }
+            ]
+          },
+          {
+            "round": 1,
+            "from": "news",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "The ruling is still expected in late December.",
+            "text": "Latest wire 2026-11-12 [N1].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Latest wire 2026-11-12.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "N1"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Bridge MCP · news_latest (live) → Azure SQL feeds · 1.1 s",
+                "zone": "external"
+              }
+            ]
+          }
+        ],
+        "sources": {
+          "R1": {
+            "id": "R1",
+            "type": "external_db",
+            "ref": "azure_oms.research.analyst_views",
+            "as_of": "2026-11-20",
+            "system": "azure_sql",
+            "template": "research_views@1"
+          },
+          "R6": {
+            "id": "R6",
+            "type": "external_db",
+            "ref": "azure_oms.research.analyst_views",
+            "as_of": "2026-11-20",
+            "system": "azure_sql",
+            "template": "research_views@1"
+          },
+          "G1": {
+            "id": "G1",
+            "type": "uc_function",
+            "ref": "eqds_demo.prod.geo_revenue",
+            "as_of": "2026-11-20"
+          },
+          "B12": {
+            "id": "B12",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B13": {
+            "id": "B13",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B21": {
+            "id": "B21",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B26": {
+            "id": "B26",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B27": {
+            "id": "B27",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "B28": {
+            "id": "B28",
+            "type": "vector_search",
+            "ref": "eqds_demo.prod.broker_chunks",
+            "as_of": "2026-11-20"
+          },
+          "N1": {
+            "id": "N1",
+            "type": "external_db",
+            "ref": "azure_oms.feeds.news_wire",
+            "as_of": "2026-11-20",
+            "system": "azure_sql",
+            "template": "news_latest (live)"
+          }
+        },
+        "ask_next": [
+          "What share of Weichai's genset shipments go to US data centres?",
+          "How did Weichai trade around previous US policy announcements?",
+          "Which of our accounts still hold Weichai, and at what active weight?"
+        ],
+        "usage": {
+          "cost_usd": 0.41,
+          "duration_s": "1 min 48 s",
+          "tokens": "96K in · 9K out"
+        },
+        "trace_id": "tr-fixture"
+      },
+      "sse_events": [
+        {
+          "id": 1,
+          "event": "status",
+          "data": {
+            "status": "RUNNING"
+          }
+        },
+        {
+          "id": 2,
+          "event": "stage",
+          "data": {
+            "stage": "who_opens",
+            "status": "active"
+          }
+        },
+        {
+          "id": 3,
+          "event": "who_opens",
+          "data": {
+            "reformulated": "Assess whether to hold Weichai Power A at 30 bps overweight into the late-December US ruling, weighing GIC's view, broker evidence, US revenue exposure and the latest news.",
+            "selected": [
+              "research",
+              "georev",
+              "broker",
+              "news"
+            ],
+            "briefs": {
+              "research": "Evidence on Weichai Power A relevant to the late-December US ruling.",
+              "georev": "Evidence on Weichai Power A relevant to the late-December US ruling.",
+              "broker": "Evidence on Weichai Power A relevant to the late-December US ruling.",
+              "news": "Evidence on Weichai Power A relevant to the late-December US ruling."
+            },
+            "selection": "auto"
+          }
+        },
+        {
+          "id": 4,
+          "event": "stage",
+          "data": {
+            "stage": "who_opens",
+            "status": "done"
+          }
+        },
+        {
+          "id": 5,
+          "event": "stage",
+          "data": {
+            "stage": "opening_round",
+            "status": "active"
+          }
+        },
+        {
+          "id": 6,
+          "event": "activity",
+          "data": {
+            "component": "eqds-sp-research",
+            "zone": "external",
+            "label": "POST /invocations",
+            "detail": "Bridge MCP · research_views@1 → Azure SQL · 1.8 s",
+            "link": {
+              "kind": "app",
+              "ref": "eqds-sp-research"
+            }
+          }
+        },
+        {
+          "id": 7,
+          "event": "message",
+          "data": {
+            "round": 1,
+            "from": "research",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "GIC view: 30 bps overweight since 15 Sep 2026 (cut from 60).",
+            "text": "Rationale: US data-centre equipment ban; genset order pause [R1] [R6].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Rationale: US data-centre equipment ban; genset order pause.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "R1",
+                  "R6"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Bridge MCP · research_views@1 → Azure SQL · 1.8 s",
+                "zone": "external"
+              }
+            ]
+          }
+        },
+        {
+          "id": 8,
+          "event": "activity",
+          "data": {
+            "component": "eqds-sp-georev",
+            "zone": "serverless",
+            "label": "POST /invocations",
+            "detail": "UC Functions MCP · geo_revenue",
+            "link": {
+              "kind": "app",
+              "ref": "eqds-sp-georev"
+            }
+          }
+        },
+        {
+          "id": 9,
+          "event": "message",
+          "data": {
+            "round": 1,
+            "from": "georev",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "US exposure has more than doubled.",
+            "text": "North America share of Weichai revenue: 6% (FY2023) → 14% (FY2026), driven by data-centre gensets [G1]. A negative ruling hits the fastest-growing segment.",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "North America share of Weichai revenue: 6% (FY2023) → 14% (FY2026), driven by data-centre gensets.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "G1"
+                ]
+              },
+              {
+                "id": "c2",
+                "text": "A negative ruling hits the fastest-growing segment.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": []
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "UC Functions MCP · geo_revenue",
+                "zone": "serverless"
+              }
+            ]
+          }
+        },
+        {
+          "id": 10,
+          "event": "activity",
+          "data": {
+            "component": "eqds-sp-broker",
+            "zone": "serverless",
+            "label": "POST /invocations",
+            "detail": "Vector Search MCP · broker_chunks",
+            "link": {
+              "kind": "app",
+              "ref": "eqds-sp-broker"
+            }
+          }
+        },
+        {
+          "id": 11,
+          "event": "message",
+          "data": {
+            "round": 1,
+            "from": "broker",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Fundamentals still improving, but targets are being cut.",
+            "text": "Q3 recurring profit +14% [B12]; gensets 500 → 1,300 units [B13]; four target cuts since [B21] [B26] [B27] [B28].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Q3 recurring profit +14%; gensets 500 → 1,300 units; four target cuts since.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "B12",
+                  "B13",
+                  "B21",
+                  "B26",
+                  "B27",
+                  "B28"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Vector Search MCP · broker_chunks",
+                "zone": "serverless"
+              }
+            ]
+          }
+        },
+        {
+          "id": 12,
+          "event": "activity",
+          "data": {
+            "component": "eqds-sp-news",
+            "zone": "external",
+            "label": "POST /invocations",
+            "detail": "Bridge MCP · news_latest (live) → Azure SQL feeds · 1.1 s",
+            "link": {
+              "kind": "app",
+              "ref": "eqds-sp-news"
+            }
+          }
+        },
+        {
+          "id": 13,
+          "event": "message",
+          "data": {
+            "round": 1,
+            "from": "news",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "The ruling is still expected in late December.",
+            "text": "Latest wire 2026-11-12 [N1].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Latest wire 2026-11-12.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "N1"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Bridge MCP · news_latest (live) → Azure SQL feeds · 1.1 s",
+                "zone": "external"
+              }
+            ]
+          }
+        },
+        {
+          "id": 14,
+          "event": "stage",
+          "data": {
+            "stage": "opening_round",
+            "status": "done"
+          }
+        },
+        {
+          "id": 15,
+          "event": "stage",
+          "data": {
+            "stage": "map",
+            "status": "active"
+          }
+        },
+        {
+          "id": 16,
+          "event": "map",
+          "data": {
+            "points": [
+              {
+                "id": "p1",
+                "verdict": "CONSENSUS",
+                "status": "OPEN",
+                "claim": "Holding at 30 bps is defensible; adding before the ruling is not supported.",
+                "stances": {
+                  "research": "support",
+                  "georev": "support",
+                  "broker": "support",
+                  "news": "support"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": 17,
+          "event": "stage",
+          "data": {
+            "stage": "map",
+            "status": "done"
+          }
+        },
+        {
+          "id": 18,
+          "event": "stage",
+          "data": {
+            "stage": "verdicts",
+            "status": "active"
+          }
+        },
+        {
+          "id": 19,
+          "event": "verdict",
+          "data": {
+            "point_id": "p1",
+            "verdict": "CONSENSUS",
+            "status": "OPEN",
+            "text": "US revenue exposure has risen to 14% [G1], so the ruling matters more than when the view was cut [R1]. Fundamentals are improving [B12] [B13] but brokers are cutting targets [B27] [B28]. No new information since 12 Nov [N1]."
+          }
+        },
+        {
+          "id": 20,
+          "event": "stage",
+          "data": {
+            "stage": "verdicts",
+            "status": "done"
+          }
+        },
+        {
+          "id": 21,
+          "event": "stage",
+          "data": {
+            "stage": "answer",
+            "status": "active"
+          }
+        },
+        {
+          "id": 22,
+          "event": "answer",
+          "data": {
+            "stance": "Hold at 30 bps; don't add before the ruling.",
+            "paragraphs": [
+              "GIC already cut Weichai to 30 bps overweight for this risk [R1] [R6]. The operating case keeps improving: Q3 recurring profit rose 14% [B12] and genset shipments grew from 500 to 1,300 units [B13]. But four brokers have cut targets since [B21] [B26] [B27] [B28].",
+              "The new geographic-revenue specialist adds the key fact: North America is now 14% of revenue, up from 6% in FY2023, mostly data-centre gensets [G1]. A negative ruling would hit the fastest-growing part of the business, so adding before late December takes on binary risk.",
+              "Nothing new has come out since 12 November [N1]. Revisit after the ruling."
+            ]
+          }
+        },
+        {
+          "id": 23,
+          "event": "ask_next",
+          "data": {
+            "questions": [
+              "What share of Weichai's genset shipments go to US data centres?",
+              "How did Weichai trade around previous US policy announcements?",
+              "Which of our accounts still hold Weichai, and at what active weight?"
+            ]
+          }
+        },
+        {
+          "id": 24,
+          "event": "usage",
+          "data": {
+            "cost_usd": 0.41,
+            "duration": "1 min 48 s",
+            "tokens": "96K in · 9K out",
+            "budget": {
+              "cost_usd_max": 2,
+              "seconds_max": 480
+            }
+          }
+        },
+        {
+          "id": 25,
+          "event": "stage",
+          "data": {
+            "stage": "answer",
+            "status": "done"
+          }
+        },
+        {
+          "id": 26,
+          "event": "status",
+          "data": {
+            "status": "DONE"
+          }
+        },
+        {
+          "id": 27,
+          "event": "done",
+          "data": {
+            "run_id": "r-fixture-weichai_followup_with_georev",
+            "trace_id": "tr-fixture"
+          }
+        }
+      ],
+      "specialist_invocations": [
+        {
+          "specialist": "research",
+          "round": 1,
+          "request": {
+            "input": [
+              {
+                "role": "user",
+                "content": "Evidence on Weichai Power A relevant to the late-December US ruling."
+              }
+            ],
+            "custom_inputs": {
+              "contract_version": "1",
+              "conversation_id": "c-7f3a",
+              "run_id": "r-fixture-weichai_followup_with_georev",
+              "round": 1,
+              "caller": "moderator",
+              "user_id": "pm.demo@gic.example",
+              "company_id": null,
+              "model_tier": "standard",
+              "idempotency_key": "r-fixture-weichai_followup_with_georev:1:research",
+              "prior_findings": []
+            }
+          },
+          "response": {
+            "output": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "GIC view: 30 bps overweight since 15 Sep 2026 (cut from 60)."
+                  }
+                ]
+              }
+            ],
+            "custom_outputs": {
+              "specialist": "research",
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "Rationale: US data-centre equipment ban; genset order pause.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "R1",
+                    "R6"
+                  ]
+                }
+              ],
+              "sources": [
+                {
+                  "id": "R1",
+                  "type": "external_db",
+                  "ref": "azure_oms.research.analyst_views",
+                  "as_of": "2026-11-20",
+                  "system": "azure_sql",
+                  "template": "research_views@1"
+                },
+                {
+                  "id": "R6",
+                  "type": "external_db",
+                  "ref": "azure_oms.research.analyst_views",
+                  "as_of": "2026-11-20",
+                  "system": "azure_sql",
+                  "template": "research_views@1"
+                }
+              ],
+              "tool_calls": [
+                {
+                  "tool": "Bridge MCP · research_views@1 → Azure SQL · 1.8 s",
+                  "zone": "external"
+                }
+              ],
+              "trace_id": "tr-research-1",
+              "usage": {
+                "input_tokens": 5315,
+                "output_tokens": 477,
+                "cost_usd": 0.047,
+                "latency_ms": 11000
+              }
+            }
+          }
+        },
+        {
+          "specialist": "georev",
+          "round": 1,
+          "request": {
+            "input": [
+              {
+                "role": "user",
+                "content": "Evidence on Weichai Power A relevant to the late-December US ruling."
+              }
+            ],
+            "custom_inputs": {
+              "contract_version": "1",
+              "conversation_id": "c-7f3a",
+              "run_id": "r-fixture-weichai_followup_with_georev",
+              "round": 1,
+              "caller": "moderator",
+              "user_id": "pm.demo@gic.example",
+              "company_id": null,
+              "model_tier": "standard",
+              "idempotency_key": "r-fixture-weichai_followup_with_georev:1:georev",
+              "prior_findings": []
+            }
+          },
+          "response": {
+            "output": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "US exposure has more than doubled."
+                  }
+                ]
+              }
+            ],
+            "custom_outputs": {
+              "specialist": "georev",
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "North America share of Weichai revenue: 6% (FY2023) → 14% (FY2026), driven by data-centre gensets.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "G1"
+                  ]
+                },
+                {
+                  "id": "c2",
+                  "text": "A negative ruling hits the fastest-growing segment.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": []
+                }
+              ],
+              "sources": [
+                {
+                  "id": "G1",
+                  "type": "uc_function",
+                  "ref": "eqds_demo.prod.geo_revenue",
+                  "as_of": "2026-11-20"
+                }
+              ],
+              "tool_calls": [
+                {
+                  "tool": "UC Functions MCP · geo_revenue",
+                  "zone": "serverless"
+                }
+              ],
+              "trace_id": "tr-georev-1",
+              "usage": {
+                "input_tokens": 5561,
+                "output_tokens": 744,
+                "cost_usd": 0.057,
+                "latency_ms": 10000
+              }
+            }
+          }
+        },
+        {
+          "specialist": "broker",
+          "round": 1,
+          "request": {
+            "input": [
+              {
+                "role": "user",
+                "content": "Evidence on Weichai Power A relevant to the late-December US ruling."
+              }
+            ],
+            "custom_inputs": {
+              "contract_version": "1",
+              "conversation_id": "c-7f3a",
+              "run_id": "r-fixture-weichai_followup_with_georev",
+              "round": 1,
+              "caller": "moderator",
+              "user_id": "pm.demo@gic.example",
+              "company_id": null,
+              "model_tier": "standard",
+              "idempotency_key": "r-fixture-weichai_followup_with_georev:1:broker",
+              "prior_findings": []
+            }
+          },
+          "response": {
+            "output": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "Fundamentals still improving, but targets are being cut."
+                  }
+                ]
+              }
+            ],
+            "custom_outputs": {
+              "specialist": "broker",
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "Q3 recurring profit +14%; gensets 500 → 1,300 units; four target cuts since.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "B12",
+                    "B13",
+                    "B21",
+                    "B26",
+                    "B27",
+                    "B28"
+                  ]
+                }
+              ],
+              "sources": [
+                {
+                  "id": "B12",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B13",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B21",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B26",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B27",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                },
+                {
+                  "id": "B28",
+                  "type": "vector_search",
+                  "ref": "eqds_demo.prod.broker_chunks",
+                  "as_of": "2026-11-20"
+                }
+              ],
+              "tool_calls": [
+                {
+                  "tool": "Vector Search MCP · broker_chunks",
+                  "zone": "serverless"
+                }
+              ],
+              "trace_id": "tr-broker-1",
+              "usage": {
+                "input_tokens": 4868,
+                "output_tokens": 797,
+                "cost_usd": 0.045,
+                "latency_ms": 13000
+              }
+            }
+          }
+        },
+        {
+          "specialist": "news",
+          "round": 1,
+          "request": {
+            "input": [
+              {
+                "role": "user",
+                "content": "Evidence on Weichai Power A relevant to the late-December US ruling."
+              }
+            ],
+            "custom_inputs": {
+              "contract_version": "1",
+              "conversation_id": "c-7f3a",
+              "run_id": "r-fixture-weichai_followup_with_georev",
+              "round": 1,
+              "caller": "moderator",
+              "user_id": "pm.demo@gic.example",
+              "company_id": null,
+              "model_tier": "standard",
+              "idempotency_key": "r-fixture-weichai_followup_with_georev:1:news",
+              "prior_findings": []
+            }
+          },
+          "response": {
+            "output": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "The ruling is still expected in late December."
+                  }
+                ]
+              }
+            ],
+            "custom_outputs": {
+              "specialist": "news",
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "Latest wire 2026-11-12.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "N1"
+                  ]
+                }
+              ],
+              "sources": [
+                {
+                  "id": "N1",
+                  "type": "external_db",
+                  "ref": "azure_oms.feeds.news_wire",
+                  "as_of": "2026-11-20",
+                  "system": "azure_sql",
+                  "template": "news_latest (live)"
+                }
+              ],
+              "tool_calls": [
+                {
+                  "tool": "Bridge MCP · news_latest (live) → Azure SQL feeds · 1.1 s",
+                  "zone": "external"
+                }
+              ],
+              "trace_id": "tr-news-1",
+              "usage": {
+                "input_tokens": 5075,
+                "output_tokens": 717,
+                "cost_usd": 0.035,
+                "latency_ms": 9000
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "zai_followup",
+      "request": {
+        "question": "Which account bought USD 12.9m of Z.AI, a bottom-fifth quant name, before its −46.9% fall, and was that an active view?",
+        "rounds": 1,
+        "specialists": null,
+        "caller": "ui"
+      },
+      "run_result": {
+        "run_id": "r-fixture-zai_followup",
+        "question": "Which account bought USD 12.9m of Z.AI, a bottom-fifth quant name, before its −46.9% fall, and was that an active view?",
+        "rounds_run": 1,
+        "answer": {
+          "stance": "It looks like an active view, made against the quant signal.",
+          "text": "One EMA Active account (ACC-004) bought USD 12.9 million of Z.AI over three days in early October. None of the trades was flagged as rebalancing [US10]. Z.AI was already in the bottom fifth of the EM quant ranking at the September month-end [EQ6]. Because PM names are not recorded on trades, we cannot say who made the call [US1]."
+        },
+        "points": [
+          {
+            "id": "p1",
+            "verdict": "CONSENSUS",
+            "status": "RESOLVED",
+            "claim": "An active purchase against the quant signal.",
+            "text": "ACC-004 (EMA Active) bought USD 12.9m, not flagged as rebalancing [US10], while the quant score was bottom-fifth [EQ6]. PM attribution is unavailable [US1].",
+            "stances": {
+              "ours": "support",
+              "emquant": "support"
+            }
+          }
+        ],
+        "messages": [
+          {
+            "round": 1,
+            "from": "moderator",
+            "to": [
+              "ours",
+              "emquant"
+            ],
+            "text": "Identify the account behind the Z.AI purchase and whether it was an active decision."
+          },
+          {
+            "round": 1,
+            "from": "ours",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "One account, ACC-004 (EMA Active), bought USD 12.9m over three days in early October; not a rebalance trade.",
+            "text": "is_rebalance = 0 on all three trades; no PM name is recorded, so the decision-maker cannot be identified [US10] [US1].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "is_rebalance = 0 on all three trades; no PM name is recorded, so the decision-maker cannot be identified.",
+                "stance": "gap",
+                "confidence": 0.8,
+                "citations": [
+                  "US10",
+                  "US1"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Bridge MCP · oms_trade_flows@1 → Azure SQL · 2.1 s",
+                "zone": "external"
+              }
+            ]
+          },
+          {
+            "round": 1,
+            "from": "emquant",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Z.AI was already bottom quintile at the September month-end.",
+            "text": "Bottom-fifth at both 2026-09-30 and 2026-10-31; weakest drivers: revisions and momentum [EQ6].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Bottom-fifth at both 2026-09-30 and 2026-10-31; weakest drivers: revisions and momentum.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EQ6"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "UC Functions MCP · quant_rank",
+                "zone": "serverless"
+              }
+            ]
+          }
+        ],
+        "sources": {
+          "US10": {
+            "id": "US10",
+            "type": "external_db",
+            "ref": "azure_oms.oms.trades",
+            "as_of": "2026-11-20",
+            "system": "azure_sql",
+            "template": "oms_post_trade_move@1"
+          },
+          "US1": {
+            "id": "US1",
+            "type": "external_db",
+            "ref": "azure_oms.oms.trades",
+            "as_of": "2026-11-20",
+            "system": "azure_sql",
+            "template": "oms_trade_flows@1"
+          },
+          "EQ6": {
+            "id": "EQ6",
+            "type": "uc_function",
+            "ref": "eqds_demo.prod.quant_rank",
+            "as_of": "2026-11-20"
+          }
+        },
+        "ask_next": [
+          "What else did ACC-004 buy against a bottom-fifth quant score?",
+          "How have bottom-fifth quant buys performed across EMA Active this year?",
+          "Show Z.AI's quant drivers over the last 6 months."
+        ],
+        "usage": {
+          "cost_usd": 0.22,
+          "duration_s": "1 min 12 s",
+          "tokens": "48K in · 5K out"
+        },
+        "trace_id": "tr-fixture"
+      },
+      "sse_events": [
+        {
+          "id": 1,
+          "event": "status",
+          "data": {
+            "status": "RUNNING"
+          }
+        },
+        {
+          "id": 2,
+          "event": "stage",
+          "data": {
+            "stage": "who_opens",
+            "status": "active"
+          }
+        },
+        {
+          "id": 3,
+          "event": "who_opens",
+          "data": {
+            "reformulated": "Identify the account behind the Z.AI purchase and whether it was an active decision.",
+            "selected": [
+              "ours",
+              "emquant"
+            ],
+            "briefs": {
+              "ours": "Which account bought Z.AI, when, and was it flagged as rebalancing?",
+              "emquant": "Z.AI quant rank and drivers at the time of purchase."
+            },
+            "selection": "auto"
+          }
+        },
+        {
+          "id": 4,
+          "event": "stage",
+          "data": {
+            "stage": "who_opens",
+            "status": "done"
+          }
+        },
+        {
+          "id": 5,
+          "event": "stage",
+          "data": {
+            "stage": "opening_round",
+            "status": "active"
+          }
+        },
+        {
+          "id": 6,
+          "event": "activity",
+          "data": {
+            "component": "eqds-sp-ours",
+            "zone": "external",
+            "label": "POST /invocations",
+            "detail": "Bridge MCP · oms_trade_flows@1 → Azure SQL · 2.1 s",
+            "link": {
+              "kind": "app",
+              "ref": "eqds-sp-ours"
+            }
+          }
+        },
+        {
+          "id": 7,
+          "event": "message",
+          "data": {
+            "round": 1,
+            "from": "ours",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "One account, ACC-004 (EMA Active), bought USD 12.9m over three days in early October; not a rebalance trade.",
+            "text": "is_rebalance = 0 on all three trades; no PM name is recorded, so the decision-maker cannot be identified [US10] [US1].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "is_rebalance = 0 on all three trades; no PM name is recorded, so the decision-maker cannot be identified.",
+                "stance": "gap",
+                "confidence": 0.8,
+                "citations": [
+                  "US10",
+                  "US1"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "Bridge MCP · oms_trade_flows@1 → Azure SQL · 2.1 s",
+                "zone": "external"
+              }
+            ]
+          }
+        },
+        {
+          "id": 8,
+          "event": "activity",
+          "data": {
+            "component": "eqds-sp-emquant",
+            "zone": "serverless",
+            "label": "POST /invocations",
+            "detail": "UC Functions MCP · quant_rank",
+            "link": {
+              "kind": "app",
+              "ref": "eqds-sp-emquant"
+            }
+          }
+        },
+        {
+          "id": 9,
+          "event": "message",
+          "data": {
+            "round": 1,
+            "from": "emquant",
+            "to": [
+              "moderator"
+            ],
+            "first_line": "Z.AI was already bottom quintile at the September month-end.",
+            "text": "Bottom-fifth at both 2026-09-30 and 2026-10-31; weakest drivers: revisions and momentum [EQ6].",
+            "claims": [
+              {
+                "id": "c1",
+                "text": "Bottom-fifth at both 2026-09-30 and 2026-10-31; weakest drivers: revisions and momentum.",
+                "stance": "support",
+                "confidence": 0.8,
+                "citations": [
+                  "EQ6"
+                ]
+              }
+            ],
+            "tool_calls": [
+              {
+                "tool": "UC Functions MCP · quant_rank",
+                "zone": "serverless"
+              }
+            ]
+          }
+        },
+        {
+          "id": 10,
+          "event": "stage",
+          "data": {
+            "stage": "opening_round",
+            "status": "done"
+          }
+        },
+        {
+          "id": 11,
+          "event": "stage",
+          "data": {
+            "stage": "map",
+            "status": "active"
+          }
+        },
+        {
+          "id": 12,
+          "event": "map",
+          "data": {
+            "points": [
+              {
+                "id": "p1",
+                "verdict": "CONSENSUS",
+                "status": "RESOLVED",
+                "claim": "An active purchase against the quant signal.",
+                "stances": {
+                  "ours": "support",
+                  "emquant": "support"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": 13,
+          "event": "stage",
+          "data": {
+            "stage": "map",
+            "status": "done"
+          }
+        },
+        {
+          "id": 14,
+          "event": "stage",
+          "data": {
+            "stage": "verdicts",
+            "status": "active"
+          }
+        },
+        {
+          "id": 15,
+          "event": "verdict",
+          "data": {
+            "point_id": "p1",
+            "verdict": "CONSENSUS",
+            "status": "RESOLVED",
+            "text": "ACC-004 (EMA Active) bought USD 12.9m, not flagged as rebalancing [US10], while the quant score was bottom-fifth [EQ6]. PM attribution is unavailable [US1]."
+          }
+        },
+        {
+          "id": 16,
+          "event": "stage",
+          "data": {
+            "stage": "verdicts",
+            "status": "done"
+          }
+        },
+        {
+          "id": 17,
+          "event": "stage",
+          "data": {
+            "stage": "answer",
+            "status": "active"
+          }
+        },
+        {
+          "id": 18,
+          "event": "answer",
+          "data": {
+            "stance": "It looks like an active view, made against the quant signal.",
+            "paragraphs": [
+              "One EMA Active account (ACC-004) bought USD 12.9 million of Z.AI over three days in early October. None of the trades was flagged as rebalancing [US10]. Z.AI was already in the bottom fifth of the EM quant ranking at the September month-end [EQ6]. Because PM names are not recorded on trades, we cannot say who made the call [US1]."
+            ]
+          }
+        },
+        {
+          "id": 19,
+          "event": "ask_next",
+          "data": {
+            "questions": [
+              "What else did ACC-004 buy against a bottom-fifth quant score?",
+              "How have bottom-fifth quant buys performed across EMA Active this year?",
+              "Show Z.AI's quant drivers over the last 6 months."
+            ]
+          }
+        },
+        {
+          "id": 20,
+          "event": "usage",
+          "data": {
+            "cost_usd": 0.22,
+            "duration": "1 min 12 s",
+            "tokens": "48K in · 5K out",
+            "budget": {
+              "cost_usd_max": 2,
+              "seconds_max": 480
+            }
+          }
+        },
+        {
+          "id": 21,
+          "event": "stage",
+          "data": {
+            "stage": "answer",
+            "status": "done"
+          }
+        },
+        {
+          "id": 22,
+          "event": "status",
+          "data": {
+            "status": "DONE"
+          }
+        },
+        {
+          "id": 23,
+          "event": "done",
+          "data": {
+            "run_id": "r-fixture-zai_followup",
+            "trace_id": "tr-fixture"
+          }
+        }
+      ],
+      "specialist_invocations": [
+        {
+          "specialist": "ours",
+          "round": 1,
+          "request": {
+            "input": [
+              {
+                "role": "user",
+                "content": "Which account bought Z.AI, when, and was it flagged as rebalancing?"
+              }
+            ],
+            "custom_inputs": {
+              "contract_version": "1",
+              "conversation_id": "c-7f3a",
+              "run_id": "r-fixture-zai_followup",
+              "round": 1,
+              "caller": "moderator",
+              "user_id": "pm.demo@gic.example",
+              "company_id": null,
+              "model_tier": "standard",
+              "idempotency_key": "r-fixture-zai_followup:1:ours",
+              "prior_findings": []
+            }
+          },
+          "response": {
+            "output": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "One account, ACC-004 (EMA Active), bought USD 12.9m over three days in early October; not a rebalance trade."
+                  }
+                ]
+              }
+            ],
+            "custom_outputs": {
+              "specialist": "ours",
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "is_rebalance = 0 on all three trades; no PM name is recorded, so the decision-maker cannot be identified.",
+                  "stance": "gap",
+                  "confidence": 0.8,
+                  "citations": [
+                    "US10",
+                    "US1"
+                  ]
+                }
+              ],
+              "sources": [
+                {
+                  "id": "US10",
+                  "type": "external_db",
+                  "ref": "azure_oms.oms.trades",
+                  "as_of": "2026-11-20",
+                  "system": "azure_sql",
+                  "template": "oms_post_trade_move@1"
+                },
+                {
+                  "id": "US1",
+                  "type": "external_db",
+                  "ref": "azure_oms.oms.trades",
+                  "as_of": "2026-11-20",
+                  "system": "azure_sql",
+                  "template": "oms_trade_flows@1"
+                }
+              ],
+              "tool_calls": [
+                {
+                  "tool": "Bridge MCP · oms_trade_flows@1 → Azure SQL · 2.1 s",
+                  "zone": "external"
+                }
+              ],
+              "trace_id": "tr-ours-1",
+              "usage": {
+                "input_tokens": 5704,
+                "output_tokens": 703,
+                "cost_usd": 0.041,
+                "latency_ms": 11000
+              }
+            }
+          }
+        },
+        {
+          "specialist": "emquant",
+          "round": 1,
+          "request": {
+            "input": [
+              {
+                "role": "user",
+                "content": "Z.AI quant rank and drivers at the time of purchase."
+              }
+            ],
+            "custom_inputs": {
+              "contract_version": "1",
+              "conversation_id": "c-7f3a",
+              "run_id": "r-fixture-zai_followup",
+              "round": 1,
+              "caller": "moderator",
+              "user_id": "pm.demo@gic.example",
+              "company_id": null,
+              "model_tier": "standard",
+              "idempotency_key": "r-fixture-zai_followup:1:emquant",
+              "prior_findings": []
+            }
+          },
+          "response": {
+            "output": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "Z.AI was already bottom quintile at the September month-end."
+                  }
+                ]
+              }
+            ],
+            "custom_outputs": {
+              "specialist": "emquant",
+              "claims": [
+                {
+                  "id": "c1",
+                  "text": "Bottom-fifth at both 2026-09-30 and 2026-10-31; weakest drivers: revisions and momentum.",
+                  "stance": "support",
+                  "confidence": 0.8,
+                  "citations": [
+                    "EQ6"
+                  ]
+                }
+              ],
+              "sources": [
+                {
+                  "id": "EQ6",
+                  "type": "uc_function",
+                  "ref": "eqds_demo.prod.quant_rank",
+                  "as_of": "2026-11-20"
+                }
+              ],
+              "tool_calls": [
+                {
+                  "tool": "UC Functions MCP · quant_rank",
+                  "zone": "serverless"
+                }
+              ],
+              "trace_id": "tr-emquant-1",
+              "usage": {
+                "input_tokens": 4022,
+                "output_tokens": 599,
+                "cost_usd": 0.045,
+                "latency_ms": 9000
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "seed_checks": [
+    {
+      "id": "RI",
+      "check": "Trades company ids ⊂ UC ref_companies",
+      "expected": "0 orphans"
+    },
+    {
+      "id": "PF-01",
+      "check": "8 score-3 names in top-50, each ≤2 buyers",
+      "expected": "8 ✓"
+    },
+    {
+      "id": "PF-02",
+      "check": "Haitian Intl not in quant universe",
+      "expected": "not found ✓"
+    },
+    {
+      "id": "PF-05",
+      "check": "Kioxia net −83.0m, 7 sellers / 2 buyers",
+      "expected": "−83.0m ✓"
+    },
+    {
+      "id": "PF-06",
+      "check": "Renesas −86.2m · Resonac −42.5m · Murata −25.5m",
+      "expected": "✓"
+    },
+    {
+      "id": "PF-07",
+      "check": "Weichai −31m (EMA, GEMF, NCREP); EMQ +0.2m",
+      "expected": "−30.8m ✓"
+    },
+    {
+      "id": "PF-08",
+      "check": "Weichai view 60 → 30 bps (2026-09-15)",
+      "expected": "✓"
+    },
+    {
+      "id": "PF-09",
+      "check": "JD Health +36.6m, +6.8% after 21d",
+      "expected": "✓"
+    },
+    {
+      "id": "PF-11",
+      "check": "Z.AI ACC-004 +12.9m, −46.9% after",
+      "expected": "✓"
+    },
+    {
+      "id": "PF-13",
+      "check": "56 conflicts USD 4,024m vs 45 confirms USD 3,722m (±2%)",
+      "expected": "4,031 / 3,716 ✓"
+    },
+    {
+      "id": "PF-14",
+      "check": "Kioxia broker chunks contain planted facts",
+      "expected": "11 docs ✓"
+    },
+    {
+      "id": "PF-18",
+      "check": "pm_name NULL on all trades",
+      "expected": "0 non-null ✓"
+    },
+    {
+      "id": "PF-20",
+      "check": "Kioxia results 2026-11-13; wiki trigger fires",
+      "expected": "✓"
+    },
+    {
+      "id": "PF-21",
+      "check": "Weichai NA revenue share FY2026 = 14%",
+      "expected": "14.0% ✓"
+    },
+    {
+      "id": "NET",
+      "check": "Serverless SELECT on azure_oms fails (expected)",
+      "expected": "timeout ✓"
+    }
+  ]
+}

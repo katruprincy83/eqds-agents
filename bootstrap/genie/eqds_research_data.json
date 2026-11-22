@@ -1,0 +1,31 @@
+{
+  "title": "EQDS Research Data${suffix}",
+  "description": "Reference, market and external-manager data for the EQDS research agents. SYNTHETIC DEMO DATA in the demo environment. Trades, positions and GIC research views live in the external OMS database and are NOT available here.",
+  "tables": [
+    {"name": "ref_companies", "description": "Company master: id, ticker, name, GICS sector and industry, country, region, MSCI EM membership, currency, market cap (USD)."},
+    {"name": "ref_holdings", "description": "GIC fund holdings snapshot by fund (NGC85, NGC2383): weight and rank."},
+    {"name": "efm_managers", "description": "External fund managers with a quality score and whether they are in the better half."},
+    {"name": "efm_holdings", "description": "External manager holdings by month-end (shares, value in USD)."},
+    {"name": "efm_buy_basket", "description": "External-manager buy basket by month-end: score (0-3 consecutive month-ends bought by better-half managers), buyers, net buying in USD, in_top50 flag."},
+    {"name": "em_quant_scores", "description": "EM quant score and quintile per month-end. Covers MSCI EM names only; quintile 1 is best, 5 is worst."},
+    {"name": "prices_daily", "description": "Daily close and 1-day return per company."},
+    {"name": "earnings_calendar", "description": "Earnings events per company: fiscal period, event type, date, status (reported, scheduled)."},
+    {"name": "geo_revenue", "description": "Revenue by region and fiscal year with share of total (shares sum to 100% per company-year)."}
+  ],
+  "instructions": [
+    "Join tables on company_id. Use ref_companies for names, sectors and countries.",
+    "The latest quant and basket month-end is 2026-10-31. Quant scores exist only for MSCI EM companies (msci_em = true); Japan names have none.",
+    "Do not answer questions about GIC trades, positions or analyst views: that data is outside this space.",
+    "All figures are USD unless a column name says otherwise. State the as-of date used."
+  ],
+  "sample_questions": [
+    "Which companies are in the external-manager top-50 basket with score 3?",
+    "What is the quant quintile of each score-3 name at the latest month-end?",
+    "How did the top 10 names by net manager buying perform over the last month?",
+    "What is Weichai Power A's revenue share by region for each fiscal year?",
+    "Which companies report results in the next two weeks?"
+  ],
+  "example_sqls": [
+    {"question": "Score-3 names in the top-50 basket", "sql": "SELECT c.name, b.score, b.buyers, b.net_buy_usd FROM ${uc}.efm_buy_basket b JOIN ${uc}.ref_companies c USING (company_id) WHERE b.in_top50 AND b.score = 3 ORDER BY b.net_buy_usd DESC"}
+  ]
+}

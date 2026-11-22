@@ -1,0 +1,218 @@
+# SYNTHETIC DEMO DATA. Single source of truth for planted facts (design §14.6).
+# Drives: generators (seed/gen_*), validation (seed/validate/checks.yaml + job_validate_seed),
+# and the evaluation dataset (job_build_eval -> eval_questions).
+# All dates are RELATIVE to demo_as_of unless written as ISO dates (then they are re-dated by offset).
+window: {start: "-29d", end: "0d"}      # "last 30 days" = 2026-10-22 .. 2026-11-20
+
+companies:      # fixed ids (design §14.4). country/sector as in the prototype storyline
+  - {id: C0101, name: "Kioxia Holdings",          ticker: "285A.T",  country: Japan,        sector: "Information Technology",  industry: "Memory & Storage", role: "clearest clash"}
+  - {id: C0102, name: "Weichai Power A",          ticker: "000338.SZ", country: China,      sector: "Industrials",             industry: "Machinery",        role: "open conflict, catalyst"}
+  - {id: C0103, name: "JD Health",                ticker: "6618.HK", country: China,        sector: "Health Care",             industry: "Health Services",  role: "sole confirm"}
+  - {id: C0104, name: "Laurus Labs",              ticker: "LAURUS.NS", country: India,      sector: "Health Care",             industry: "Pharmaceuticals",  role: "score-3, top-quintile quant"}
+  - {id: C0105, name: "Adani Energy Solutions",   ticker: "ADANIENSOL.NS", country: India,  sector: "Utilities",               industry: "Electric Utilities", role: "score-3"}
+  - {id: C0106, name: "Haitian International",    ticker: "1882.HK", country: China,        sector: "Industrials",             industry: "Machinery",        role: "score-3, not in quant universe"}
+  - {id: C0107, name: "China Resources Beer",     ticker: "0291.HK", country: China,        sector: "Consumer Staples",        industry: "Beverages",        role: "score-3"}
+  - {id: C0108, name: "Komatsu",                  ticker: "6301.T",  country: Japan,        sector: "Industrials",             industry: "Machinery",        role: "score-3, DM, no quant, no trades"}
+  - {id: C0109, name: "Renesas Electronics",      ticker: "6723.T",  country: Japan,        sector: "Information Technology",  industry: "Semiconductors",   role: "Japan tech selling"}
+  - {id: C0110, name: "Resonac Holdings",         ticker: "4004.T",  country: Japan,        sector: "Materials",               industry: "Chemicals",        role: "Japan selling"}
+  - {id: C0111, name: "Murata Manufacturing",     ticker: "6981.T",  country: Japan,        sector: "Information Technology",  industry: "Electronic Components", role: "Japan tech selling"}
+  - {id: C0112, name: "Bilibili",                 ticker: "9626.HK", country: China,        sector: "Communication Services",  industry: "Interactive Media", role: "bottom-quintile quant"}
+  - {id: C0113, name: "Z.AI (Zhipu)",             ticker: "2513.HK", country: China,        sector: "Information Technology",  industry: "Software",         role: "bottom quintile; bought before -46.9%"}
+  - {id: C0114, name: "Recruit Holdings",         ticker: "6098.T",  country: Japan,        sector: "Industrials",             industry: "Professional Services", role: "Company Wiki / Ask AI page"}
+  - {id: C0115, name: "Reliance Industries",      ticker: "RELIANCE.NS", country: India,    sector: "Energy",                  industry: "Oil & Gas",        role: "prebuilt wiki"}
+  - {id: C0116, name: "DHT Holdings",             ticker: "DHT",     country: United States, sector: "Energy",                 industry: "Oil & Gas Shipping", role: "top-50 holding, no wiki yet"}
+  - {id: C0117, name: "Hornbeck Offshore",        ticker: "HOS",     country: United States, sector: "Energy",                 industry: "Oil & Gas Services", role: "top-50 holding, no wiki yet"}
+  - {id: C0118, name: "Summit Midstream",         ticker: "SMC",     country: United States, sector: "Energy",                 industry: "Midstream",        role: "top-50 holding, no wiki yet"}
+  - {id: C0119, name: "VAALCO Energy",            ticker: "EGY",     country: United States, sector: "Energy",                 industry: "Oil & Gas E&P",    role: "top-50 holding, no wiki yet"}
+  - {id: C0120, name: "Equital",                  ticker: "EQTL.TA", country: Israel,       sector: "Energy",                  industry: "Holdings",         role: "top-50 holding, no wiki yet"}
+
+efm:            # buyers among the better-half managers; each name <= 2 distinct buyers (PF-01, PF-04)
+  score3: [C0101, C0102, C0103, C0104, C0105, C0106, C0107, C0108]
+  buyers:       # month-end -> manager index (1-based) that net-increased
+    C0101: {"2026-08-31": 3,  "2026-09-30": 17, "2026-10-31": 3}
+    C0102: {"2026-08-31": 5,  "2026-09-30": 5,  "2026-10-31": 22}
+    C0103: {"2026-08-31": 8,  "2026-09-30": 8,  "2026-10-31": 8}
+    C0104: {"2026-08-31": 11, "2026-09-30": 14, "2026-10-31": 11}
+    C0105: {"2026-08-31": 2,  "2026-09-30": 2,  "2026-10-31": 9}
+    C0106: {"2026-08-31": 13, "2026-09-30": 13, "2026-10-31": 25}
+    C0107: {"2026-08-31": 6,  "2026-09-30": 19, "2026-10-31": 6}
+    C0108: {"2026-08-31": 10, "2026-09-30": 10, "2026-10-31": 10}
+
+quant:
+  universe: msci_em                       # DM names absent by design (PF-03, PF-19)
+  month_end: "2026-10-31"
+  planted_scores: {C0104: 88, C0112: 14, C0113: 9}      # at Sep and Oct month-ends
+  legacy_id: {company: C0106, legacy: C9106}            # PF-02: lookup by C0106 finds nothing
+
+prices:                                   # drift overrides (design §14.4)
+  - {company: C0103, from: "2026-10-22", horizon_td: 21, ret_pct:   6.8, pf: PF-09}
+  - {company: C0104, from: "2026-10-22", horizon_td: 21, ret_pct:   5.7, pf: PF-10}
+  - {company: C0113, from: "2026-10-05", horizon_td: 21, ret_pct: -46.9, pf: PF-11}
+  - {company: C0102, from: "2026-09-15", horizon_td: 1,  ret_pct: -12.0, pf: PF-16}
+  - {company: C0101, trend_12m_pct: 140}
+basket_avg_ret_30d_pct: -3.4              # non-planted names of the top-50 basket
+
+flows:          # planted trades. "strategies" = share of total by strategy (accounts evenly used within each)
+  - id: PF-05
+    company: C0101
+    sells:
+      total_usd: 95400000
+      accounts: {EMA: [ACC-003, ACC-005, ACC-007], GEMF: [ACC-011, ACC-014], NCREP: [ACC-021, ACC-026]}
+      strategy_share: {EMA: 0.55, GEMF: 0.25, NCREP: 0.20}
+      dates: ["2026-10-23", "2026-10-27", "2026-10-29", "2026-11-03", "2026-11-05", "2026-11-10"]
+      rebalance_strategies: [NCREP]
+      rebalance_date: "2026-10-30"
+    buys:
+      total_usd: 12400000
+      accounts: {EMA: [ACC-009, ACC-010]}
+      strategy_share: {EMA: 1.0}
+      dates: ["2026-11-04", "2026-11-12"]
+  - id: PF-06
+    company: C0109
+    sells: {total_usd: 86200000, accounts: {JPA: [ACC-034, ACC-035, ACC-036], EMA: [ACC-004, ACC-006]}, strategy_share: {JPA: 0.65, EMA: 0.35}, dates: ["2026-10-26", "2026-11-02", "2026-11-09", "2026-11-13"]}
+  - id: PF-06
+    company: C0110
+    sells: {total_usd: 42500000, accounts: {JPA: [ACC-035, ACC-037], EMA: [ACC-005]}, strategy_share: {JPA: 0.6, EMA: 0.4}, dates: ["2026-10-28", "2026-11-04", "2026-11-11"]}
+  - id: PF-06
+    company: C0111
+    sells: {total_usd: 25500000, accounts: {JPA: [ACC-034, ACC-038]}, strategy_share: {JPA: 1.0}, dates: ["2026-10-27", "2026-11-06", "2026-11-12"]}
+  - id: PF-07
+    company: C0102
+    sells:
+      total_usd: 31000000
+      accounts: {EMA: [ACC-001, ACC-002], GEMF: [ACC-012], NCREP: [ACC-017, ACC-018]}
+      strategy_share: {EMA: 0.4516129, GEMF: 0.2903226, NCREP: 0.2580645}     # 14.0 / 9.0 / 8.0 of 31.0
+      dates: ["2026-10-26", "2026-10-28", "2026-11-03", "2026-11-09"]
+      rebalance_strategies: [NCREP]
+      rebalance_date: "2026-10-30"
+    buys: {total_usd: 200000, accounts: {EMQ: [ACC-029]}, strategy_share: {EMQ: 1.0}, dates: ["2026-11-02"]}
+  - id: PF-09
+    company: C0103
+    buys: {total_usd: 36600000, accounts: {EMA: [ACC-001, ACC-002, ACC-008]}, strategy_share: {EMA: 1.0}, dates: ["2026-10-22", "2026-10-22", "2026-10-23"]}
+  - id: PF-10
+    company: C0104
+    sells: {total_usd: 450000, accounts: {NCREP: [ACC-019]}, strategy_share: {NCREP: 1.0}, dates: ["2026-10-22"], rebalance_strategies: [NCREP], rebalance_date: "2026-10-22"}
+  - id: PF-10
+    company: C0105
+    sells: {total_usd: 300000, accounts: {NCREP: [ACC-020]}, strategy_share: {NCREP: 1.0}, dates: ["2026-10-22"], rebalance_strategies: [NCREP], rebalance_date: "2026-10-22"}
+  - id: PF-10
+    company: C0106
+    sells: {total_usd: 200000, accounts: {NCREP: [ACC-022]}, strategy_share: {NCREP: 1.0}, dates: ["2026-10-23"], rebalance_strategies: [NCREP], rebalance_date: "2026-10-23"}
+  - id: PF-10
+    company: C0107
+    sells: {total_usd: 150000, accounts: {NCREP: [ACC-023]}, strategy_share: {NCREP: 1.0}, dates: ["2026-10-23"], rebalance_strategies: [NCREP], rebalance_date: "2026-10-23"}
+  - id: PF-11
+    company: C0113
+    buys: {total_usd: 12900000, accounts: {EMA: [ACC-004]}, strategy_share: {EMA: 1.0}, dates: ["2026-10-05", "2026-10-06", "2026-10-07"]}
+
+calibration:      # PF-13: oms_confirm_conflict@1 over basket=efm_universe200 (top-50 + planted + most-held to 200)
+  universe_size: 200
+  strong_musd: 20
+  conflicts: {count: 56, total_musd: 4024, tol_pct: 2}
+  confirms: {count: 45, total_musd: 3722, tol_pct: 2}
+  no_confirm_in_top50_except: [C0103]
+
+research:
+  views:
+    - {company: C0102, analyst: "Wei Lun Tan", rating: OW, active_weight_bps: 60, effective_date: "2026-05-12", rationale: "Data-centre genset demand and strong order book support an overweight."}
+    - {company: C0102, analyst: "Wei Lun Tan", rating: OW, active_weight_bps: 30, effective_date: "2026-09-15", rationale: "US order banning Chinese equipment in data centres; pause in data-centre genset orders."}
+  notes:
+    - {company: C0102, analyst: "Wei Lun Tan", published_at: "2026-09-15T08:30:00", title: "Weichai Power A: trimming to 30 bps overweight after US data-centre equipment order", body_key: weichai_note_1}
+    - {company: C0102, analyst: "Wei Lun Tan", published_at: "2026-09-18T09:10:00", title: "Weichai Power A: assessing exposure to the US order", body_key: weichai_note_2}
+
+news:
+  - {company: null, published_at: "2026-11-12T07:45:00", headline: "US ruling on Chinese power equipment expected in late December", source: "Asia Markets Wire", tags: "US,China,power-equipment", body_key: us_ruling}
+  - {company: null, published_at: "2026-11-08T03:20:00", headline: "China heavy-truck sales fell 13% in October", source: "Pacific Business Daily", tags: "China,heavy-truck,sales", body_key: trucks}
+  - {company: C0101, published_at: "2026-10-28T06:10:00", headline: "Kioxia: NAND capacity sold out through 2027, executive says", source: "Meridian Newswire", tags: "Kioxia,NAND,capacity", body_key: kioxia_capacity}
+live_tail_scripted: {at_minutes: 5, company: C0101, headline: "Kioxia raises FY guidance on data-centre eSSD demand", source: "Tanjong Times"}
+
+earnings:
+  - {company: C0101, period: "Q2 FY3/27", event: results, date: "2026-11-13", status: reported}
+  - {company: C0102, period: "Q3 FY12/26", event: results, date: "2026-10-30", status: reported}
+  - {company: C0116, period: "Q3 FY12/26", event: results, date: "2026-11-23", status: scheduled}     # release in the week after as_of pauses broker-flow trigger
+wiki_prebuilt:
+  - {company: C0115, pages: 47, sources: 97, citations: 2577, updated: "2026-10-19", note: "Nothing new since the Nov 2 build"}
+  - {company: C0114, pages: 12, updated: "2026-11-17", note: "built this week"}
+  - {company: C0101, pages: 18, updated: "2026-10-14", note: "refresh due: results 2026-11-13 + 2 days"}
+  - {company: C0102, pages: 16, updated: "2026-09-20", note: "refresh due: >=3 rating/target changes since last build"}
+
+geo_revenue:
+  - {company: C0102, region: "North America", share_pct: {FY2023: 6, FY2024: 8, FY2025: 11, FY2026: 14}}
+
+phrases:        # verbatim sentences planted into documents (SD-R07). `where` = document family
+  - {id: PF-14a, where: broker, company: C0101, text: "Capacity is sold out through CY27, and we see data-centre eSSD demand exceeding supply."}
+  - {id: PF-14b, where: broker, company: C0101, text: "We rate the shares Buy with a target price of JPY 24,000 to 43,500 across our scenarios, implying FY3/28E P/E of 2-3x versus peers at 3-5x."}
+  - {id: PF-14c, where: broker, company: C0101, text: "One broker cuts its target and expects NAND prices to fall from 2H CY27; another flags AI-capex durability as the key risk."}
+  - {id: PF-15,  where: expert, company: C0101, text: "Kioxia meets roughly 50% of data-centre demand today. It sells only NAND, so it cannot cross-subsidise the way its memory rivals can."}
+  - {id: PF-16a, where: broker, company: C0102, text: "Q3 recurring profit rose 14%, with genset shipments climbing from 500 to 1,300 units, and the shares trade on about 9x 2027 P/E with a 5% dividend yield."}
+  - {id: PF-16b, where: broker, company: C0102, text: "Four brokers cut their targets after the US order, and October heavy-truck sales fell 13%."}
+  - {id: PF-20,  where: earnings, company: C0101, text: "NAND bit demand from data-centre eSSD exceeds our supply through 2027."}
+  - {id: PF-16c, where: earnings, company: C0102, text: "Genset ramp is on track, but order visibility is affected by US policy uncertainty."}
+
+facts:          # catalog (design §14.6). `eval_fact` feeds the evaluation dataset
+  - {id: PF-01, expected_specialist: efm,     source_type: uc_function, eval_fact: "Eight names score 3 in the top-50 external-manager basket, each with at most two distinct buyers; India and China lead"}
+  - {id: PF-02, expected_specialist: emquant, source_type: gap,         eval_fact: "Haitian International is not found in the EM quant universe (id mismatch)"}
+  - {id: PF-03, expected_specialist: ours,    source_type: gap,         eval_fact: "Komatsu is a Japan (developed-market) name with no quant score and no GIC trades in the last 30 days"}
+  - {id: PF-04, expected_specialist: efm,     source_type: uc_function, eval_fact: "Kioxia was bought by better-half managers at each of the last three month-ends and is in the top-50 basket"}
+  - {id: PF-05, expected_specialist: ours,    source_type: external_db, eval_fact: "GIC net sold about USD 83m of Kioxia across seven accounts while two bought; part was NC EM Replication rebalancing"}
+  - {id: PF-06, expected_specialist: ours,    source_type: external_db, eval_fact: "Japan technology selling: Renesas USD 86.2m, Resonac USD 42.5m, Murata USD 25.5m"}
+  - {id: PF-07, expected_specialist: ours,    source_type: external_db, eval_fact: "Weichai Power A was net sold about USD 31m across EMA Active, GEM Focus and NC EM Replication while EM Quant net bought USD 0.2m"}
+  - {id: PF-08, expected_specialist: research, source_type: external_db, eval_fact: "GIC's analyst cut Weichai from 60 to 30 bps overweight in September 2026, citing the US data-centre equipment ban"}
+  - {id: PF-09, expected_specialist: ours,    source_type: external_db, eval_fact: "JD Health is the sole confirm: EMA Active net bought USD 36.6m and the stock rose 6.8% one month later"}
+  - {id: PF-10, expected_specialist: ours,    source_type: external_db, eval_fact: "Laurus, Adani Energy, Haitian and CR Beer show tiny NC EM Replication sells of USD 0.1-0.5m (rebalancing); Laurus rose 5.7% afterwards"}
+  - {id: PF-11, expected_specialist: ours,    source_type: external_db, eval_fact: "Account ACC-004 (EMA Active) bought USD 12.9m of Z.AI in early October before a 46.9% fall, with Z.AI in the bottom quintile"}
+  - {id: PF-12, expected_specialist: emquant, source_type: uc_function, eval_fact: "Bilibili is in the bottom quintile of the quant score"}
+  - {id: PF-13, expected_specialist: ours,    source_type: external_db, eval_fact: "Book-wide there are 56 strong conflicts worth USD 4,024m versus 45 strong confirms worth USD 3,722m"}
+  - {id: PF-14, expected_specialist: broker,  source_type: vector_search, eval_fact: "All Kioxia brokers rate it Buy with targets of JPY 24,000-43,500, FY3/28E P/E of 2-3x versus peers 3-5x, and capacity sold out through CY27"}
+  - {id: PF-15, expected_specialist: experts, source_type: vector_search, eval_fact: "A former Kioxia insider says it meets about 50% of data-centre demand and, being NAND-only, cannot cross-subsidise"}
+  - {id: PF-16, expected_specialist: broker,  source_type: vector_search, eval_fact: "Weichai Q3 recurring profit rose 14%, genset shipments went from 500 to 1,300, about 9x 2027 P/E with a 5% yield; four brokers cut targets; October heavy-truck sales fell 13%"}
+  - {id: PF-17, expected_specialist: news,    source_type: external_db, eval_fact: "A US ruling on Chinese power equipment is expected in late December"}
+  - {id: PF-18, expected_specialist: ours,    source_type: gap,         eval_fact: "PM names are not populated in trades, so trades cannot be tied to decision-makers"}
+  - {id: PF-19, expected_specialist: emquant, source_type: gap,         eval_fact: "Quant scores cover MSCI EM names only, at the 31 October 2026 month-end"}
+  - {id: PF-20, expected_specialist: earnings, source_type: vector_search, eval_fact: "Kioxia reported on 13 November 2026 and management said data-centre eSSD demand exceeds supply through 2027"}
+  - {id: PF-21, expected_specialist: georev,  source_type: uc_function, eval_fact: "Weichai's North America revenue share rose from 6% (FY2023) to 14% (FY2026) on data-centre gensets"}
+
+eval_questions:   # 40 rows: 15 headline, 15 deep dive, 10 gaps/negatives. `pfs` pull expected_facts from `facts`
+  headline:
+    - {q: "What are the best external managers buying now, and do we own or trade any of it?", pfs: [PF-01, PF-05, PF-07, PF-09, PF-13], cite: [external_db, vector_search]}
+    - {q: "Which of the managers' top-50 basket names are we selling, and how large are the sells?", pfs: [PF-05, PF-06, PF-07, PF-13], cite: [external_db]}
+    - {q: "Are there any names where our trading confirms what the better managers are buying?", pfs: [PF-09, PF-13], cite: [external_db]}
+    - {q: "How does our trading book compare to the external managers' buy basket overall?", pfs: [PF-13, PF-05], cite: [external_db]}
+    - {q: "Which score-3 names are in the managers' basket and who is buying them?", pfs: [PF-01, PF-04], cite: [uc_function]}
+    - {q: "Where do the managers, our trades and the quant score all point in different directions?", pfs: [PF-05, PF-11, PF-12, PF-01], cite: [external_db]}
+    - {q: "Which large sells look like deliberate active views rather than index rebalancing?", pfs: [PF-05, PF-06, PF-07, PF-10], cite: [external_db]}
+    - {q: "What do brokers and experts say about the names we are selling most heavily?", pfs: [PF-14, PF-15, PF-05], cite: [external_db, vector_search]}
+    - {q: "What would change the picture on the managers' buys versus our trades in the next month?", pfs: [PF-17, PF-20, PF-16], cite: [vector_search, external_db]}
+    - {q: "Give me the debate on the managers' buy list: where is there consensus and where is it open?", pfs: [PF-05, PF-07, PF-08, PF-14], cite: [external_db, vector_search]}
+    - {q: "Which of the managers' buys have the strongest outside research support?", pfs: [PF-14, PF-16], cite: [vector_search]}
+    - {q: "Which of the managers' buys are weakest on quant and why?", pfs: [PF-12, PF-11, PF-02], cite: [uc_function]}
+    - {q: "Where is our active trading most at odds with the external managers?", pfs: [PF-05, PF-06, PF-07], cite: [external_db]}
+    - {q: "Summarise the evidence gaps in the comparison between managers' buys and our trades.", pfs: [PF-02, PF-03, PF-18, PF-19], cite: [external_db]}
+    - {q: "What are the best external managers buying and how did those names perform recently?", pfs: [PF-01, PF-09, PF-11], cite: [uc_function, external_db]}
+  deep_dive:
+    - {q: "Does the outlook for Kioxia justify selling a name the managers are buying?", pfs: [PF-14, PF-15, PF-05, PF-20], cite: [external_db, vector_search]}
+    - {q: "How much of our Kioxia selling was rebalancing, and how many accounts sold versus bought?", pfs: [PF-05], cite: [external_db]}
+    - {q: "What did Kioxia management say on its latest call about data-centre demand?", pfs: [PF-20], cite: [vector_search]}
+    - {q: "What do the Kioxia brokers' targets and valuations look like?", pfs: [PF-14], cite: [vector_search]}
+    - {q: "What did the Kioxia expert call say about supply and cross-subsidy risk?", pfs: [PF-15], cite: [vector_search]}
+    - {q: "Why did GIC's analyst cut Weichai Power A, and how does that compare to the brokers?", pfs: [PF-08, PF-16], cite: [external_db, vector_search]}
+    - {q: "What happened to Weichai's profit, shipments and valuation, and what is the US catalyst?", pfs: [PF-16, PF-17], cite: [vector_search, external_db]}
+    - {q: "How exposed is Weichai to North America?", pfs: [PF-21], cite: [uc_function]}
+    - {q: "Which account bought USD 12.9m of Z.AI before its fall, and was it an active view?", pfs: [PF-11, PF-12], cite: [external_db, uc_function]}
+    - {q: "How did JD Health perform after the EMA Active purchase?", pfs: [PF-09], cite: [external_db]}
+    - {q: "What happened with Laurus Labs: quant rank, our small sell and the price move?", pfs: [PF-10, PF-12], cite: [external_db, uc_function]}
+    - {q: "What is the latest news on Kioxia and Weichai?", pfs: [PF-17], cite: [external_db]}
+    - {q: "Which Japanese technology names are we selling and how large are the sells?", pfs: [PF-06], cite: [external_db]}
+    - {q: "What is the latest earnings status for Kioxia and Weichai?", pfs: [PF-20, PF-16], cite: [vector_search]}
+    - {q: "What are the risks to the Kioxia thesis according to brokers?", pfs: [PF-14], cite: [vector_search]}
+  gaps:
+    - {q: "What is the EM quant score for Komatsu?", pfs: [PF-03, PF-19], cite: []}
+    - {q: "What is the quant rank for Haitian International?", pfs: [PF-02], cite: []}
+    - {q: "Which portfolio manager made the Kioxia sells?", pfs: [PF-18], cite: [external_db]}
+    - {q: "Did we trade Komatsu in the last 30 days?", pfs: [PF-03], cite: [external_db]}
+    - {q: "What is the EM quant score for Kioxia?", pfs: [PF-19], cite: []}
+    - {q: "Which date do the quant scores cover?", pfs: [PF-19], cite: []}
+    - {q: "Who decided to buy Z.AI?", pfs: [PF-18, PF-11], cite: [external_db]}
+    - {q: "Do we have broker research on Renesas, Resonac and Murata?", pfs: [PF-06], cite: []}
+    - {q: "What is Haitian International's quant score and why can't it be found?", pfs: [PF-02], cite: []}
+    - {q: "Can trades be attributed to individual decision-makers?", pfs: [PF-18], cite: [external_db]}

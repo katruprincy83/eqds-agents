@@ -1,0 +1,41 @@
+# Specialist definition (design §5.3). Source of truth for the registry row, the app and its access grants.
+key: experts
+display_name: Expert calls
+tag_prefix: X
+owner: EQDS · research
+version: 1.0.0
+description: 'Expert-network call transcripts: former insiders and industry experts'' views, quantities they cite, supporting and challenging
+  arguments.'
+domains:
+- expert calls
+- insiders
+- industry
+model_tier: standard
+skill:
+  name: experts
+  version: 1.0.0
+tools:
+- type: vector_search
+  indexes:
+  - name: expert_chunks_idx
+    columns:
+    - chunk_id
+    - call_id
+    - company_id
+    - expert_role
+    - call_date
+    - text
+    description: Semantic search over expert-network call transcript chunks. Optional company_id filter.
+tools_summary: Vector Search MCP · expert_chunks
+access:
+  tables:
+  - expert_chunks
+  - expert_chunks_idx
+  - ref_companies
+  functions: []
+  volumes:
+  - skills
+  - prompts
+max_tool_calls: 8
+timeout_s: 150
+contract_version: '1'

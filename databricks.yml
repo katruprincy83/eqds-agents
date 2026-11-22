@@ -1,0 +1,117 @@
+# EQDS bundle (design §12.2). Every environment-specific value is a variable (§4.1 E1-E3).
+# Values come from `config/env/<target>.yaml` through `scripts/bundle_vars.py`, which writes
+# .databricks/bundle/<target>/variable-overrides.json (run it with `make vars TARGET=<t>`; `make deploy` does it for you).
+# A new environment = a new target below + config/env/<target>.yaml + config/models.<target>.yaml.
+bundle:
+  name: eqds-agents
+
+include:
+  - resources/*/*.yml
+
+sync:
+  include:
+    - config/**
+    - seed/**
+    - src/**
+    - bootstrap/**
+    - skills/**
+    - prompts/**
+    - eval/**
+    - packages/**
+    - agents/**/specialist.yaml
+    - build/apps/**       # produced by scripts/build_apps.py; app resources point here
+  exclude:
+    - "**/__pycache__/**"
+    - "**/.venv/**"
+    - node_modules/**
+
+variables:
+  target_name:        {default: demo, description: "name of config/env/<target>.yaml"}
+  name_prefix:        {default: eqds}
+  catalog:            {default: eqds}
+  schema:             {default: dev}
+  suffix:             {default: ""}
+  workspace_host:     {default: ""}
+  lakebase_project:   {default: eqds-lakebase}
+  lakebase_branch:    {default: production}
+  lakebase_database:  {default: eqds_dev}
+  vector_search_endpoint: {default: eqds-vs}
+  genie_space_id:     {default: unset}
+  experiment_path:    {default: /Shared/eqds/dev}
+  foreign_catalog:    {default: azure_oms}
+  connection:         {default: azure_oms_conn}
+  secret_scope:       {default: eqds-bridge}
+  data_profile:       {default: synthetic}
+  external_db_mode:   {default: bridge}
+  live_tools_mode:    {default: bridge}
+  wiki_refresh_cron:  {default: "0 30 7 * * ?"}
+  wiki_refresh_tz:    {default: Asia/Singapore}
+  ingest_news_cron:   {default: "0 */15 * * * ?"}
+  serverless_env_version: {default: "3"}
+  # compute for the jobs that must reach the external database (bridge worker, Azure seed, news ingest, validate).
+  # `bridge_compute` = classic | serverless, rendered into these complex variables by scripts/bundle_vars.py (E8).
+  bridge_compute:     {default: classic}
+  azure_cluster_key:  {default: "azure_cluster"}
+  azure_env_key:      {default: ""}
+  azure_job_clusters:
+    type: complex
+    default: []
+  azure_environments:
+    type: complex
+    default: []
+  azure_libraries:
+    type: complex
+    default: []
+  # embedding endpoint for Vector Search (the only serving endpoint) and Unity AI Gateway model services (§8.0)
+  embed_served_entities:
+    type: complex
+    default: []
+  llm_reasoning_id:     {default: eqds_llm_reasoning}
+  llm_standard_id:      {default: eqds_llm_standard}
+  llm_fast_id:          {default: eqds_llm_fast}
+  llm_reasoning_config:
+    type: complex
+    default: {}
+  llm_standard_config:
+    type: complex
+    default: {}
+  llm_fast_config:
+    type: complex
+    default: {}
+  github_repo_url:    {default: ""}
+  app_version:        {default: dev}
+  schedule_status:    {default: PAUSED, description: "UNPAUSED enables the wiki/ingest schedules (profile schedules.enabled)"}
+  bridge_worker_status: {default: UNPAUSED}
+  ui_permissions:
+    type: complex
+    default: []
+  sp_ci:              {default: ""}
+
+artifacts: {}
+
+targets:
+  demo:
+    default: true
+    workspace:
+      host: https://dbc-6ab9fd5d-c871.cloud.databricks.com
+    variables:
+      target_name: demo
+
+  # The GIC workspace (single workspace, schema-separated, §4). Hosts are placeholders until the platform team provides them.
+  dev:
+    mode: development
+    workspace:
+      host: https://REPLACE-ME.cloud.databricks.com
+    variables:
+      target_name: dev
+  staging:
+    workspace:
+      host: https://REPLACE-ME.cloud.databricks.com
+    variables:
+      target_name: staging
+  prod:
+    mode: production
+    workspace:
+      host: https://REPLACE-ME.cloud.databricks.com
+    variables:
+      target_name: prod

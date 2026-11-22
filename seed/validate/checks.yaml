@@ -1,0 +1,19 @@
+# Seed validation checks (design §14.9). Expected values mirror seed/planted_facts.yaml. Tolerances are absolute unless `_pct`.
+# Executed by src/jobs/validate_seed.py; results land in {uc}.seed_validation_results and the job fails if any check fails.
+window: {start: "2026-10-22", end: "2026-11-20"}
+checks:
+  - {id: ref_integrity,  name: "Trades reference known companies",                         expect: {unknown_company_ids: 0}}
+  - {id: positions_sum,  name: "Daily position changes equal net traded quantity (50 sampled changes, +-1 share)",       expect: {mismatches: 0}}
+  - {id: PF-01,          name: "Eight score-3 names in the top-50 basket, each with at most 2 buyers", expect: {score3: 8, max_buyers: 2}}
+  - {id: PF-05,          name: "Kioxia: GIC net sold USD 83.0m, 7 sellers vs 2 buyers",      expect: {net_musd: -83.0, sell_accounts: 7, buy_accounts: 2}, tol: {net_musd: 0.5}}
+  - {id: PF-07,          name: "Weichai: active+index sells about USD 31m; EM Quant +0.2m",  expect: {sells_musd: -31.0, emq_musd: 0.2}, tol: {sells_musd: 0.5, emq_musd: 0.05}}
+  - {id: PF-09,          name: "JD Health: +USD 36.6m and +6.8% one month later",            expect: {net_musd: 36.6, ret_pct: 6.8}, tol: {net_musd: 0.3, ret_pct: 0.2}}
+  - {id: PF-11,          name: "Z.AI: +USD 12.9m then -46.9%",                               expect: {net_musd: 12.9, ret_pct: -46.9}, tol: {net_musd: 0.2, ret_pct: 0.3}}
+  - {id: PF-13,          name: "Book-wide: 56 strong conflicts (USD 4,024m), 45 strong confirms (USD 3,722m)", expect: {conflicts: 56, conflict_musd: 4024, confirms: 45, confirm_musd: 3722}, tol_pct: 2}
+  - {id: PF-18,          name: "PM names are not populated in trades",                        expect: {pm_populated: 0}}
+  - {id: docs_planted,   name: "Planted Kioxia broker sentence is indexed (chunk table)",   expect: {chunks: ">=1"}}
+  - {id: PF-20,          name: "Kioxia results reported 2026-11-13 and planted eSSD sentence present", expect: {calendar: 1, chunks: ">=1"}}
+  - {id: PF-21,          name: "Weichai North America revenue share 14% in FY2026; shares sum to 100", expect: {share_pct: 14.0, bad_sums: 0}, tol: {share_pct: 0.5}}
+  - {id: vs_retrieval,   name: "Vector search finds the planted expert chunk in the top 3",   expect: {found: true}}
+  - {id: restriction,    name: "Serverless access to the external DB matches the profile (network.serverless_blocked)", expect: {observed_blocked: "profile"}}
+  - {id: skew,           name: "Skew sanity: Gini of trade value > 0.6; NCREP rebalance-day share of trade count > 15%", expect: {gini: ">0.6", ncrep_rebalance_share: ">0.15"}}

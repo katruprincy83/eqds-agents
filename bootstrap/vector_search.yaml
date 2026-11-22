@@ -1,0 +1,26 @@
+# Vector Search indexes (design §5.5, §7.2). Delta Sync over the chunk tables (CDF on), managed embeddings via the
+# deployment-owned embedding endpoint `${name_prefix}-embed${suffix}`. Created by job_env_bootstrap (SDK), idempotent.
+endpoint: "${vector_search_endpoint}"
+embedding_endpoint: "${name_prefix}-embed${suffix}"
+indexes:
+  - name: broker_chunks_idx
+    source_table: broker_chunks
+    primary_key: chunk_id
+    text_column: text
+    sync: [chunk_id, doc_id, company_id, broker, rating, published_at, text]
+  - name: expert_chunks_idx
+    source_table: expert_chunks
+    primary_key: chunk_id
+    text_column: text
+    sync: [chunk_id, call_id, company_id, expert_role, call_date, text]
+  - name: earnings_chunks_idx
+    source_table: earnings_chunks
+    primary_key: chunk_id
+    text_column: text
+    sync: [chunk_id, call_id, company_id, fiscal_period, call_date, doc_type, text]
+  - name: news_items_idx
+    source_table: news_items
+    primary_key: news_id
+    text_column: body
+    sync: [news_id, company_id, headline, source, published_at, body]
+    optional: true          # news_items is landed by job_ingest_news; created on the first bootstrap after it exists

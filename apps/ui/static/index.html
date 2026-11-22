@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EQDS Research · Multi-agent research platform (synthetic data)</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 40.2 64' role='img' aria-label='GIC'%3E%3Cpath d='M6.10156 13.75V26.89C6.90783 26.7156 7.80125 26.5631 8.71647 26.4106V13.1399H6.71171C6.38484 13.1399 6.10156 13.4014 6.10156 13.75Z' fill='%23071D49'/%3E%3Cpath d='M0 32.9697C0 33.7324 0.893429 34.7348 4.03132 35.6718C4.07491 35.6718 4.11849 35.6718 4.11849 35.6282C4.14028 35.5846 4.11849 35.5411 4.07491 35.5411C3.00715 35.0834 2.44059 34.604 2.44059 34.0811C2.44059 33.2312 4.05312 32.4903 6.10146 31.9673V50.2717C6.10146 50.6204 6.38475 50.8819 6.71161 50.8819H8.71638V29.2653C5.01192 29.81 0 31.0739 0 32.9697Z' fill='%23071D49'/%3E%3Cpath d='M11.571 7.67051V26.0403C12.6824 25.9313 13.8373 25.8224 15.0358 25.757V7.03857H12.203C11.8543 7.03857 11.571 7.32186 11.571 7.67051Z' fill='%23071D49'/%3E%3Cpath d='M11.5711 56.3297C11.5711 56.6783 11.8544 56.9398 12.1813 56.9398H15.0141V28.6116C13.8156 28.6769 12.6607 28.7641 11.5493 28.8949L11.5711 56.3297Z' fill='%23071D49'/%3E%3Cpath d='M22.314 25.6479V0.610146C22.314 0.283282 22.0525 0 21.7039 0H18.4788C18.1519 0 17.8687 0.261491 17.8687 0.610146V25.6479C18.5878 25.6262 19.3286 25.6262 20.0913 25.6262C20.8322 25.6262 21.5949 25.6262 22.314 25.6479Z' fill='%23071D49'/%3E%3Cpath d='M17.8687 28.5025V63.3898C17.8687 63.7167 18.1301 64 18.4788 64H21.7039C22.0307 64 22.314 63.7167 22.314 63.3898V28.5025C21.5731 28.4807 20.8322 28.4807 20.0913 28.4807C19.3504 28.4807 18.6095 28.4807 17.8687 28.5025Z' fill='%23071D49'/%3E%3Cpath d='M25.1685 56.9615H28.0013C28.35 56.9615 28.6115 56.6782 28.6115 56.3513V28.8947C27.5002 28.7858 26.3452 28.6768 25.1467 28.6115L25.1685 56.9615Z' fill='%23071D49'/%3E%3Cpath d='M28.0013 7.03857H25.1685V25.757C26.367 25.8224 27.5219 25.9313 28.6332 26.0403V7.67051C28.6332 7.32186 28.3499 7.03857 28.0013 7.03857Z' fill='%23071D49'/%3E%3Cpath d='M34.081 13.75C34.081 13.4014 33.7977 13.1399 33.4708 13.1399H31.4661V26.4106C32.4031 26.5631 33.2747 26.7156 34.081 26.89V13.75Z' fill='%23071D49'/%3E%3Cpath d='M36.1511 30.2676C36.1075 30.2676 36.064 30.2894 36.064 30.333C36.064 30.3548 36.064 30.3984 36.1075 30.4202C37.3932 30.965 37.7419 31.4879 37.7419 31.8584C37.7419 32.6646 36.3472 33.3837 34.081 33.9721V29.7447C33.2747 29.5703 32.3813 29.4178 31.4661 29.2653V50.8819H33.4708C33.8195 50.8819 34.081 50.5986 34.081 50.2717V36.2166C37.8508 35.3885 40.1824 34.2554 40.1824 32.9915C40.1824 32.1635 39.2019 31.1393 36.1511 30.2676Z' fill='%23071D49'/%3E%3C/svg%3E">
+<style>
+:root{
+  /* GIC palette (gic.careers) */
+  --gic-primary:#0033FF; --gic-primary-hover:#04258B; --gic-navy:#071D49; --gic-dark:#040F25;
+  --gic-gold:#8A5D24; --gic-gray:#F2F2F2; --gic-border:#C2C9CB; --gic-border-dark:#A3A3A3;
+  --txt:#000; --txt2:#3C3C40; --txt3:#676767; --white:#fff;
+  --ok:#1E7B4F; --warn:#8A5D24; --err:#B3261E;
+  --sans:"Suisse Intl","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --serif:"Canela Deck","Canela",Georgia,"Times New Roman",serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--gic-gray);color:var(--txt);font-family:var(--sans);font-size:15px;line-height:1.5}
+a{color:var(--gic-primary);text-decoration:none}
+a:hover{color:var(--gic-primary-hover);text-decoration:underline}
+button{font-family:var(--sans);cursor:pointer}
+h1,h2,h3{font-family:var(--serif);font-weight:500;color:var(--gic-navy);margin:0}
+.serif{font-family:var(--serif)}
+/* ---------- header ---------- */
+header{background:var(--gic-navy);color:#fff;position:sticky;top:0;z-index:50}
+.hbar{display:flex;align-items:center;gap:24px;padding:0 28px;height:64px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:600;letter-spacing:.02em}
+.brand .mark{height:36px;width:auto;color:#fff;flex:none}
+.brand .appname{font-family:var(--serif);font-size:22px;font-weight:500;letter-spacing:.01em;white-space:nowrap}
+.brand .sub{font-size:12px;font-weight:400;opacity:.75;border-left:1px solid rgba(255,255,255,.35);padding-left:12px;white-space:nowrap}
+@media (max-width:1280px){.brand .sub{display:none}}
+nav{display:flex;gap:4px;margin-left:12px}
+nav button{background:none;border:0;color:#fff;opacity:.75;padding:20px 14px;font-size:14px;border-bottom:3px solid transparent}
+nav button.active{opacity:1;border-bottom-color:var(--gic-primary)}
+nav button:hover{opacity:1}
+.hright{margin-left:auto;display:flex;align-items:center;gap:12px}
+.pill{font-size:11px;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(255,255,255,.4);padding:4px 10px;border-radius:999px}
+.btn{border:0;border-radius:999px;padding:10px 20px;font-size:14px;font-weight:600;background:var(--gic-primary);color:#fff;transition:background .15s}
+.btn:hover{background:var(--gic-primary-hover)}
+.btn:active{background:var(--gic-navy)}
+.btn.ghost{background:transparent;color:var(--gic-primary);border:1px solid var(--gic-primary)}
+.btn.ghost:hover{background:#E8EDFF}
+.btn.light{background:#fff;color:var(--gic-navy)}
+.btn.sm{padding:6px 14px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.play{display:flex;align-items:center;gap:8px;background:var(--gic-primary);padding:10px 22px 10px 16px}
+.play .tri{width:0;height:0;border-left:11px solid #fff;border-top:7px solid transparent;border-bottom:7px solid transparent}
+.iconbtn{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:999px;width:36px;height:36px;font-size:16px}
+/* ---------- layout ---------- */
+main{max-width:1440px;margin:0 auto;padding:28px}
+.view{display:none}.view.active{display:block}
+.card{background:#fff;border:1px solid var(--gic-border);border-radius:4px;padding:20px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start}
+.muted{color:var(--txt3)}.small{font-size:13px}.tiny{font-size:11.5px}
+.kicker{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gic-gold);font-weight:600}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+hr.sep{border:0;border-top:1px solid var(--gic-border);margin:18px 0}
+.ext::after{content:" ↗";font-size:.85em}
+.needs-config{color:var(--txt3)!important;border-bottom:1px dashed var(--txt3)}
+/* ---------- Ask AI ---------- */
+.ask textarea{width:100%;min-height:96px;border:1px solid var(--gic-border-dark);border-radius:4px;padding:14px;font:inherit;font-size:16px;resize:vertical}
+.ask textarea:focus{outline:2px solid var(--gic-primary);border-color:transparent}
+select{font:inherit;padding:9px 12px;border:1px solid var(--gic-border-dark);border-radius:4px;background:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gic-border);background:#fff;border-radius:999px;padding:5px 12px 5px 6px;font-size:13px;cursor:pointer;user-select:none}
+.chip .av{width:22px;height:22px;border-radius:50%;color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.chip.on{border-color:var(--gic-primary);background:#E8EDFF}
+.chip.auto{opacity:.55}
+.chip .new{font-size:10px;background:var(--gic-gold);color:#fff;border-radius:999px;padding:1px 6px}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
+.toggle input{accent-color:var(--gic-primary);width:16px;height:16px}
+.stages{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 4px}
+.stage{font-size:13px;color:var(--txt3);display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--gic-gray)}
+.stage::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--gic-border-dark)}
+.stage.active{color:var(--gic-navy);background:#E8EDFF}.stage.active::before{background:var(--gic-primary);animation:pulse 1s infinite}
+.stage.done{color:var(--gic-navy)}.stage.done::before{background:var(--ok)}
+@keyframes pulse{50%{opacity:.25}}
+.runhead h2{font-size:28px;line-height:1.25}
+.meta{font-size:13px;color:var(--txt3)}
+.meta b{color:var(--gic-navy);font-weight:600}
+.answer{border:2px solid var(--gic-navy);border-radius:6px;padding:22px 26px;background:#fff;margin-top:16px}
+.answer p{margin:0 0 12px}
+.answer .stance{font-weight:700}
+.tag{display:inline-block;font-size:11px;font-weight:600;color:var(--gic-primary-hover);background:#E8EDFF;border-radius:3px;padding:0 5px;margin:0 1px;cursor:pointer;vertical-align:1px}
+.tag:hover{background:var(--gic-primary);color:#fff}
+.tag.flash{animation:flash 1.2s 2}
+@keyframes flash{50%{background:var(--gic-gold);color:#fff}}
+.section-t{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);font-weight:600;margin:22px 0 10px}
+.msg{display:grid;grid-template-columns:40px 1fr;gap:12px;padding:10px 0;border-top:1px solid #eee}
+.msg .av{width:36px;height:36px;border-radius:50%;color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+.msg .who{font-weight:600;color:var(--gic-navy);font-size:14px}
+.msg .to{color:var(--txt3);font-weight:400}
+.msg details summary{cursor:pointer;color:var(--txt2);font-size:14px;list-style:none}
+.msg details summary::-webkit-details-marker{display:none}
+.msg details summary::before{content:"▸ ";color:var(--txt3)}
+.msg details[open] summary::before{content:"▾ "}
+.msg .body{font-size:14px;color:var(--txt2);margin-top:6px;white-space:pre-line}
+.msg .toolline{font-size:12px;color:var(--txt3);margin-top:4px}
+.point{border-left:4px solid var(--gic-border);padding:12px 16px;margin:12px 0;background:#fff}
+.point.CONSENSUS{border-left-color:var(--gic-primary)}
+.point.OPEN{border-left-color:var(--gic-gold)}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:3px;margin-right:6px}
+.b-CONSENSUS{background:#E8EDFF;color:var(--gic-primary-hover)}
+.b-ONE_SOURCE{background:var(--gic-gray);color:var(--txt2)}
+.b-RESOLVED{background:#E3F1EA;color:var(--ok)}
+.b-OPEN{background:#F6EEE3;color:var(--gic-gold)}
+.point .claim{font-weight:600;color:var(--gic-navy)}
+.stances{display:flex;gap:6px;margin:8px 0}
+.stances span{font-size:11px;border:1px solid var(--gic-border);border-radius:999px;padding:1px 8px 1px 3px;display:inline-flex;gap:4px;align-items:center}
+.stances .av{width:16px;height:16px;border-radius:50%;color:#fff;font-size:8px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.verdict{font-size:14px;color:var(--txt2)}
+.asknext button{display:block;text-align:left;width:100%;border:1px solid var(--gic-border);background:#fff;color:var(--gic-primary-hover);border-radius:4px;padding:10px 14px;margin:6px 0;font-size:14px}
+.asknext button:hover{border-color:var(--gic-primary);background:#E8EDFF}
+.banner{border-radius:4px;padding:12px 16px;margin:12px 0;font-size:14px;display:flex;gap:10px;align-items:center}
+.banner.warn{background:#F6EEE3;border:1px solid var(--gic-gold);color:#5c3d14}
+.banner.ok{background:#E3F1EA;border:1px solid var(--ok);color:#124a2f}
+.banner.err{background:#FBE9E7;border:1px solid var(--err);color:#7a1a14}
+.feedback{display:flex;gap:8px;align-items:center;margin-top:14px;font-size:13px;color:var(--txt3)}
+.feedback button{border:1px solid var(--gic-border);background:#fff;border-radius:999px;padding:4px 12px}
+.feedback button.sel{background:var(--gic-navy);color:#fff;border-color:var(--gic-navy)}
+/* ---------- side panel: live trace ---------- */
+.side{position:sticky;top:88px;max-height:calc(100vh - 200px);overflow:auto}
+.side h3{font-size:20px}
+.ev{display:grid;grid-template-columns:62px 1fr;gap:8px;padding:8px 0;border-top:1px solid #eee;font-size:12.5px;animation:fadein .3s}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}}
+.ev .t{color:var(--txt3);font-variant-numeric:tabular-nums}
+.ev .c{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:1px 6px;border-radius:3px;margin-bottom:2px}
+.c-serverless{background:#E8EDFF;color:var(--gic-primary-hover)}
+.c-classic{background:#F6EEE3;color:var(--gic-gold)}
+.c-external{background:var(--gic-dark);color:#fff}
+.c-model{background:#EEE;color:var(--txt2)}
+.c-state{background:#E3F1EA;color:var(--ok)}
+/* ---------- sources drawer ---------- */
+.drawer{position:fixed;top:0;right:-560px;width:540px;height:100vh;background:#fff;border-left:1px solid var(--gic-border);z-index:80;transition:right .25s;overflow:auto;padding:24px;box-shadow:-8px 0 24px rgba(4,15,37,.12)}
+.drawer.open{right:0}
+.src{padding:10px 0;border-top:1px solid #eee;font-size:13px}
+.src.hl{background:#FFF6E6}
+.src .id{font-weight:700;color:var(--gic-primary-hover);margin-right:6px}
+.src .ty{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3)}
+/* ---------- wiki ---------- */
+.wikihead p{max-width:980px;color:var(--txt2)}
+.wcards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.wcard{background:#fff;border:1px dashed var(--gic-border-dark);border-radius:4px;padding:18px}
+.wcard.has{border-style:solid;border-color:var(--gic-border)}
+.wcard h4{margin:0 0 4px;font-size:17px;color:var(--gic-navy)}
+.rank{display:inline-block;background:var(--gic-gray);border-radius:3px;padding:0 6px;font-size:12px;margin-right:6px}
+.sectors{display:flex;gap:8px;overflow:auto;padding:4px 0 10px}
+.sectors button{white-space:nowrap;border:1px solid var(--gic-border);background:#fff;border-radius:999px;padding:6px 14px;font-size:13px}
+.sectors button.on{border-color:var(--gic-primary);color:var(--gic-primary)}
+.due{font-size:12px;color:var(--gic-gold);font-weight:600}
+/* ---------- under the hood ---------- */
+.subnav{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.subnav button{border:1px solid var(--gic-border);background:#fff;border-radius:999px;padding:7px 16px;font-size:13.5px}
+.subnav button.on{background:var(--gic-navy);border-color:var(--gic-navy);color:#fff}
+.arch{display:grid;grid-template-columns:150px 1fr 250px 230px;gap:14px}
+.lane{border-radius:6px;padding:12px;min-height:100%}
+.lane h5{margin:0 0 10px;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.lane.users{background:#fff;border:1px solid var(--gic-border)}
+.lane.sl{background:#E8EDFF}.lane.sl h5{color:var(--gic-primary-hover)}
+.lane.cl{background:#F6EEE3;border:1px dashed var(--gic-gold)}.lane.cl h5{color:var(--gic-gold)}
+.lane.ex{background:var(--gic-dark);color:#fff}.lane.ex h5{color:#fff;opacity:.8}
+.comp{display:block;background:#fff;border:1px solid var(--gic-border);border-radius:4px;padding:9px 11px;margin-bottom:8px;color:var(--txt);font-size:13px;transition:box-shadow .2s,border-color .2s}
+.comp b{display:block;color:var(--gic-navy);font-size:13.5px}
+.comp:hover{text-decoration:none;border-color:var(--gic-primary)}
+.comp.lit{border-color:var(--gic-primary);box-shadow:0 0 0 3px rgba(0,51,255,.25)}
+.lane.ex .comp{background:#0B1E46;border-color:#2A3D6B;color:#dfe5f5}.lane.ex .comp b{color:#fff}
+.lane.ex .comp.lit{box-shadow:0 0 0 3px rgba(138,93,36,.6);border-color:var(--gic-gold)}
+.slgrid{display:grid;grid-template-columns:1fr 2fr 1fr;gap:10px}
+#archSpecs{display:grid;grid-template-columns:1fr 1fr;gap:0 8px;align-content:start}
+#archSpecs .comp{font-size:11.5px;padding:7px 9px}#archSpecs .comp b{font-size:12.5px}
+.platband{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:6px}
+.platband .comp{background:var(--gic-navy);color:#dfe5f5;border-color:var(--gic-navy)}
+.platband .comp b{color:#fff}
+.blocked{margin-top:10px;font-size:12px;color:#ffb4a8;border:1px dashed #ff8a7a;border-radius:4px;padding:8px}
+.spans .sp{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;margin:4px 0;border-radius:3px;font-size:13px;background:var(--gic-gray)}
+.spans .sp .d{color:var(--txt3);font-variant-numeric:tabular-nums;white-space:nowrap}
+pre.code{background:var(--gic-dark);color:#E6ECFF;padding:14px 16px;border-radius:4px;font-size:12.5px;overflow:auto;white-space:pre-wrap}
+table.t{border-collapse:collapse;width:100%;font-size:13px}
+table.t th{text-align:left;background:var(--gic-navy);color:#fff;padding:8px 10px;font-weight:600}
+table.t td{padding:7px 10px;border-bottom:1px solid #eee}
+.bar{height:10px;background:var(--gic-gray);border-radius:5px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--gic-primary);transition:width 1s}
+.bar.fail i{background:var(--err)}
+.pipe{display:flex;gap:8px;flex-wrap:wrap}
+.pipe .st{flex:1;min-width:130px;border:1px solid var(--gic-border);border-radius:4px;padding:10px;background:#fff;font-size:13px}
+.pipe .st b{display:block;color:var(--gic-navy)}
+.pipe .st.run{border-color:var(--gic-primary);box-shadow:0 0 0 3px rgba(0,51,255,.18)}
+.pipe .st.ok{border-color:var(--ok)}.pipe .st.ok .s{color:var(--ok)}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--gic-border);border-top-color:var(--gic-primary);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* ---------- demo narrator ---------- */
+.narr{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;width:min(980px,94vw);background:var(--gic-dark);color:#fff;border-radius:8px;padding:14px 18px;z-index:90;display:none;box-shadow:0 10px 30px rgba(4,15,37,.35)}
+.narr.on{display:block}
+.narr .top{display:flex;align-items:center;gap:12px}
+.narr .step{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#C9A36B;font-weight:700}
+.narr .title{font-family:var(--serif);font-size:20px}
+.narr .text{font-size:14px;color:#D6DDF0;margin-top:4px;min-height:42px}
+.narr .ctrls{margin-left:auto;display:flex;gap:6px}
+.narr .ctrls button{background:#13275A;border:1px solid #2A3D6B;color:#fff;border-radius:999px;padding:6px 12px;font-size:13px}
+.narr .ctrls button:hover{background:var(--gic-primary)}
+.narr .prog{height:3px;background:#13275A;border-radius:2px;margin-top:10px;overflow:hidden}
+.narr .prog i{display:block;height:100%;background:var(--gic-primary);width:0;transition:width .4s}
+.spot{outline:3px solid var(--gic-gold)!important;outline-offset:3px;border-radius:4px;transition:outline .2s}
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;background:rgba(4,15,37,.55);z-index:100;display:none;align-items:center;justify-content:center}
+.modal.on{display:flex}
+.modal .box{background:#fff;border-radius:6px;width:min(760px,94vw);max-height:88vh;overflow:auto;padding:26px}
+.form{display:grid;grid-template-columns:200px 1fr;gap:10px 14px;align-items:center;font-size:14px}
+.form input{font:inherit;padding:8px 10px;border:1px solid var(--gic-border-dark);border-radius:4px;width:100%}
+.wtabs{display:flex;gap:18px;border-bottom:1px solid var(--gic-border);margin:12px 0 16px;overflow:auto}
+.wtabs button{background:none;border:0;padding:10px 0;font-size:14px;color:var(--txt2);border-bottom:3px solid transparent;white-space:nowrap}
+.wtabs button.on{color:var(--gic-navy);border-bottom-color:var(--gic-primary);font-weight:600}
+body.spec [data-spec]{position:relative;outline:1px dashed var(--gic-gold);outline-offset:2px}
+body.spec [data-spec]::after{content:attr(data-spec);position:absolute;top:-10px;right:6px;font:600 10px/1.5 var(--sans);background:var(--gic-gold);color:#fff;padding:0 6px;border-radius:2px;z-index:6;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+#specBtn.on{background:var(--gic-gold);border-color:var(--gic-gold)}
+.hist{margin-top:14px}.hist a{display:block;font-size:13.5px;padding:4px 0;cursor:pointer}
+.logbox{background:var(--gic-dark);color:#E6ECFF;font:12.5px/1.6 ui-monospace,Menlo,monospace;border-radius:4px;padding:12px 14px;min-height:120px;white-space:pre-wrap}
+.logbox .e{color:#ff9d8f}.logbox .o{color:#8fe3b4}.logbox .w{color:#e8c48a}
+.check{display:grid;grid-template-columns:22px 70px 1fr 130px;gap:8px;padding:7px 0;border-bottom:1px solid #eee;font-size:13px;align-items:start}
+.check .st{font-weight:700}.check.ok .st{color:var(--ok)}.check.run .st{color:var(--gic-primary)}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.capcol h4{margin:0;padding:12px 14px;color:#fff;border-radius:4px 4px 0 0;font-size:16px}
+.capcol ul{margin:0;padding:12px 14px 14px 30px;background:#fff;border:1px solid var(--gic-border);border-top:0;border-radius:0 0 4px 4px;font-size:13.5px;line-height:1.7}
+footer{text-align:center;color:var(--txt3);font-size:12px;padding:24px 0 120px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hbar">
+    <div class="brand"><svg class="mark" viewBox="0 0 40.2 64" role="img" aria-label="GIC"><path d="M6.10156 13.75V26.89C6.90783 26.7156 7.80125 26.5631 8.71647 26.4106V13.1399H6.71171C6.38484 13.1399 6.10156 13.4014 6.10156 13.75Z" fill="currentColor"/><path d="M0 32.9697C0 33.7324 0.893429 34.7348 4.03132 35.6718C4.07491 35.6718 4.11849 35.6718 4.11849 35.6282C4.14028 35.5846 4.11849 35.5411 4.07491 35.5411C3.00715 35.0834 2.44059 34.604 2.44059 34.0811C2.44059 33.2312 4.05312 32.4903 6.10146 31.9673V50.2717C6.10146 50.6204 6.38475 50.8819 6.71161 50.8819H8.71638V29.2653C5.01192 29.81 0 31.0739 0 32.9697Z" fill="currentColor"/><path d="M11.571 7.67051V26.0403C12.6824 25.9313 13.8373 25.8224 15.0358 25.757V7.03857H12.203C11.8543 7.03857 11.571 7.32186 11.571 7.67051Z" fill="currentColor"/><path d="M11.5711 56.3297C11.5711 56.6783 11.8544 56.9398 12.1813 56.9398H15.0141V28.6116C13.8156 28.6769 12.6607 28.7641 11.5493 28.8949L11.5711 56.3297Z" fill="currentColor"/><path d="M22.314 25.6479V0.610146C22.314 0.283282 22.0525 0 21.7039 0H18.4788C18.1519 0 17.8687 0.261491 17.8687 0.610146V25.6479C18.5878 25.6262 19.3286 25.6262 20.0913 25.6262C20.8322 25.6262 21.5949 25.6262 22.314 25.6479Z" fill="currentColor"/><path d="M17.8687 28.5025V63.3898C17.8687 63.7167 18.1301 64 18.4788 64H21.7039C22.0307 64 22.314 63.7167 22.314 63.3898V28.5025C21.5731 28.4807 20.8322 28.4807 20.0913 28.4807C19.3504 28.4807 18.6095 28.4807 17.8687 28.5025Z" fill="currentColor"/><path d="M25.1685 56.9615H28.0013C28.35 56.9615 28.6115 56.6782 28.6115 56.3513V28.8947C27.5002 28.7858 26.3452 28.6768 25.1467 28.6115L25.1685 56.9615Z" fill="currentColor"/><path d="M28.0013 7.03857H25.1685V25.757C26.367 25.8224 27.5219 25.9313 28.6332 26.0403V7.67051C28.6332 7.32186 28.3499 7.03857 28.0013 7.03857Z" fill="currentColor"/><path d="M34.081 13.75C34.081 13.4014 33.7977 13.1399 33.4708 13.1399H31.4661V26.4106C32.4031 26.5631 33.2747 26.7156 34.081 26.89V13.75Z" fill="currentColor"/><path d="M36.1511 30.2676C36.1075 30.2676 36.064 30.2894 36.064 30.333C36.064 30.3548 36.064 30.3984 36.1075 30.4202C37.3932 30.965 37.7419 31.4879 37.7419 31.8584C37.7419 32.6646 36.3472 33.3837 34.081 33.9721V29.7447C33.2747 29.5703 32.3813 29.4178 31.4661 29.2653V50.8819H33.4708C33.8195 50.8819 34.081 50.5986 34.081 50.2717V36.2166C37.8508 35.3885 40.1824 34.2554 40.1824 32.9915C40.1824 32.1635 39.2019 31.1393 36.1511 30.2676Z" fill="currentColor"/></svg><span class="appname">EQDS Research</span><span class="sub">Multi-agent research platform</span></div>
+    <nav id="nav">
+      <button data-view="ask" class="active">Ask AI</button>
+      <button data-view="wiki">Company Wiki</button>
+      <button data-view="hood">Under the hood</button>
+    </nav>
+    <div class="hright">
+      <span class="pill">Synthetic demo data</span>
+      <button class="iconbtn" id="specBtn" title="Spec mode: show build annotations (design-doc section, API, event)" onclick="toggleSpecMode()" style="width:auto;padding:0 12px;font-size:12px;font-weight:700">SPEC</button>
+      <button class="iconbtn" title="Workspace settings" onclick="openSettings()">⚙</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ======================= ASK AI ======================= -->
+<section class="view active" id="view-ask">
+  <div class="grid2">
+    <div>
+      <div class="card ask" id="askCard" data-spec="§5.1 eqds-ui · POST /api/ask → eqds-moderator POST /runs">
+        <div class="kicker">Ask AI · moderator-led multi-agent research</div>
+        <h1 style="font-size:34px;margin:6px 0 6px">Ask the research agents</h1>
+        <p class="muted small" style="margin:0 0 14px">Several research agents, each with its own sources (GIC trades, external managers, EM quant, broker reports, expert and earnings calls, GIC research, news) debate your question, dig into where they disagree and answer in plain words with every source cited.</p>
+        <textarea id="q" placeholder="Your question: for example, what are the best external managers buying now, and do we own or trade any of it?"></textarea>
+        <div class="row" style="margin-top:12px">
+          <select id="rounds"><option value="1">1 round</option><option value="3" selected>3 rounds</option><option value="5">5 rounds</option></select>
+          <label class="toggle"><input type="checkbox" id="autoSel" checked onchange="renderChips()"> Let the moderator pick specialists</label>
+          <button class="btn" id="askBtn" onclick="ask()">Ask</button>
+        </div>
+        <div class="section-t" style="margin-top:16px">Specialists <span class="muted tiny" style="text-transform:none;letter-spacing:0">(from the registry · toggle to pick manually)</span></div>
+        <div class="chips" id="chips" data-spec="§5.4 GET /api/specialists ← Lakebase registry.specialists"></div>
+        <div class="hist" id="hist" data-spec="FR-UI-10 GET /api/history ← ops.runs (user_id)"></div>
+      </div>
+
+      <div id="runArea"></div>
+    </div>
+
+    <aside class="card side" id="liveCard" data-spec="§6.2 SSE event: activity (component, zone, label, detail, link)">
+      <div class="kicker">Live run</div>
+      <h3>What's happening under the hood</h3>
+      <p class="small muted" style="margin:6px 0 8px">Each step shows the Databricks component doing the work. Links open the workspace.</p>
+      <div id="evlog"><div class="small muted">No run yet. Ask a question.</div></div>
+    </aside>
+  </div>
+</section>
+
+<!-- ======================= WIKI ======================= -->
+<section class="view" id="view-wiki">
+  <div class="wikihead">
+    <h1 style="font-size:40px">Company Wiki</h1>
+    <p>Every wiki is built by GIC's research agents, who debate each page from their sources, and refreshes itself. Each morning at 07:30 SGT a wiki is refreshed when, since it was built, the company has reported earnings (two days after, once the call and the results notes are in), 6 or more new broker reports or 3 or more rating or target changes have arrived, 3 reports have landed within two days, or 30 days have passed with anything new. A refresh rebuilds only the pages the news makes stale. Broker flow waits 14 days after the last build and the week before a scheduled release, and a wiki is rebuilt in full 120 days after its last full build.</p>
+    <p class="small"><a class="ext" data-link="job:wikiJobId:eqds-wiki-refresh">Lakeflow Job · eqds-wiki-refresh (07:30 SGT, for-each)</a> · <a class="ext" data-link="table:earnings_calendar">earnings_calendar</a> · <a class="ext" data-link="table:wiki_state">wiki_state</a></p>
+  </div>
+  <div class="card" style="margin:18px 0">
+    <div class="row">
+      <input id="wsearch" placeholder="Search companies" style="flex:1;min-width:240px;font:inherit;padding:10px 12px;border:1px solid var(--gic-border-dark);border-radius:4px" oninput="renderWiki()">
+      <span>Top <select id="topn" onchange="renderWiki()"><option>50</option><option>100</option></select> holdings</span>
+      <span class="muted small" id="wikiCount"></span>
+      <button class="btn ghost" onclick="requestWikiPrompt()">+ Request a company</button>
+    </div>
+    <p class="muted small" style="margin:10px 0 0">By GICS sector: every wiki, and the fund's top holdings without one · holdings as of the latest month-end.</p>
+  </div>
+  <div class="card" style="margin-bottom:18px">
+    <b>Build queue</b> <span class="muted small">· parallel per company, capped at 4 to stay within model quota (target state; the prototype runs one at a time · a first build takes about 1 h 16 min, a refresh about 35 min)</span>
+    <div id="queue" class="small" style="margin-top:8px" data-spec="POST /api/wiki/request → Jobs run_now(eqds-wiki-refresh)">Nothing is building.</div>
+    <details class="small" style="margin-top:6px"><summary>Finished this week (12)</summary><div class="muted">Recruit Holdings · Reliance Industries · Tencent · Infosys · Samsung Electronics · TSMC · HDFC Bank · Meituan · SK Hynix · Kweichow Moutai · Bank Central Asia · Naspers</div></details>
+  </div>
+  <div class="sectors" id="sectors" data-spec="§10 GET /api/wiki ← wiki_state, wiki_pages, ref_holdings"></div>
+  <div id="wikiBody"></div>
+</section>
+
+<!-- ======================= UNDER THE HOOD ======================= -->
+<section class="view" id="view-hood">
+  <div class="kicker">Target-state architecture · restricted network</div>
+  <h1 style="font-size:36px;margin:4px 0 16px">Under the hood</h1>
+  <div class="subnav" id="subnav">
+    <button data-sub="arch" class="on">Architecture</button>
+    <button data-sub="trace">Trace</button>
+    <button data-sub="net">Network & Azure SQL</button>
+    <button data-sub="models">Models</button>
+    <button data-sub="data">Data & seed</button>
+    <button data-sub="reg">Specialist registry</button>
+    <button data-sub="qa">Quality & AgentOps</button>
+    <button data-sub="caps">Capability matrix</button>
+  </div>
+
+  <div class="sub" id="sub-arch">
+    <div class="arch" data-spec="§2 logical architecture · §3 component inventory">
+      <div class="lane users"><h5>Consumers</h5>
+        <a class="comp" data-comp="ui-user"><b>EQDS analysts & PMs</b>Databricks Apps SSO</a>
+        <a class="comp" data-comp="ada"><b>Ada (future)</b>agent API, own SP</a>
+        <a class="comp ext" data-comp="wikijob" data-link="job:wikiJobId:eqds-wiki-refresh"><b>Wiki refresh job</b>07:30 SGT</a>
+      </div>
+      <div class="lane sl"><h5>Serverless · Databricks Apps & managed services</h5>
+        <div class="slgrid">
+          <div>
+            <a class="comp" data-comp="ui" data-link="app:eqds-ui"><b>eqds-ui</b>Research UI App</a>
+            <a class="comp" data-comp="moderator" data-link="app:eqds-moderator"><b>eqds-moderator</b>LangGraph · async run API · resumable</a>
+          </div>
+          <div id="archSpecs"></div>
+          <div>
+            <a class="comp" data-comp="mcp-uc" data-link="schema"><b>UC Functions MCP</b>efm_buy_basket, quant_rank, price_move</a>
+            <a class="comp" data-comp="mcp-vs" data-link="table:broker_chunks_index"><b>Vector Search MCP</b>broker, expert, earnings chunks</a>
+            <a class="comp" data-comp="mcp-genie" data-link="genie"><b>Genie MCP</b>UC tables only</a>
+            <a class="comp" data-comp="mcp-bridge" data-link="app:eqds-bridge-mcp"><b>eqds-bridge-mcp</b>custom MCP on Apps</a>
+          </div>
+        </div>
+        <div class="platband">
+          <a class="comp" data-comp="gateway" data-link="endpoints"><b>Unity AI Gateway</b>model services eqds_llm_* + inference tables</a>
+          <a class="comp" data-comp="lakebase" data-link="lakebase"><b>Lakebase</b>runs · checkpoints · memory · queue</a>
+          <a class="comp" data-comp="mlflow" data-link="experiment"><b>MLflow 3</b>traces · eval · feedback</a>
+          <a class="comp" data-comp="uc" data-link="catalog"><b>Unity Catalog</b>data · indexes · functions · skills</a>
+        </div>
+      </div>
+      <div class="lane cl"><h5>GIC network · classic bridge</h5>
+        <a class="comp" data-comp="worker" data-link="job:bridgeJobId:eqds-bridge-worker"><b>Bridge worker</b>single-node classic job · Spark · allowlisted templates</a>
+        <a class="comp" data-comp="foreign" data-link="foreign:oms/trades"><b>Foreign catalog azure_oms</b>Lakehouse Federation · UC grants & audit</a>
+        <a class="comp" data-comp="ingest" data-link="job:ingestJobId:eqds-ingest-news"><b>Ingestion jobs</b>news history → UC news_items</a>
+      </div>
+      <div class="lane ex"><h5>External · stays outside Databricks</h5>
+        <a class="comp" data-comp="azure"><b>Azure SQL Database</b>eqds_oms<br>oms: trades, positions, accounts<br>research: views, notes<br>feeds: news_wire, web_index</a>
+        <a class="comp" data-comp="apollo"><b>Apollo</b>later</a>
+        <div class="blocked">✕ No route from serverless. The firewall allows only the classic egress IP (private connectivity not established).</div>
+      </div>
+    </div>
+    <p class="small muted" style="margin-top:12px">Components light up during a run. Click any box to open it in the Databricks workspace (set the workspace in ⚙).</p>
+  </div>
+
+  <div class="sub" id="sub-trace" style="display:none">
+    <div class="grid2">
+      <div class="card"><div class="row"><h3>MLflow trace</h3><span class="muted small" id="traceId"></span><a class="ext small" style="margin-left:auto" data-link="experiment">Open experiment traces</a></div>
+        <div class="spans" id="spans" style="margin-top:12px"><div class="muted small">Run a question first.</div></div></div>
+      <div class="card"><h3>Trace tags</h3><pre class="code" id="traceTags">—</pre>
+        <p class="small muted">Specialist traces are linked by <code>run_id</code> tag and <code>child_trace_id</code> attribute. User feedback from the answer card is logged as an assessment on this trace.</p></div>
+    </div>
+    <div class="grid2" style="grid-template-columns:1fr 1fr;margin-top:24px">
+      <div class="card" data-spec="§6.1 POST /invocations (ResponsesAgent) · request/response"><div class="row"><h3>Specialist invocation contract</h3>
+        <select id="invSel" style="margin-left:auto" onchange="renderInv()"></select></div>
+        <div class="row small" style="margin:10px 0 6px"><b>Request</b><span class="muted">custom_inputs carry run, round, caller and idempotency key</span></div><pre class="code" id="invReq">Run a question first.</pre>
+        <div class="row small" style="margin:10px 0 6px"><b>Response</b><span class="muted">custom_outputs.claims[] + sources[] feed the moderator and the citations</span></div><pre class="code" id="invRes">—</pre></div>
+      <div class="card" data-spec="§9 memory · Lakebase mem.conversation, mem.specialist"><h3>Memory (Lakebase)</h3>
+        <div class="section-t">mem.conversation · moderator session memory</div><div id="memConv" class="small muted">No turns yet.</div>
+        <div class="section-t">mem.specialist · per-specialist memory + idempotency cache</div><div id="memSpec" class="small muted">No interactions yet.</div>
+        <div class="section-t">Skills & prompts · UC Volume (pinned versions)</div><div id="skills" class="small"></div></div>
+    </div>
+  </div>
+
+  <div class="sub" id="sub-net" style="display:none">
+    <div class="grid2" style="grid-template-columns:1fr 1fr">
+      <div class="card" id="netServerless" data-spec="§7.4 expected failure (AC-15) · SQL warehouse statement"><div class="kicker">Serverless notebook / SQL warehouse</div><h3>Query Azure SQL directly</h3>
+        <pre class="code">SELECT company_id, side, value_usd
+FROM azure_oms.oms.trades
+WHERE trade_date >= '2026-10-22'
+LIMIT 10;</pre>
+        <button class="btn" onclick="netServerless()">Run on serverless</button>
+        <div id="netSOut"></div></div>
+      <div class="card" id="netBridge" data-spec="§5.6.1 bridge template oms_confirm_conflict@1"><div class="kicker">Specialist tool → bridge (classic)</div><h3>Same data, queried in place</h3>
+        <pre class="code">tools/call  oms_confirm_conflict
+  { "basket": "efm_top50",
+    "start": "2026-10-22", "end": "2026-11-20",
+    "strong_musd": 20 }
+→ bridge.requests (Lakebase) → classic worker
+→ spark.sql(template oms_confirm_conflict@1)
+→ azure_oms.oms.trades ⋈ efm_buy_basket</pre>
+        <button class="btn" onclick="netBridge()">Run via bridge</button>
+        <div id="netBOut"></div></div>
+    </div>
+    <p class="small" style="margin-top:12px"><a class="ext" data-link="foreign:oms/trades">azure_oms.oms.trades (foreign table)</a> · <a class="ext" data-link="connection">UC connection azure_oms_conn</a> · <a class="ext" data-link="job:bridgeJobId:eqds-bridge-worker">Bridge worker job</a> · <a class="ext" data-link="app:eqds-bridge-mcp">eqds-bridge-mcp app</a></p>
+    <div class="card" style="margin-top:16px" data-spec="§7.2 job_ingest_news (classic) · pattern A landed copy"><div class="kicker">Landed copy (pattern A)</div><h3>News history lineage</h3>
+      <div class="row small" style="margin-top:10px;gap:8px">
+        <a class="comp" style="margin:0" data-link="foreign:feeds/news_wire"><b>azure_oms.feeds.news_wire</b>Azure SQL (foreign)</a><span>→</span>
+        <a class="comp" style="margin:0" data-link="job:ingestJobId:eqds-ingest-news"><b>job_ingest_news</b>classic job cluster · every 15 min · MERGE</a><span>→</span>
+        <a class="comp" style="margin:0" data-link="lineage:news_items"><b>news_items</b>UC Delta · lineage</a><span>→</span>
+        <a class="comp" style="margin:0" data-link="table:news_chunks_index"><b>news_chunks_index</b>Vector Search</a></div>
+      <p class="small muted" style="margin:10px 0 0">The live tail (&lt; 15 min) is served by the bridge tool <code>news_latest</code>. Trades and research are never landed: they are queried in place.</p></div>
+  </div>
+
+  <div class="sub" id="sub-reg" style="display:none">
+    <div class="card">
+      <div class="row"><h3>Specialist registry</h3><span class="muted small">Lakebase <code>registry.specialists</code> · the moderator caches it for 60 s · no moderator redeploy needed</span>
+        <button class="btn sm" id="regBtn" style="margin-left:auto" onclick="registerGeo()">+ Register “Geographic revenue”</button></div>
+      <table class="t" style="margin-top:12px"><thead><tr><th>Key</th><th>Name</th><th>Tag</th><th>Tools</th><th>App</th><th>Version</th><th>Owner</th></tr></thead><tbody id="regBody"></tbody></table>
+    </div>
+  </div>
+
+  <div class="sub" id="sub-qa" style="display:none">
+    <div class="grid2" style="grid-template-columns:1fr 1fr">
+      <div class="card"><div class="row"><h3>Evaluation · eqds staging</h3><a class="ext small" style="margin-left:auto" data-link="experiment">MLflow evaluation runs</a></div>
+        <p class="small muted" id="evalNote">Latest evaluation run from MLflow.</p>
+        <div id="evalBars"></div>
+        <button class="btn sm" id="evalBtn" onclick="runEval()">Run smoke evaluation</button> <span class="small muted" id="evalMsg"></span></div>
+      <div class="card"><div class="row"><h3>AgentOps · latest pipeline runs</h3><a class="ext small" style="margin-left:auto" data-link="github">GitHub</a></div>
+        <p class="small muted" id="ciNote">GitHub Actions: PR gate, staging and prod deployments (per-agent release via DABs).</p>
+        <div class="pipe" id="pipe"></div>
+        <button class="btn sm" style="margin-top:12px" onclick="loadCI()">Refresh</button></div>
+    </div>
+  </div>
+  <div class="sub" id="sub-models" style="display:none">
+    <div class="grid2" style="grid-template-columns:1fr 1fr">
+      <div class="card" data-spec="§8.0 endpoints created by the bundle · §8.1 config/models.<env>.yaml"><div class="row"><h3>Model services (created per environment)</h3><a class="ext small" style="margin-left:auto" data-link="endpoints">Serving endpoints</a></div>
+        <p class="small muted" style="margin:6px 0 0">The deployment <b>creates</b> one Unity AI Gateway model service per tier (DAB <code>model_services</code>), each with an inference table, rate limits and gateway-side fallback. Every agent call goes through them; no legacy serving endpoints are used for LLMs (embeddings for Vector Search excepted).</p>
+        <table class="t" style="margin-top:10px"><thead><tr><th>Tier</th><th>Model service (created)</th><th>Serves</th><th>Fallback</th></tr></thead><tbody id="tierBody"></tbody></table>
+        <pre class="code" id="tierYaml" style="margin-top:12px"></pre>
+        <div class="section-t">Model service state</div>
+        <div class="small" id="capSnap"></div></div>
+      <div class="card" data-spec="§8.2 retry/fallback · §8.3 normalize · AC-07 AC-08"><h3>Resilience & normalization</h3>
+        <p class="small muted">All LLM calls go through the shared <code>eqds_llm</code> client. Test-only fault flag: <code>EQDS_LLM_FAULT=429:primary</code>.</p>
+        <div class="row"><button class="btn sm" onclick="inject429()">Inject 429 on standard primary</button></div>
+        <div class="logbox" id="modelLog" style="margin-top:12px">Ready.</div></div>
+    </div>
+  </div>
+
+  <div class="sub" id="sub-data" style="display:none">
+    <div class="grid2" style="grid-template-columns:1.1fr .9fr">
+      <div class="card" data-spec="§14.3 placement map · §14.8 sizing"><h3>Synthetic data placement</h3>
+        <p class="small muted">Deterministic seed 42 · DEMO_AS_OF 2026-11-20 · all data labelled SYNTHETIC DEMO DATA</p>
+        <table class="t"><thead><tr><th>Dataset</th><th>Lives in</th><th>Rows</th><th>Access</th></tr></thead><tbody id="dataBody"></tbody></table></div>
+      <div class="card" data-spec="§14.9 job_validate_seed (classic) · AC-16"><div class="row"><h3>Planted facts & validation</h3><a class="ext small" style="margin-left:auto" data-link="job:seedJobId:eqds-validate-seed">job_validate_seed</a></div>
+        <div id="checks" style="margin-top:8px"></div>
+        <button class="btn sm" style="margin-top:12px" onclick="runValidate()">Run job_validate_seed</button><span id="valMsg" class="small" style="margin-left:10px"></span></div>
+    </div>
+  </div>
+
+  <div class="sub" id="sub-caps" style="display:none">
+    <p class="small muted" data-spec="Requirements C-06 · deck capability matrix">Status reflects the discussion and must be confirmed for the EQDS workspace (draft).</p>
+    <div class="cols3" id="caps"></div>
+  </div>
+
+</section>
+
+<footer>All data is synthetic, for demonstration only. Company names are labels only; brokers, managers, experts, analysts and accounts are fictional. · GIC palette per gic.careers · Built on Databricks Apps, Lakebase, MLflow 3, Unity Catalog, Lakehouse Federation.</footer>
+</main>
+
+<!-- sources drawer -->
+<div class="drawer" id="drawer">
+  <div class="row"><h3>Sources</h3><span class="muted small" id="srcCount"></span><button class="btn ghost sm" style="margin-left:auto" onclick="closeDrawer()">Close</button></div>
+  <p class="small muted">The tables and documents the agents read. External-database sources are queried in place in Azure SQL via the bridge.</p>
+  <div id="srcList"></div>
+</div>
+
+<!-- settings modal -->
+<div class="modal" id="settings"><div class="box">
+  <h2>Databricks workspace links</h2>
+  <p class="small muted">Links throughout the demo are built from these values and stored in this browser only. You can also pass them as URL parameters, e.g. <code>?ws=https://your-workspace-host&amp;exp=123</code>.</p>
+  <div class="form" id="form"></div>
+  <div class="row" style="margin-top:18px;justify-content:flex-end"><button class="btn ghost" onclick="closeSettings()">Cancel</button><button class="btn" onclick="saveSettings()">Save</button></div>
+</div></div>
+
+<!-- wiki modal -->
+<div class="modal" id="wikiModal"><div class="box" style="width:min(980px,94vw)">
+  <div class="row"><h2 id="wmTitle">Company Wiki</h2><button class="btn ghost sm" style="margin-left:auto" onclick="document.getElementById('wikiModal').classList.remove('on')">← All companies</button></div>
+  <div class="wtabs" id="wmTabs"></div>
+  <div id="wmBody"></div>
+</div></div>
+
+<div id="toast" style="position:fixed;top:80px;right:24px;background:var(--gic-navy);color:#fff;padding:12px 18px;border-radius:4px;font-size:14px;z-index:120;display:none;max-width:420px"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,327 @@
+{
+ "datasets": [
+  {
+   "name": "checks",
+   "displayName": "Seed validation (latest run)",
+   "queryLines": [
+    "SELECT check_no, check_id, name, passed, actual FROM seed_validation_results WHERE ran_at >= (SELECT max(ran_at) FROM seed_validation_results) - INTERVAL 15 MINUTES AND check_id NOT LIKE 'rowcount:%' ORDER BY check_no"
+   ]
+  },
+  {
+   "name": "summary",
+   "displayName": "Validation summary",
+   "queryLines": [
+    "SELECT count_if(passed) AS passed, count_if(NOT passed) AS failed, max(ran_at) AS last_run FROM seed_validation_results WHERE ran_at >= (SELECT max(ran_at) FROM seed_validation_results) - INTERVAL 15 MINUTES"
+   ]
+  },
+  {
+   "name": "volumes",
+   "displayName": "Row counts",
+   "queryLines": [
+    "SELECT replace(check_id, 'rowcount:', '') AS dataset, actual AS rows FROM seed_validation_results WHERE ran_at >= (SELECT max(ran_at) FROM seed_validation_results) - INTERVAL 15 MINUTES AND check_id LIKE 'rowcount:%' ORDER BY 1"
+   ]
+  },
+  {
+   "name": "index_state",
+   "displayName": "Documents by source",
+   "queryLines": [
+    "SELECT 'broker_chunks' AS source, count(*) AS chunks FROM broker_chunks UNION ALL SELECT 'expert_chunks', count(*) FROM expert_chunks UNION ALL SELECT 'earnings_chunks', count(*) FROM earnings_chunks UNION ALL SELECT 'news_items', count(*) FROM news_items"
+   ]
+  }
+ ],
+ "pages": [
+  {
+   "name": "ops",
+   "displayName": "EQDS platform health",
+   "pageType": "PAGE_TYPE_CANVAS",
+   "layout": [
+    {
+     "widget": {
+      "name": "passed",
+      "queries": [
+       {
+        "name": "main_query",
+        "query": {
+         "datasetName": "summary",
+         "fields": [
+          {
+           "name": "passed",
+           "expression": "`passed`"
+          }
+         ],
+         "disaggregated": true
+        }
+       }
+      ],
+      "spec": {
+       "version": 2,
+       "widgetType": "counter",
+       "encodings": {
+        "value": {
+         "fieldName": "passed",
+         "displayName": "Checks passed"
+        }
+       },
+       "frame": {
+        "showTitle": true,
+        "title": "Checks passed"
+       }
+      }
+     },
+     "position": {
+      "x": 0,
+      "y": 0,
+      "width": 2,
+      "height": 3
+     }
+    },
+    {
+     "widget": {
+      "name": "failed",
+      "queries": [
+       {
+        "name": "main_query",
+        "query": {
+         "datasetName": "summary",
+         "fields": [
+          {
+           "name": "failed",
+           "expression": "`failed`"
+          }
+         ],
+         "disaggregated": true
+        }
+       }
+      ],
+      "spec": {
+       "version": 2,
+       "widgetType": "counter",
+       "encodings": {
+        "value": {
+         "fieldName": "failed",
+         "displayName": "Checks failed"
+        }
+       },
+       "frame": {
+        "showTitle": true,
+        "title": "Checks failed"
+       }
+      }
+     },
+     "position": {
+      "x": 2,
+      "y": 0,
+      "width": 2,
+      "height": 3
+     }
+    },
+    {
+     "widget": {
+      "name": "last",
+      "queries": [
+       {
+        "name": "main_query",
+        "query": {
+         "datasetName": "summary",
+         "fields": [
+          {
+           "name": "last_run",
+           "expression": "`last_run`"
+          }
+         ],
+         "disaggregated": true
+        }
+       }
+      ],
+      "spec": {
+       "version": 2,
+       "widgetType": "counter",
+       "encodings": {
+        "value": {
+         "fieldName": "last_run",
+         "displayName": "Last validation"
+        }
+       },
+       "frame": {
+        "showTitle": true,
+        "title": "Last validation"
+       }
+      }
+     },
+     "position": {
+      "x": 4,
+      "y": 0,
+      "width": 2,
+      "height": 3
+     }
+    },
+    {
+     "widget": {
+      "name": "checks-t",
+      "queries": [
+       {
+        "name": "main_query",
+        "query": {
+         "datasetName": "checks",
+         "fields": [
+          {
+           "name": "check_id",
+           "expression": "`check_id`"
+          },
+          {
+           "name": "name",
+           "expression": "`name`"
+          },
+          {
+           "name": "passed",
+           "expression": "`passed`"
+          },
+          {
+           "name": "actual",
+           "expression": "`actual`"
+          }
+         ],
+         "disaggregated": true
+        }
+       }
+      ],
+      "spec": {
+       "version": 2,
+       "widgetType": "table",
+       "encodings": {
+        "columns": [
+         {
+          "fieldName": "check_id",
+          "displayName": "check id"
+         },
+         {
+          "fieldName": "name",
+          "displayName": "name"
+         },
+         {
+          "fieldName": "passed",
+          "displayName": "passed"
+         },
+         {
+          "fieldName": "actual",
+          "displayName": "actual"
+         }
+        ]
+       },
+       "frame": {
+        "showTitle": true,
+        "title": "Seed validation checks"
+       }
+      }
+     },
+     "position": {
+      "x": 0,
+      "y": 3,
+      "width": 6,
+      "height": 9
+     }
+    },
+    {
+     "widget": {
+      "name": "vol-t",
+      "queries": [
+       {
+        "name": "main_query",
+        "query": {
+         "datasetName": "volumes",
+         "fields": [
+          {
+           "name": "dataset",
+           "expression": "`dataset`"
+          },
+          {
+           "name": "rows",
+           "expression": "`rows`"
+          }
+         ],
+         "disaggregated": true
+        }
+       }
+      ],
+      "spec": {
+       "version": 2,
+       "widgetType": "table",
+       "encodings": {
+        "columns": [
+         {
+          "fieldName": "dataset",
+          "displayName": "dataset"
+         },
+         {
+          "fieldName": "rows",
+          "displayName": "rows"
+         }
+        ]
+       },
+       "frame": {
+        "showTitle": true,
+        "title": "Row counts"
+       }
+      }
+     },
+     "position": {
+      "x": 0,
+      "y": 12,
+      "width": 3,
+      "height": 6
+     }
+    },
+    {
+     "widget": {
+      "name": "idx-t",
+      "queries": [
+       {
+        "name": "main_query",
+        "query": {
+         "datasetName": "index_state",
+         "fields": [
+          {
+           "name": "source",
+           "expression": "`source`"
+          },
+          {
+           "name": "chunks",
+           "expression": "`chunks`"
+          }
+         ],
+         "disaggregated": true
+        }
+       }
+      ],
+      "spec": {
+       "version": 2,
+       "widgetType": "table",
+       "encodings": {
+        "columns": [
+         {
+          "fieldName": "source",
+          "displayName": "source"
+         },
+         {
+          "fieldName": "chunks",
+          "displayName": "chunks"
+         }
+        ]
+       },
+       "frame": {
+        "showTitle": true,
+        "title": "Documents available to the retrievers"
+       }
+      }
+     },
+     "position": {
+      "x": 3,
+      "y": 12,
+      "width": 3,
+      "height": 6
+     }
+    }
+   ]
+  }
+ ]
+}

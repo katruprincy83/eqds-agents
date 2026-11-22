@@ -1,0 +1,13 @@
+# Embedding endpoint created by the deployment (design §8.0). Vector Search managed indexes need a Model Serving
+# endpoint for their embedding model; this is the ONLY serving endpoint the project owns. LLM calls never use it:
+# they go through the Unity AI Gateway model services in resources/serving/llm.yml.
+# The served entity block comes from the environment profile (`model_serving.embed_*`).
+resources:
+  model_serving_endpoints:
+    embed:
+      name: ${var.name_prefix}-embed${var.suffix}
+      config:
+        served_entities: ${var.embed_served_entities}
+      # the API requires an ai_gateway block on update; usage tracking only (no inference table or rate limit on the embedding endpoint)
+      ai_gateway:
+        usage_tracking_config: {enabled: true}

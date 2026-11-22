@@ -1,0 +1,11 @@
+[project]
+name = "eqds-llm"
+version = "1.0.0"
+description = "EQDS model access: tiers, normalization, retry/fallback, cost"
+requires-python = ">=3.10"
+dependencies = ["pydantic>=2.6", "pyyaml>=6", "databricks-sdk>=0.50", "openai>=1.40"]
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+[tool.setuptools.packages.find]
+include = ["eqds_llm*"]

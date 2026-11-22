@@ -1,0 +1,32 @@
+# Synthetic data configuration (design §14). SYNTHETIC DEMO DATA.
+# Catalog/schema/azure host are NOT here: they come from the environment profile at run time.
+seed: 42
+demo_as_of: "2026-11-20"          # Fri. All windows are offsets from this date (re-datable)
+history_start: "2025-11-21"
+use_real_company_names: true      # false for anything shared externally
+n_companies: 600
+n_trades: 150000
+n_efm_managers: 120
+n_broker_reports: 1500
+n_broker_pdfs: 250
+n_expert_calls: 80
+n_earnings_calls: 400
+n_notes: 2000
+n_views: 2400
+n_news: 30000
+n_web: 800
+positions_business_days: 60
+holdings_snapshot: "2026-11-10"
+month_ends: ["2025-11-30","2025-12-31","2026-01-31","2026-02-28","2026-03-31","2026-04-30","2026-05-31","2026-06-30","2026-07-31","2026-08-31","2026-09-30","2026-10-31"]   # calendar month-ends (M0 = 2026-10-31)
+efm_window: ["2026-08-31","2026-09-30","2026-10-31"]
+funds: {NGC85: "EM core", NGC2383: "EM quant window"}
+strategies:
+  - {strategy_id: EMA,   name: "EMA Active",        style: active,     accounts: 10, trade_share: 0.30, count_share: 0.14, median_usd: 3000000, sigma: 1.1, fund: NGC85}
+  - {strategy_id: GEMF,  name: "GEM Focus",         style: active,     accounts: 6,  trade_share: 0.15, count_share: 0.06, median_usd: 4500000, sigma: 1.0, fund: NGC85}
+  - {strategy_id: NCREP, name: "NC EM Replication", style: index,      accounts: 12, trade_share: 0.35, count_share: 0.55, median_usd: 250000,  sigma: 0.9, fund: NGC85}
+  - {strategy_id: EMQ,   name: "EM Quant",          style: systematic, accounts: 5,  trade_share: 0.10, count_share: 0.18, median_usd: 800000,  sigma: 0.8, fund: NGC2383}
+  - {strategy_id: JPA,   name: "Japan Active",      style: active,     accounts: 5,  trade_share: 0.07, count_share: 0.05, median_usd: 2500000, sigma: 1.0, fund: OTHER}
+  - {strategy_id: APINC, name: "APAC Income",       style: income,     accounts: 2,  trade_share: 0.03, count_share: 0.02, median_usd: 1500000, sigma: 0.9, fund: OTHER}
+brokers: ["Harbour Lane Securities","Meridian Capital Research","Northbridge Securities","Pacific Crest Partners","Kestrel Research","Lionsgate Asia Securities","Summit Ridge Research","Tanjong Equities","Aster & Co.","Bayview Global Markets"]
+wires: ["Asia Markets Wire","Pacific Business Daily","Meridian Newswire","Tanjong Times"]
+analysts: ["Priya Venkatesan","Wei Lun Tan","Hana Okabe","Marcus Lindqvist","Aisha Rahman","Daniel Koh","Mei Ling Chua","Rohan Mehta","Sofia Reyes","Jun Ho Park","Elena Voss","Kenji Arai"]

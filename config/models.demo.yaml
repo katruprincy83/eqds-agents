@@ -1,0 +1,41 @@
+# Model tier configuration (design §8.1). Every LLM call goes through Unity AI Gateway MODEL SERVICES (UC securables,
+# `catalog.schema.service`); there are no legacy Model Serving endpoints for LLMs and no direct calls to pay-per-token endpoints.
+#
+# For each tier the deployment owns one model service, `<catalog>.<schema>.<name_prefix>_llm_<tier><suffix>`
+# (created by resources/serving/llm.yml via `databricks bundle deploy`), with
+#   - routing:   `model` is the primary destination, `gateway_fallback` the destinations the gateway tries when the primary fails,
+#   - an inference table `<service>_payload` in the same schema (request/response logging, usage, latency),
+#   - rate limits from the environment profile (`model_serving.rate_limits`).
+# `client_fallback` is a second model service (a platform one in `system.ai`) the client fails over to, via the same gateway,
+# when the project-owned service itself is unavailable or rate limited.
+# Changing what a tier serves is configuration only: edit `model`, run `make deploy`.
+tiers:
+  reasoning:
+    model: system.ai.databricks-claude-sonnet-5      # demo: sonnet-5 keeps a run inside the USD 2 / 480 s budget; use opus for deeper reasoning
+    gateway_fallback: [system.ai.databricks-claude-opus-5-5]
+    client_fallback: system.ai.claude-opus-5-5
+    max_output_tokens: 4096
+  standard:
+    model: system.ai.databricks-claude-sonnet-5
+    gateway_fallback: [system.ai.databricks-claude-sonnet-4-6]
+    client_fallback: system.ai.claude-sonnet-4-6
+    max_output_tokens: 2048
+  fast:
+    model: system.ai.databricks-claude-haiku-5-5
+    gateway_fallback: [system.ai.databricks-claude-haiku-4-5]
+    client_fallback: system.ai.claude-haiku-4-5
+    max_output_tokens: 1024
+# Embeddings are not an LLM tier: Vector Search managed indexes require a Model Serving endpoint for the embedding model, so this
+# is the one serving endpoint the project creates (resources/serving/embed.yml). Agents never call it directly.
+embedding:
+  endpoint: ${name_prefix}-embed${suffix}
+# Optional: explicit AI Gateway base URL. Empty = derived from the workspace host + workspace id.
+gateway: {url: ""}
+retry: {max_attempts: 4, base_delay_s: 1.0, max_delay_s: 16, retry_on: [429, 500, 502, 503, 504]}
+pricing_usd_per_1m:        # PLACEHOLDERS for cost estimates only (keyed by UC model name): fill from the current price list
+  system.ai.databricks-claude-opus-5-5: {in: 5.0, out: 25.0}
+  system.ai.databricks-claude-sonnet-5: {in: 3.0, out: 15.0}
+  system.ai.databricks-claude-sonnet-4-6: {in: 3.0, out: 15.0}
+  system.ai.databricks-claude-haiku-5-5: {in: 1.0, out: 5.0}
+  system.ai.databricks-claude-haiku-4-5: {in: 1.0, out: 5.0}
+  default: {in: 3.0, out: 15.0}

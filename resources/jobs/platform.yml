@@ -1,0 +1,444 @@
+# Platform jobs (design §4.2, §5.6, §7.2, §10, §11.2, §14.7). Seed jobs are in seed.yml. Compute: serverless unless the job must reach the external DB (bridge_compute, E8).
+resources:
+  jobs:
+    validate_seed:
+      name: ${var.name_prefix}-validate-seed-${var.target_name}
+      max_concurrent_runs: 1
+      parameters:
+      - name: target
+        default: ${var.target_name}
+      job_clusters: ${var.azure_job_clusters}
+      environments: ${var.azure_environments}
+      tasks:
+      - task_key: validate_seed
+        spark_python_task:
+          python_file: ../../src/jobs/validate_seed.py
+          parameters:
+          - --target
+          - '{{job.parameters.target}}'
+          - --root
+          - ${workspace.file_path}
+        job_cluster_key: ${var.azure_cluster_key}
+        environment_key: ${var.azure_env_key}
+        libraries: ${var.azure_libraries}
+    build_eval:
+      name: ${var.name_prefix}-build-eval-${var.target_name}
+      max_concurrent_runs: 1
+      parameters:
+      - name: target
+        default: ${var.target_name}
+      environments:
+      - environment_key: default
+        spec:
+          environment_version: ${var.serverless_env_version}
+          dependencies:
+          - pyyaml
+          - pydantic>=2.6
+          - psycopg[binary,pool]>=3.1
+          - httpx
+          - databricks-sdk>=0.50
+          - pandas
+          - pyarrow
+          - numpy
+      tasks:
+      - task_key: build_eval
+        spark_python_task:
+          python_file: ../../src/jobs/build_eval.py
+          parameters:
+          - --target
+          - '{{job.parameters.target}}'
+          - --root
+          - ${workspace.file_path}
+        environment_key: default
+    env_bootstrap:
+      name: ${var.name_prefix}-env-bootstrap-${var.target_name}
+      max_concurrent_runs: 1
+      parameters:
+      - name: target
+        default: ${var.target_name}
+      environments:
+      - environment_key: default
+        spec:
+          environment_version: ${var.serverless_env_version}
+          dependencies:
+          - pyyaml
+          - pydantic>=2.6
+          - psycopg[binary,pool]>=3.1
+          - httpx
+          - databricks-sdk>=0.50
+          - pandas
+          - pyarrow
+          - numpy
+          - langchain-core
+          - openai
+          - mlflow>=3.1
+      tasks:
+      - task_key: env_bootstrap
+        spark_python_task:
+          python_file: ../../src/jobs/env_bootstrap.py
+          parameters:
+          - --target
+          - '{{job.parameters.target}}'
+          - --root
+          - ${workspace.file_path}
+        environment_key: default
+      timeout_seconds: 7200
+    env_preflight:
+      name: ${var.name_prefix}-env-preflight-${var.target_name}
+      max_concurrent_runs: 1
+      parameters:
+      - name: target
+        default: ${var.target_name}
+      environments:
+      - environment_key: default
+        spec:
+          environment_version: ${var.serverless_env_version}
+          dependencies: &id001
+          - pyyaml
+          - pydantic>=2.6
+          - psycopg[binary,pool]>=3.1
+          - httpx
+          - databricks-sdk>=0.50
+          - pandas
+          - pyarrow
+      tasks:
+      - task_key: env_preflight
+        spark_python_task:
+          python_file: ../../src/jobs/env_preflight.py
+          parameters:
+          - --target
+          - '{{job.parameters.target}}'
+          - --root
+          - ${workspace.file_path}
+        environment_key: default
+    env_teardown:
+      name: ${var.name_prefix}-env-teardown-${var.target_name}
+      max_concurrent_runs: 1
+      parameters:
+      - name: target
+        default: ${var.target_name}
+      environments:
+      - environment_key: default
+        spec:
+          environment_version: ${var.serverless_env_version}
+          dependencies:
+          - pyyaml
+          - pydantic>=2.6
+          - psycopg[binary,pool]>=3.1
+          - httpx
+          - databricks-sdk>=0.50
+          - pandas
+          - pyarrow
+          - numpy
+          - langchain-core
+          - openai
+          - mlflow>=3.1
+      tasks:
+      - task_key: env_bootstrap
+        spark_python_task:
+          python_file: ../../src/jobs/env_bootstrap.py
+          parameters:
+          - --target
+          - '{{job.parameters.target}}'
+          - --root
+          - ${workspace.file_path}
+          - --teardown
+        environment_key: default
+    state_export:
+      name: ${var.name_prefix}-state-export-${var.target_name}
+      max_concurrent_runs: 1
+      parameters:
+      - name: target
+        default: ${var.target_name}
+      - name: mode
+        default: export
+      - name: path
+        default: ''
+      environments:
+      - environment_key: default
+        spec:
+          environment_version: ${var.serverless_env_version}
+          dependencies: *id001
+      tasks:
+      - task_key: state_io
+        spark_python_task:
+          python_file: ../../src/jobs/state_io.py
+          parameters:
+          - --target
+          - '{{job.parameters.target}}'
+          - --root
+          - ${workspace.file_path}
+          - --mode
+          - '{{job.parameters.mode}}'
+          - --path
+          - '{{job.parameters.path}}'
+        environment_key: default
+    state_import:
+      name: ${var.name_prefix}-state-import-${var.target_name}
+      max_concurrent_runs: 1
+      parameters:
+      - name: target
+        default: ${var.target_name}
+      - name: mode
+        default: import
+      - name: path
+        default: ''
+      environments:
+      - environment_key: default
+        spec:
+          environment_version: ${var.serverless_env_version}
+          dependencies: *id001
+      tasks:
+      - task_key: state_io
+        spark_python_task:
+          python_file: ../../src/jobs/state_io.py
+          parameters:
+          - --target
+          - '{{job.parameters.target}}'
+          - --root
+          - ${workspace.file_path}
+          - --mode
+          - '{{job.parameters.mode}}'
+          - --path
+          - '{{job.parameters.path}}'
+        environment_key: default
+    docs_index:
+      name: ${var.name_prefix}-docs-index-${var.target_name}
+      max_concurrent_runs: 1
+      parameters:
+      - name: target
+        default: ${var.target_name}
+      environments:
+      - environment_key: default
+        spec:
+          environment_version: ${var.serverless_env_version}
+          dependencies: *id001
+      tasks:
+      - task_key: docs_index
+        spark_python_task:
+          python_file: ../../src/jobs/docs_index.py
+          parameters:
+          - --target
+          - '{{job.parameters.target}}'
+          - --root
+          - ${workspace.file_path}
+        environment_key: default
+    eval:
+      name: ${var.name_prefix}-eval-${var.target_name}
+      max_concurrent_runs: 1
+      parameters:
+      - name: target
+        default: ${var.target_name}
+      - name: subset
+        default: smoke
+      - name: rounds
+        default: '0'
+      environments:
+      - environment_key: default
+        spec:
+          environment_version: ${var.serverless_env_version}
+          dependencies:
+          - pyyaml
+          - pydantic>=2.6
+          - psycopg[binary,pool]>=3.1
+          - httpx
+          - databricks-sdk>=0.50
+          - pandas
+          - pyarrow
+          - langchain-core
+          - openai
+          - mlflow>=3.1
+      tasks:
+      - task_key: eval
+        spark_python_task:
+          python_file: ../../src/jobs/eval.py
+          parameters:
+          - --target
+          - '{{job.parameters.target}}'
+          - --root
+          - ${workspace.file_path}
+          - --subset
+          - '{{job.parameters.subset}}'
+          - --rounds
+          - '{{job.parameters.rounds}}'
+        environment_key: default
+      timeout_seconds: 7200
+    ingest_news:
+      name: ${var.name_prefix}-ingest-news-${var.target_name}
+      max_concurrent_runs: 1
+      parameters:
+      - name: target
+        default: ${var.target_name}
+      job_clusters: ${var.azure_job_clusters}
+      environments: ${var.azure_environments}
+      tasks:
+      - task_key: ingest_news
+        spark_python_task:
+          python_file: ../../src/jobs/ingest_news.py
+          parameters:
+          - --target
+          - '{{job.parameters.target}}'
+          - --root
+          - ${workspace.file_path}
+        job_cluster_key: ${var.azure_cluster_key}
+        environment_key: ${var.azure_env_key}
+        libraries: ${var.azure_libraries}
+      schedule:
+        quartz_cron_expression: ${var.ingest_news_cron}
+        timezone_id: UTC
+        pause_status: ${var.schedule_status}
+    news_generator:
+      name: ${var.name_prefix}-news-generator-${var.target_name}
+      max_concurrent_runs: 1
+      parameters:
+      - name: target
+        default: ${var.target_name}
+      - name: minutes
+        default: '30'
+      job_clusters: ${var.azure_job_clusters}
+      environments: ${var.azure_environments}
+      tasks:
+      - task_key: news_generator
+        spark_python_task:
+          python_file: ../../src/jobs/news_generator.py
+          parameters:
+          - --target
+          - '{{job.parameters.target}}'
+          - --root
+          - ${workspace.file_path}
+          - --minutes
+          - '{{job.parameters.minutes}}'
+        job_cluster_key: ${var.azure_cluster_key}
+        environment_key: ${var.azure_env_key}
+        libraries: ${var.azure_libraries}
+      timeout_seconds: 7200
+    bridge_worker:
+      name: ${var.name_prefix}-bridge-worker-${var.target_name}
+      max_concurrent_runs: 1
+      parameters:
+      - name: target
+        default: ${var.target_name}
+      job_clusters: ${var.azure_job_clusters}
+      environments: ${var.azure_environments}
+      tasks:
+      - task_key: bridge_worker
+        spark_python_task:
+          python_file: ../../src/jobs/bridge_worker.py
+          parameters:
+          - --target
+          - '{{job.parameters.target}}'
+          - --root
+          - ${workspace.file_path}
+        job_cluster_key: ${var.azure_cluster_key}
+        environment_key: ${var.azure_env_key}
+        libraries: ${var.azure_libraries}
+      continuous:
+        pause_status: ${var.bridge_worker_status}
+    wiki_refresh:
+      name: ${var.name_prefix}-wiki-refresh-${var.target_name}
+      max_concurrent_runs: 1
+      schedule:
+        quartz_cron_expression: ${var.wiki_refresh_cron}
+        timezone_id: ${var.wiki_refresh_tz}
+        pause_status: ${var.schedule_status}
+      parameters:
+      - name: target
+        default: ${var.target_name}
+      - name: only_company
+        default: ''
+      - name: mode
+        default: ''
+      - name: rounds
+        default: '2'
+      environments:
+      - environment_key: default
+        spec:
+          environment_version: ${var.serverless_env_version}
+          dependencies:
+          - pyyaml
+          - pydantic>=2.6
+          - psycopg[binary,pool]>=3.1
+          - httpx
+          - databricks-sdk>=0.50
+          - pandas
+          - pyarrow
+          - numpy
+      tasks:
+      - task_key: evaluate_triggers
+        spark_python_task:
+          python_file: ../../src/jobs/wiki_evaluate_triggers.py
+          parameters:
+          - --target
+          - '{{job.parameters.target}}'
+          - --root
+          - ${workspace.file_path}
+          - --only_company
+          - '{{job.parameters.only_company}}'
+          - --mode
+          - '{{job.parameters.mode}}'
+        environment_key: default
+      - task_key: build
+        depends_on:
+        - task_key: evaluate_triggers
+        for_each_task:
+          inputs: '{{tasks.evaluate_triggers.values.companies}}'
+          concurrency: 4
+          task:
+            task_key: build_one
+            environment_key: default
+            spark_python_task:
+              python_file: ../../src/jobs/wiki_build_company.py
+              parameters:
+              - --target
+              - '{{job.parameters.target}}'
+              - --root
+              - ${workspace.file_path}
+              - --item
+              - '{{input}}'
+              - --rounds
+              - '{{job.parameters.rounds}}'
+    demo_reset:
+      name: ${var.name_prefix}-demo-reset-${var.target_name}
+      max_concurrent_runs: 1
+      timeout_seconds: 7200
+      tasks:
+      - task_key: seed_uc
+        run_job_task:
+          job_id: ${resources.jobs.seed_uc.id}
+      - task_key: seed_docs
+        run_job_task:
+          job_id: ${resources.jobs.seed_docs.id}
+        depends_on:
+        - task_key: seed_uc
+      - task_key: seed_azure
+        run_job_task:
+          job_id: ${resources.jobs.seed_azure.id}
+        depends_on:
+        - task_key: seed_uc
+      - task_key: bootstrap
+        run_job_task:
+          job_id: ${resources.jobs.env_bootstrap.id}
+        depends_on:
+        - task_key: seed_docs
+        - task_key: seed_azure
+      - task_key: ingest_news
+        run_job_task:
+          job_id: ${resources.jobs.ingest_news.id}
+        depends_on:
+        - task_key: bootstrap
+      - task_key: docs_index
+        run_job_task:
+          job_id: ${resources.jobs.docs_index.id}
+        depends_on:
+        - task_key: bootstrap
+      - task_key: validate
+        run_job_task:
+          job_id: ${resources.jobs.validate_seed.id}
+        depends_on:
+        - task_key: ingest_news
+        - task_key: docs_index
+      - task_key: build_eval
+        run_job_task:
+          job_id: ${resources.jobs.build_eval.id}
+        depends_on:
+        - task_key: validate

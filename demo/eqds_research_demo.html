@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EQDS Research · Multi-agent research platform (synthetic data)</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 40.2 64' role='img' aria-label='GIC'%3E%3Cpath d='M6.10156 13.75V26.89C6.90783 26.7156 7.80125 26.5631 8.71647 26.4106V13.1399H6.71171C6.38484 13.1399 6.10156 13.4014 6.10156 13.75Z' fill='%23071D49'/%3E%3Cpath d='M0 32.9697C0 33.7324 0.893429 34.7348 4.03132 35.6718C4.07491 35.6718 4.11849 35.6718 4.11849 35.6282C4.14028 35.5846 4.11849 35.5411 4.07491 35.5411C3.00715 35.0834 2.44059 34.604 2.44059 34.0811C2.44059 33.2312 4.05312 32.4903 6.10146 31.9673V50.2717C6.10146 50.6204 6.38475 50.8819 6.71161 50.8819H8.71638V29.2653C5.01192 29.81 0 31.0739 0 32.9697Z' fill='%23071D49'/%3E%3Cpath d='M11.571 7.67051V26.0403C12.6824 25.9313 13.8373 25.8224 15.0358 25.757V7.03857H12.203C11.8543 7.03857 11.571 7.32186 11.571 7.67051Z' fill='%23071D49'/%3E%3Cpath d='M11.5711 56.3297C11.5711 56.6783 11.8544 56.9398 12.1813 56.9398H15.0141V28.6116C13.8156 28.6769 12.6607 28.7641 11.5493 28.8949L11.5711 56.3297Z' fill='%23071D49'/%3E%3Cpath d='M22.314 25.6479V0.610146C22.314 0.283282 22.0525 0 21.7039 0H18.4788C18.1519 0 17.8687 0.261491 17.8687 0.610146V25.6479C18.5878 25.6262 19.3286 25.6262 20.0913 25.6262C20.8322 25.6262 21.5949 25.6262 22.314 25.6479Z' fill='%23071D49'/%3E%3Cpath d='M17.8687 28.5025V63.3898C17.8687 63.7167 18.1301 64 18.4788 64H21.7039C22.0307 64 22.314 63.7167 22.314 63.3898V28.5025C21.5731 28.4807 20.8322 28.4807 20.0913 28.4807C19.3504 28.4807 18.6095 28.4807 17.8687 28.5025Z' fill='%23071D49'/%3E%3Cpath d='M25.1685 56.9615H28.0013C28.35 56.9615 28.6115 56.6782 28.6115 56.3513V28.8947C27.5002 28.7858 26.3452 28.6768 25.1467 28.6115L25.1685 56.9615Z' fill='%23071D49'/%3E%3Cpath d='M28.0013 7.03857H25.1685V25.757C26.367 25.8224 27.5219 25.9313 28.6332 26.0403V7.67051C28.6332 7.32186 28.3499 7.03857 28.0013 7.03857Z' fill='%23071D49'/%3E%3Cpath d='M34.081 13.75C34.081 13.4014 33.7977 13.1399 33.4708 13.1399H31.4661V26.4106C32.4031 26.5631 33.2747 26.7156 34.081 26.89V13.75Z' fill='%23071D49'/%3E%3Cpath d='M36.1511 30.2676C36.1075 30.2676 36.064 30.2894 36.064 30.333C36.064 30.3548 36.064 30.3984 36.1075 30.4202C37.3932 30.965 37.7419 31.4879 37.7419 31.8584C37.7419 32.6646 36.3472 33.3837 34.081 33.9721V29.7447C33.2747 29.5703 32.3813 29.4178 31.4661 29.2653V50.8819H33.4708C33.8195 50.8819 34.081 50.5986 34.081 50.2717V36.2166C37.8508 35.3885 40.1824 34.2554 40.1824 32.9915C40.1824 32.1635 39.2019 31.1393 36.1511 30.2676Z' fill='%23071D49'/%3E%3C/svg%3E">
+<style>
+:root{
+  /* GIC palette (gic.careers) */
+  --gic-primary:#0033FF; --gic-primary-hover:#04258B; --gic-navy:#071D49; --gic-dark:#040F25;
+  --gic-gold:#8A5D24; --gic-gray:#F2F2F2; --gic-border:#C2C9CB; --gic-border-dark:#A3A3A3;
+  --txt:#000; --txt2:#3C3C40; --txt3:#676767; --white:#fff;
+  --ok:#1E7B4F; --warn:#8A5D24; --err:#B3261E;
+  --sans:"Suisse Intl","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --serif:"Canela Deck","Canela",Georgia,"Times New Roman",serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--gic-gray);color:var(--txt);font-family:var(--sans);font-size:15px;line-height:1.5}
+a{color:var(--gic-primary);text-decoration:none}
+a:hover{color:var(--gic-primary-hover);text-decoration:underline}
+button{font-family:var(--sans);cursor:pointer}
+h1,h2,h3{font-family:var(--serif);font-weight:500;color:var(--gic-navy);margin:0}
+.serif{font-family:var(--serif)}
+/* ---------- header ---------- */
+header{background:var(--gic-navy);color:#fff;position:sticky;top:0;z-index:50}
+.hbar{display:flex;align-items:center;gap:24px;padding:0 28px;height:64px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:600;letter-spacing:.02em}
+.brand .mark{height:36px;width:auto;color:#fff;flex:none}
+.brand .appname{font-family:var(--serif);font-size:22px;font-weight:500;letter-spacing:.01em;white-space:nowrap}
+.brand .sub{font-size:12px;font-weight:400;opacity:.75;border-left:1px solid rgba(255,255,255,.35);padding-left:12px;white-space:nowrap}
+@media (max-width:1280px){.brand .sub{display:none}}
+nav{display:flex;gap:4px;margin-left:12px}
+nav button{background:none;border:0;color:#fff;opacity:.75;padding:20px 14px;font-size:14px;border-bottom:3px solid transparent}
+nav button.active{opacity:1;border-bottom-color:var(--gic-primary)}
+nav button:hover{opacity:1}
+.hright{margin-left:auto;display:flex;align-items:center;gap:12px}
+.pill{font-size:11px;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(255,255,255,.4);padding:4px 10px;border-radius:999px}
+.btn{border:0;border-radius:999px;padding:10px 20px;font-size:14px;font-weight:600;background:var(--gic-primary);color:#fff;transition:background .15s}
+.btn:hover{background:var(--gic-primary-hover)}
+.btn:active{background:var(--gic-navy)}
+.btn.ghost{background:transparent;color:var(--gic-primary);border:1px solid var(--gic-primary)}
+.btn.ghost:hover{background:#E8EDFF}
+.btn.light{background:#fff;color:var(--gic-navy)}
+.btn.sm{padding:6px 14px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.play{display:flex;align-items:center;gap:8px;background:var(--gic-primary);padding:10px 22px 10px 16px}
+.play .tri{width:0;height:0;border-left:11px solid #fff;border-top:7px solid transparent;border-bottom:7px solid transparent}
+.iconbtn{background:none;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:999px;width:36px;height:36px;font-size:16px}
+/* ---------- layout ---------- */
+main{max-width:1440px;margin:0 auto;padding:28px}
+.view{display:none}.view.active{display:block}
+.card{background:#fff;border:1px solid var(--gic-border);border-radius:4px;padding:20px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start}
+.muted{color:var(--txt3)}.small{font-size:13px}.tiny{font-size:11.5px}
+.kicker{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gic-gold);font-weight:600}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+hr.sep{border:0;border-top:1px solid var(--gic-border);margin:18px 0}
+.ext::after{content:" ↗";font-size:.85em}
+.needs-config{color:var(--txt3)!important;border-bottom:1px dashed var(--txt3)}
+/* ---------- Ask AI ---------- */
+.ask textarea{width:100%;min-height:96px;border:1px solid var(--gic-border-dark);border-radius:4px;padding:14px;font:inherit;font-size:16px;resize:vertical}
+.ask textarea:focus{outline:2px solid var(--gic-primary);border-color:transparent}
+select{font:inherit;padding:9px 12px;border:1px solid var(--gic-border-dark);border-radius:4px;background:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--gic-border);background:#fff;border-radius:999px;padding:5px 12px 5px 6px;font-size:13px;cursor:pointer;user-select:none}
+.chip .av{width:22px;height:22px;border-radius:50%;color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.chip.on{border-color:var(--gic-primary);background:#E8EDFF}
+.chip.auto{opacity:.55}
+.chip .new{font-size:10px;background:var(--gic-gold);color:#fff;border-radius:999px;padding:1px 6px}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
+.toggle input{accent-color:var(--gic-primary);width:16px;height:16px}
+.stages{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 4px}
+.stage{font-size:13px;color:var(--txt3);display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--gic-gray)}
+.stage::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--gic-border-dark)}
+.stage.active{color:var(--gic-navy);background:#E8EDFF}.stage.active::before{background:var(--gic-primary);animation:pulse 1s infinite}
+.stage.done{color:var(--gic-navy)}.stage.done::before{background:var(--ok)}
+@keyframes pulse{50%{opacity:.25}}
+.runhead h2{font-size:28px;line-height:1.25}
+.meta{font-size:13px;color:var(--txt3)}
+.meta b{color:var(--gic-navy);font-weight:600}
+.answer{border:2px solid var(--gic-navy);border-radius:6px;padding:22px 26px;background:#fff;margin-top:16px}
+.answer p{margin:0 0 12px}
+.answer .stance{font-weight:700}
+.tag{display:inline-block;font-size:11px;font-weight:600;color:var(--gic-primary-hover);background:#E8EDFF;border-radius:3px;padding:0 5px;margin:0 1px;cursor:pointer;vertical-align:1px}
+.tag:hover{background:var(--gic-primary);color:#fff}
+.tag.flash{animation:flash 1.2s 2}
+@keyframes flash{50%{background:var(--gic-gold);color:#fff}}
+.section-t{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);font-weight:600;margin:22px 0 10px}
+.msg{display:grid;grid-template-columns:40px 1fr;gap:12px;padding:10px 0;border-top:1px solid #eee}
+.msg .av{width:36px;height:36px;border-radius:50%;color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+.msg .who{font-weight:600;color:var(--gic-navy);font-size:14px}
+.msg .to{color:var(--txt3);font-weight:400}
+.msg details summary{cursor:pointer;color:var(--txt2);font-size:14px;list-style:none}
+.msg details summary::-webkit-details-marker{display:none}
+.msg details summary::before{content:"▸ ";color:var(--txt3)}
+.msg details[open] summary::before{content:"▾ "}
+.msg .body{font-size:14px;color:var(--txt2);margin-top:6px;white-space:pre-line}
+.msg .toolline{font-size:12px;color:var(--txt3);margin-top:4px}
+.point{border-left:4px solid var(--gic-border);padding:12px 16px;margin:12px 0;background:#fff}
+.point.CONSENSUS{border-left-color:var(--gic-primary)}
+.point.OPEN{border-left-color:var(--gic-gold)}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:3px;margin-right:6px}
+.b-CONSENSUS{background:#E8EDFF;color:var(--gic-primary-hover)}
+.b-ONE_SOURCE{background:var(--gic-gray);color:var(--txt2)}
+.b-RESOLVED{background:#E3F1EA;color:var(--ok)}
+.b-OPEN{background:#F6EEE3;color:var(--gic-gold)}
+.point .claim{font-weight:600;color:var(--gic-navy)}
+.stances{display:flex;gap:6px;margin:8px 0}
+.stances span{font-size:11px;border:1px solid var(--gic-border);border-radius:999px;padding:1px 8px 1px 3px;display:inline-flex;gap:4px;align-items:center}
+.stances .av{width:16px;height:16px;border-radius:50%;color:#fff;font-size:8px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.verdict{font-size:14px;color:var(--txt2)}
+.asknext button{display:block;text-align:left;width:100%;border:1px solid var(--gic-border);background:#fff;color:var(--gic-primary-hover);border-radius:4px;padding:10px 14px;margin:6px 0;font-size:14px}
+.asknext button:hover{border-color:var(--gic-primary);background:#E8EDFF}
+.banner{border-radius:4px;padding:12px 16px;margin:12px 0;font-size:14px;display:flex;gap:10px;align-items:center}
+.banner.warn{background:#F6EEE3;border:1px solid var(--gic-gold);color:#5c3d14}
+.banner.ok{background:#E3F1EA;border:1px solid var(--ok);color:#124a2f}
+.banner.err{background:#FBE9E7;border:1px solid var(--err);color:#7a1a14}
+.feedback{display:flex;gap:8px;align-items:center;margin-top:14px;font-size:13px;color:var(--txt3)}
+.feedback button{border:1px solid var(--gic-border);background:#fff;border-radius:999px;padding:4px 12px}
+.feedback button.sel{background:var(--gic-navy);color:#fff;border-color:var(--gic-navy)}
+/* ---------- side panel: live trace ---------- */
+.side{position:sticky;top:88px;max-height:calc(100vh - 200px);overflow:auto}
+.side h3{font-size:20px}
+.ev{display:grid;grid-template-columns:62px 1fr;gap:8px;padding:8px 0;border-top:1px solid #eee;font-size:12.5px;animation:fadein .3s}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}}
+.ev .t{color:var(--txt3);font-variant-numeric:tabular-nums}
+.ev .c{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:1px 6px;border-radius:3px;margin-bottom:2px}
+.c-serverless{background:#E8EDFF;color:var(--gic-primary-hover)}
+.c-classic{background:#F6EEE3;color:var(--gic-gold)}
+.c-external{background:var(--gic-dark);color:#fff}
+.c-model{background:#EEE;color:var(--txt2)}
+.c-state{background:#E3F1EA;color:var(--ok)}
+/* ---------- sources drawer ---------- */
+.drawer{position:fixed;top:0;right:-560px;width:540px;height:100vh;background:#fff;border-left:1px solid var(--gic-border);z-index:80;transition:right .25s;overflow:auto;padding:24px;box-shadow:-8px 0 24px rgba(4,15,37,.12)}
+.drawer.open{right:0}
+.src{padding:10px 0;border-top:1px solid #eee;font-size:13px}
+.src.hl{background:#FFF6E6}
+.src .id{font-weight:700;color:var(--gic-primary-hover);margin-right:6px}
+.src .ty{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3)}
+/* ---------- wiki ---------- */
+.wikihead p{max-width:980px;color:var(--txt2)}
+.wcards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.wcard{background:#fff;border:1px dashed var(--gic-border-dark);border-radius:4px;padding:18px}
+.wcard.has{border-style:solid;border-color:var(--gic-border)}
+.wcard h4{margin:0 0 4px;font-size:17px;color:var(--gic-navy)}
+.rank{display:inline-block;background:var(--gic-gray);border-radius:3px;padding:0 6px;font-size:12px;margin-right:6px}
+.sectors{display:flex;gap:8px;overflow:auto;padding:4px 0 10px}
+.sectors button{white-space:nowrap;border:1px solid var(--gic-border);background:#fff;border-radius:999px;padding:6px 14px;font-size:13px}
+.sectors button.on{border-color:var(--gic-primary);color:var(--gic-primary)}
+.due{font-size:12px;color:var(--gic-gold);font-weight:600}
+/* ---------- under the hood ---------- */
+.subnav{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.subnav button{border:1px solid var(--gic-border);background:#fff;border-radius:999px;padding:7px 16px;font-size:13.5px}
+.subnav button.on{background:var(--gic-navy);border-color:var(--gic-navy);color:#fff}
+.arch{display:grid;grid-template-columns:150px 1fr 250px 230px;gap:14px}
+.lane{border-radius:6px;padding:12px;min-height:100%}
+.lane h5{margin:0 0 10px;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.lane.users{background:#fff;border:1px solid var(--gic-border)}
+.lane.sl{background:#E8EDFF}.lane.sl h5{color:var(--gic-primary-hover)}
+.lane.cl{background:#F6EEE3;border:1px dashed var(--gic-gold)}.lane.cl h5{color:var(--gic-gold)}
+.lane.ex{background:var(--gic-dark);color:#fff}.lane.ex h5{color:#fff;opacity:.8}
+.comp{display:block;background:#fff;border:1px solid var(--gic-border);border-radius:4px;padding:9px 11px;margin-bottom:8px;color:var(--txt);font-size:13px;transition:box-shadow .2s,border-color .2s}
+.comp b{display:block;color:var(--gic-navy);font-size:13.5px}
+.comp:hover{text-decoration:none;border-color:var(--gic-primary)}
+.comp.lit{border-color:var(--gic-primary);box-shadow:0 0 0 3px rgba(0,51,255,.25)}
+.lane.ex .comp{background:#0B1E46;border-color:#2A3D6B;color:#dfe5f5}.lane.ex .comp b{color:#fff}
+.lane.ex .comp.lit{box-shadow:0 0 0 3px rgba(138,93,36,.6);border-color:var(--gic-gold)}
+.slgrid{display:grid;grid-template-columns:1fr 2fr 1fr;gap:10px}
+#archSpecs{display:grid;grid-template-columns:1fr 1fr;gap:0 8px;align-content:start}
+#archSpecs .comp{font-size:11.5px;padding:7px 9px}#archSpecs .comp b{font-size:12.5px}
+.platband{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:6px}
+.platband .comp{background:var(--gic-navy);color:#dfe5f5;border-color:var(--gic-navy)}
+.platband .comp b{color:#fff}
+.blocked{margin-top:10px;font-size:12px;color:#ffb4a8;border:1px dashed #ff8a7a;border-radius:4px;padding:8px}
+.spans .sp{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;margin:4px 0;border-radius:3px;font-size:13px;background:var(--gic-gray)}
+.spans .sp .d{color:var(--txt3);font-variant-numeric:tabular-nums;white-space:nowrap}
+pre.code{background:var(--gic-dark);color:#E6ECFF;padding:14px 16px;border-radius:4px;font-size:12.5px;overflow:auto;white-space:pre-wrap}
+table.t{border-collapse:collapse;width:100%;font-size:13px}
+table.t th{text-align:left;background:var(--gic-navy);color:#fff;padding:8px 10px;font-weight:600}
+table.t td{padding:7px 10px;border-bottom:1px solid #eee}
+.bar{height:10px;background:var(--gic-gray);border-radius:5px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--gic-primary);transition:width 1s}
+.bar.fail i{background:var(--err)}
+.pipe{display:flex;gap:8px;flex-wrap:wrap}
+.pipe .st{flex:1;min-width:130px;border:1px solid var(--gic-border);border-radius:4px;padding:10px;background:#fff;font-size:13px}
+.pipe .st b{display:block;color:var(--gic-navy)}
+.pipe .st.run{border-color:var(--gic-primary);box-shadow:0 0 0 3px rgba(0,51,255,.18)}
+.pipe .st.ok{border-color:var(--ok)}.pipe .st.ok .s{color:var(--ok)}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--gic-border);border-top-color:var(--gic-primary);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* ---------- demo narrator ---------- */
+.narr{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;width:min(980px,94vw);background:var(--gic-dark);color:#fff;border-radius:8px;padding:14px 18px;z-index:90;display:none;box-shadow:0 10px 30px rgba(4,15,37,.35)}
+.narr.on{display:block}
+.narr .top{display:flex;align-items:center;gap:12px}
+.narr .step{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#C9A36B;font-weight:700}
+.narr .title{font-family:var(--serif);font-size:20px}
+.narr .text{font-size:14px;color:#D6DDF0;margin-top:4px;min-height:42px}
+.narr .ctrls{margin-left:auto;display:flex;gap:6px}
+.narr .ctrls button{background:#13275A;border:1px solid #2A3D6B;color:#fff;border-radius:999px;padding:6px 12px;font-size:13px}
+.narr .ctrls button:hover{background:var(--gic-primary)}
+.narr .prog{height:3px;background:#13275A;border-radius:2px;margin-top:10px;overflow:hidden}
+.narr .prog i{display:block;height:100%;background:var(--gic-primary);width:0;transition:width .4s}
+.spot{outline:3px solid var(--gic-gold)!important;outline-offset:3px;border-radius:4px;transition:outline .2s}
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;background:rgba(4,15,37,.55);z-index:100;display:none;align-items:center;justify-content:center}
+.modal.on{display:flex}
+.modal .box{background:#fff;border-radius:6px;width:min(760px,94vw);max-height:88vh;overflow:auto;padding:26px}
+.form{display:grid;grid-template-columns:200px 1fr;gap:10px 14px;align-items:center;font-size:14px}
+.form input{font:inherit;padding:8px 10px;border:1px solid var(--gic-border-dark);border-radius:4px;width:100%}
+.wtabs{display:flex;gap:18px;border-bottom:1px solid var(--gic-border);margin:12px 0 16px;overflow:auto}
+.wtabs button{background:none;border:0;padding:10px 0;font-size:14px;color:var(--txt2);border-bottom:3px solid transparent;white-space:nowrap}
+.wtabs button.on{color:var(--gic-navy);border-bottom-color:var(--gic-primary);font-weight:600}
+body.spec [data-spec]{position:relative;outline:1px dashed var(--gic-gold);outline-offset:2px}
+body.spec [data-spec]::after{content:attr(data-spec);position:absolute;top:-10px;right:6px;font:600 10px/1.5 var(--sans);background:var(--gic-gold);color:#fff;padding:0 6px;border-radius:2px;z-index:6;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+#specBtn.on{background:var(--gic-gold);border-color:var(--gic-gold)}
+.hist{margin-top:14px}.hist a{display:block;font-size:13.5px;padding:4px 0;cursor:pointer}
+.logbox{background:var(--gic-dark);color:#E6ECFF;font:12.5px/1.6 ui-monospace,Menlo,monospace;border-radius:4px;padding:12px 14px;min-height:120px;white-space:pre-wrap}
+.logbox .e{color:#ff9d8f}.logbox .o{color:#8fe3b4}.logbox .w{color:#e8c48a}
+.check{display:grid;grid-template-columns:22px 70px 1fr 130px;gap:8px;padding:7px 0;border-bottom:1px solid #eee;font-size:13px;align-items:start}
+.check .st{font-weight:700}.check.ok .st{color:var(--ok)}.check.run .st{color:var(--gic-primary)}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.capcol h4{margin:0;padding:12px 14px;color:#fff;border-radius:4px 4px 0 0;font-size:16px}
+.capcol ul{margin:0;padding:12px 14px 14px 30px;background:#fff;border:1px solid var(--gic-border);border-top:0;border-radius:0 0 4px 4px;font-size:13.5px;line-height:1.7}
+footer{text-align:center;color:var(--txt3);font-size:12px;padding:24px 0 120px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hbar">
+    <div class="brand"><svg class="mark" viewBox="0 0 40.2 64" role="img" aria-label="GIC"><path d="M6.10156 13.75V26.89C6.90783 26.7156 7.80125 26.5631 8.71647 26.4106V13.1399H6.71171C6.38484 13.1399 6.10156 13.4014 6.10156 13.75Z" fill="currentColor"/><path d="M0 32.9697C0 33.7324 0.893429 34.7348 4.03132 35.6718C4.07491 35.6718 4.11849 35.6718 4.11849 35.6282C4.14028 35.5846 4.11849 35.5411 4.07491 35.5411C3.00715 35.0834 2.44059 34.604 2.44059 34.0811C2.44059 33.2312 4.05312 32.4903 6.10146 31.9673V50.2717C6.10146 50.6204 6.38475 50.8819 6.71161 50.8819H8.71638V29.2653C5.01192 29.81 0 31.0739 0 32.9697Z" fill="currentColor"/><path d="M11.571 7.67051V26.0403C12.6824 25.9313 13.8373 25.8224 15.0358 25.757V7.03857H12.203C11.8543 7.03857 11.571 7.32186 11.571 7.67051Z" fill="currentColor"/><path d="M11.5711 56.3297C11.5711 56.6783 11.8544 56.9398 12.1813 56.9398H15.0141V28.6116C13.8156 28.6769 12.6607 28.7641 11.5493 28.8949L11.5711 56.3297Z" fill="currentColor"/><path d="M22.314 25.6479V0.610146C22.314 0.283282 22.0525 0 21.7039 0H18.4788C18.1519 0 17.8687 0.261491 17.8687 0.610146V25.6479C18.5878 25.6262 19.3286 25.6262 20.0913 25.6262C20.8322 25.6262 21.5949 25.6262 22.314 25.6479Z" fill="currentColor"/><path d="M17.8687 28.5025V63.3898C17.8687 63.7167 18.1301 64 18.4788 64H21.7039C22.0307 64 22.314 63.7167 22.314 63.3898V28.5025C21.5731 28.4807 20.8322 28.4807 20.0913 28.4807C19.3504 28.4807 18.6095 28.4807 17.8687 28.5025Z" fill="currentColor"/><path d="M25.1685 56.9615H28.0013C28.35 56.9615 28.6115 56.6782 28.6115 56.3513V28.8947C27.5002 28.7858 26.3452 28.6768 25.1467 28.6115L25.1685 56.9615Z" fill="currentColor"/><path d="M28.0013 7.03857H25.1685V25.757C26.367 25.8224 27.5219 25.9313 28.6332 26.0403V7.67051C28.6332 7.32186 28.3499 7.03857 28.0013 7.03857Z" fill="currentColor"/><path d="M34.081 13.75C34.081 13.4014 33.7977 13.1399 33.4708 13.1399H31.4661V26.4106C32.4031 26.5631 33.2747 26.7156 34.081 26.89V13.75Z" fill="currentColor"/><path d="M36.1511 30.2676C36.1075 30.2676 36.064 30.2894 36.064 30.333C36.064 30.3548 36.064 30.3984 36.1075 30.4202C37.3932 30.965 37.7419 31.4879 37.7419 31.8584C37.7419 32.6646 36.3472 33.3837 34.081 33.9721V29.7447C33.2747 29.5703 32.3813 29.4178 31.4661 29.2653V50.8819H33.4708C33.8195 50.8819 34.081 50.5986 34.081 50.2717V36.2166C37.8508 35.3885 40.1824 34.2554 40.1824 32.9915C40.1824 32.1635 39.2019 31.1393 36.1511 30.2676Z" fill="currentColor"/></svg><span class="appname">EQDS Research</span><span class="sub">Multi-agent research platform</span></div>
+    <nav id="nav">
+      <button data-view="ask" class="active">Ask AI</button>
+      <button data-view="wiki">Company Wiki</button>
+      <button data-view="hood">Under the hood</button>
+    </nav>
+    <div class="hright">
+      <span class="pill">Synthetic demo data</span>
+      <button class="iconbtn" id="specBtn" title="Spec mode: show build annotations (design-doc section, API, event)" onclick="toggleSpecMode()" style="width:auto;padding:0 12px;font-size:12px;font-weight:700">SPEC</button>
+      <button class="iconbtn" title="Workspace settings" onclick="openSettings()">⚙</button>
+      <button class="btn play" id="playBtn" onclick="Demo.start()"><span class="tri"></span>Play demo</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ======================= ASK AI ======================= -->
+<section class="view active" id="view-ask">
+  <div class="grid2">
+    <div>
+      <div class="card ask" id="askCard" data-spec="§5.1 eqds-ui · POST /api/ask → eqds-moderator POST /runs">
+        <div class="kicker">Ask AI · moderator-led multi-agent research</div>
+        <h1 style="font-size:34px;margin:6px 0 6px">Ask the research agents</h1>
+        <p class="muted small" style="margin:0 0 14px">Several research agents, each with its own sources (GIC trades, external managers, EM quant, broker reports, expert and earnings calls, GIC research, news) debate your question, dig into where they disagree and answer in plain words with every source cited.</p>
+        <textarea id="q" placeholder="Your question: for example, what are the best external managers buying now, and do we own or trade any of it?"></textarea>
+        <div class="row" style="margin-top:12px">
+          <select id="rounds"><option value="1">1 round</option><option value="3" selected>3 rounds</option><option value="5">5 rounds</option></select>
+          <label class="toggle"><input type="checkbox" id="autoSel" checked onchange="renderChips()"> Let the moderator pick specialists</label>
+          <button class="btn" id="askBtn" onclick="ask()">Ask</button>
+        </div>
+        <div class="section-t" style="margin-top:16px">Specialists <span class="muted tiny" style="text-transform:none;letter-spacing:0">(from the registry · toggle to pick manually)</span></div>
+        <div class="chips" id="chips" data-spec="§5.4 GET /api/specialists ← Lakebase registry.specialists"></div>
+        <div class="hist" id="hist" data-spec="FR-UI-10 GET /api/history ← ops.runs (user_id)"></div>
+      </div>
+
+      <div id="runArea"></div>
+    </div>
+
+    <aside class="card side" id="liveCard" data-spec="§6.2 SSE event: activity (component, zone, label, detail, link)">
+      <div class="kicker">Live run</div>
+      <h3>What's happening under the hood</h3>
+      <p class="small muted" style="margin:6px 0 8px">Each step shows the Databricks component doing the work. Links open the workspace.</p>
+      <div id="evlog"><div class="small muted">No run yet. Ask a question or press <b>Play demo</b>.</div></div>
+    </aside>
+  </div>
+</section>
+
+<!-- ======================= WIKI ======================= -->
+<section class="view" id="view-wiki">
+  <div class="wikihead">
+    <h1 style="font-size:40px">Company Wiki</h1>
+    <p>Every wiki is built by GIC's research agents, who debate each page from their sources, and refreshes itself. Each morning at 07:30 SGT a wiki is refreshed when, since it was built, the company has reported earnings (two days after, once the call and the results notes are in), 6 or more new broker reports or 3 or more rating or target changes have arrived, 3 reports have landed within two days, or 30 days have passed with anything new. A refresh rebuilds only the pages the news makes stale. Broker flow waits 14 days after the last build and the week before a scheduled release, and a wiki is rebuilt in full 120 days after its last full build.</p>
+    <p class="small"><a class="ext" data-link="job:wikiJobId:eqds-wiki-refresh">Lakeflow Job · eqds-wiki-refresh (07:30 SGT, for-each)</a> · <a class="ext" data-link="table:earnings_calendar">earnings_calendar</a> · <a class="ext" data-link="table:wiki_state">wiki_state</a></p>
+  </div>
+  <div class="card" style="margin:18px 0">
+    <div class="row">
+      <input id="wsearch" placeholder="Search companies" style="flex:1;min-width:240px;font:inherit;padding:10px 12px;border:1px solid var(--gic-border-dark);border-radius:4px" oninput="renderWiki()">
+      <span>Top <select id="topn" onchange="renderWiki()"><option>50</option><option>100</option></select> holdings</span>
+      <span class="muted small">40 wikis · 50 of the top 50 holdings without one</span>
+      <button class="btn ghost" onclick="toast('Wiki request queued: the build job runs the moderator once per page.')">+ Request a company</button>
+    </div>
+    <p class="muted small" style="margin:10px 0 0">By GICS sector: every wiki, and the fund's top holdings without one · holdings as of 10 Nov 2026.</p>
+  </div>
+  <div class="card" style="margin-bottom:18px">
+    <b>Build queue</b> <span class="muted small">· parallel per company, capped at 4 to stay within model quota (target state; the prototype runs one at a time · a first build takes about 1 h 16 min, a refresh about 35 min)</span>
+    <div id="queue" class="small" style="margin-top:8px" data-spec="POST /api/wiki/request → Jobs run_now(eqds-wiki-refresh)">Nothing is building.</div>
+    <details class="small" style="margin-top:6px"><summary>Finished this week (12)</summary><div class="muted">Recruit Holdings · Reliance Industries · Tencent · Infosys · Samsung Electronics · TSMC · HDFC Bank · Meituan · SK Hynix · Kweichow Moutai · Bank Central Asia · Naspers</div></details>
+  </div>
+  <div class="sectors" id="sectors" data-spec="§10 GET /api/wiki ← wiki_state, wiki_pages, ref_holdings"></div>
+  <div id="wikiBody"></div>
+</section>
+
+<!-- ======================= UNDER THE HOOD ======================= -->
+<section class="view" id="view-hood">
+  <div class="kicker">Target-state architecture · restricted network</div>
+  <h1 style="font-size:36px;margin:4px 0 16px">Under the hood</h1>
+  <div class="subnav" id="subnav">
+    <button data-sub="arch" class="on">Architecture</button>
+    <button data-sub="trace">Trace</button>
+    <button data-sub="net">Network & Azure SQL</button>
+    <button data-sub="models">Models</button>
+    <button data-sub="data">Data & seed</button>
+    <button data-sub="reg">Specialist registry</button>
+    <button data-sub="qa">Quality & AgentOps</button>
+    <button data-sub="caps">Capability matrix</button>
+    <button data-sub="handoff">Build handoff</button>
+  </div>
+
+  <div class="sub" id="sub-arch">
+    <div class="arch" data-spec="§2 logical architecture · §3 component inventory">
+      <div class="lane users"><h5>Consumers</h5>
+        <a class="comp" data-comp="ui-user"><b>EQDS analysts & PMs</b>Databricks Apps SSO</a>
+        <a class="comp" data-comp="ada"><b>Ada (future)</b>agent API, own SP</a>
+        <a class="comp ext" data-comp="wikijob" data-link="job:wikiJobId:eqds-wiki-refresh"><b>Wiki refresh job</b>07:30 SGT</a>
+      </div>
+      <div class="lane sl"><h5>Serverless · Databricks Apps & managed services</h5>
+        <div class="slgrid">
+          <div>
+            <a class="comp" data-comp="ui" data-link="app:eqds-ui"><b>eqds-ui</b>Research UI App</a>
+            <a class="comp" data-comp="moderator" data-link="app:eqds-moderator"><b>eqds-moderator</b>LangGraph · async run API · resumable</a>
+          </div>
+          <div id="archSpecs"></div>
+          <div>
+            <a class="comp" data-comp="mcp-uc" data-link="schema"><b>UC Functions MCP</b>efm_buy_basket, quant_rank, price_move</a>
+            <a class="comp" data-comp="mcp-vs" data-link="table:broker_chunks_index"><b>Vector Search MCP</b>broker, expert, earnings chunks</a>
+            <a class="comp" data-comp="mcp-genie" data-link="genie"><b>Genie MCP</b>UC tables only</a>
+            <a class="comp" data-comp="mcp-bridge" data-link="app:eqds-bridge-mcp"><b>eqds-bridge-mcp</b>custom MCP on Apps</a>
+          </div>
+        </div>
+        <div class="platband">
+          <a class="comp" data-comp="gateway" data-link="endpoints"><b>Model Serving + AI Gateway</b>eqds-llm-* · eqds-embed (created) · fallback FMAPI</a>
+          <a class="comp" data-comp="lakebase" data-link="lakebase"><b>Lakebase</b>runs · checkpoints · memory · queue</a>
+          <a class="comp" data-comp="mlflow" data-link="experiment"><b>MLflow 3</b>traces · eval · feedback</a>
+          <a class="comp" data-comp="uc" data-link="catalog"><b>Unity Catalog</b>data · indexes · functions · skills</a>
+        </div>
+      </div>
+      <div class="lane cl"><h5>GIC network · classic bridge</h5>
+        <a class="comp" data-comp="worker" data-link="job:bridgeJobId:eqds-bridge-worker"><b>Bridge worker</b>single-node classic job · Spark · allowlisted templates</a>
+        <a class="comp" data-comp="foreign" data-link="foreign:oms/trades"><b>Foreign catalog azure_oms</b>Lakehouse Federation · UC grants & audit</a>
+        <a class="comp" data-comp="ingest" data-link="job:ingestJobId:eqds-ingest-news"><b>Ingestion jobs</b>news history → UC news_items</a>
+      </div>
+      <div class="lane ex"><h5>External · stays outside Databricks</h5>
+        <a class="comp" data-comp="azure"><b>Azure SQL Database</b>eqds_oms<br>oms: trades, positions, accounts<br>research: views, notes<br>feeds: news_wire, web_index</a>
+        <a class="comp" data-comp="apollo"><b>Apollo</b>later</a>
+        <div class="blocked">✕ No route from serverless. The firewall allows only the classic egress IP (private connectivity not established).</div>
+      </div>
+    </div>
+    <p class="small muted" style="margin-top:12px">Components light up during a run. Click any box to open it in the Databricks workspace (set the workspace in ⚙).</p>
+  </div>
+
+  <div class="sub" id="sub-trace" style="display:none">
+    <div class="grid2">
+      <div class="card"><div class="row"><h3>MLflow trace</h3><span class="muted small" id="traceId"></span><a class="ext small" style="margin-left:auto" data-link="experiment">Open experiment traces</a></div>
+        <div class="spans" id="spans" style="margin-top:12px"><div class="muted small">Run a question first.</div></div></div>
+      <div class="card"><h3>Trace tags</h3><pre class="code" id="traceTags">—</pre>
+        <p class="small muted">Specialist traces are linked by <code>run_id</code> tag and <code>child_trace_id</code> attribute. User feedback from the answer card is logged as an assessment on this trace.</p></div>
+    </div>
+    <div class="grid2" style="grid-template-columns:1fr 1fr;margin-top:24px">
+      <div class="card" data-spec="§6.1 POST /invocations (ResponsesAgent) · request/response"><div class="row"><h3>Specialist invocation contract</h3>
+        <select id="invSel" style="margin-left:auto" onchange="renderInv()"></select></div>
+        <div class="row small" style="margin:10px 0 6px"><b>Request</b><span class="muted">custom_inputs carry run, round, caller and idempotency key</span></div><pre class="code" id="invReq">Run a question first.</pre>
+        <div class="row small" style="margin:10px 0 6px"><b>Response</b><span class="muted">custom_outputs.claims[] + sources[] feed the moderator and the citations</span></div><pre class="code" id="invRes">—</pre></div>
+      <div class="card" data-spec="§9 memory · Lakebase mem.conversation, mem.specialist"><h3>Memory (Lakebase)</h3>
+        <div class="section-t">mem.conversation · moderator session memory</div><div id="memConv" class="small muted">No turns yet.</div>
+        <div class="section-t">mem.specialist · per-specialist memory + idempotency cache</div><div id="memSpec" class="small muted">No interactions yet.</div>
+        <div class="section-t">Skills & prompts · UC Volume (pinned versions)</div><div id="skills" class="small"></div></div>
+    </div>
+  </div>
+
+  <div class="sub" id="sub-net" style="display:none">
+    <div class="grid2" style="grid-template-columns:1fr 1fr">
+      <div class="card" id="netServerless" data-spec="§7.4 expected failure (AC-15) · SQL warehouse statement"><div class="kicker">Serverless notebook / SQL warehouse</div><h3>Query Azure SQL directly</h3>
+        <pre class="code">SELECT company_id, side, value_usd
+FROM azure_oms.oms.trades
+WHERE trade_date >= '2026-10-22'
+LIMIT 10;</pre>
+        <button class="btn" onclick="netServerless()">Run on serverless</button>
+        <div id="netSOut"></div></div>
+      <div class="card" id="netBridge" data-spec="§5.6.1 bridge template oms_confirm_conflict@1"><div class="kicker">Specialist tool → bridge (classic)</div><h3>Same data, queried in place</h3>
+        <pre class="code">tools/call  oms_confirm_conflict
+  { "basket": "efm_top50",
+    "start": "2026-10-22", "end": "2026-11-20",
+    "strong_musd": 20 }
+→ bridge.requests (Lakebase) → classic worker
+→ spark.sql(template oms_confirm_conflict@1)
+→ azure_oms.oms.trades ⋈ efm_buy_basket</pre>
+        <button class="btn" onclick="netBridge()">Run via bridge</button>
+        <div id="netBOut"></div></div>
+    </div>
+    <p class="small" style="margin-top:12px"><a class="ext" data-link="foreign:oms/trades">azure_oms.oms.trades (foreign table)</a> · <a class="ext" data-link="connection">UC connection azure_oms_conn</a> · <a class="ext" data-link="job:bridgeJobId:eqds-bridge-worker">Bridge worker job</a> · <a class="ext" data-link="app:eqds-bridge-mcp">eqds-bridge-mcp app</a></p>
+    <div class="card" style="margin-top:16px" data-spec="§7.2 job_ingest_news (classic) · pattern A landed copy"><div class="kicker">Landed copy (pattern A)</div><h3>News history lineage</h3>
+      <div class="row small" style="margin-top:10px;gap:8px">
+        <a class="comp" style="margin:0" data-link="foreign:feeds/news_wire"><b>azure_oms.feeds.news_wire</b>Azure SQL (foreign)</a><span>→</span>
+        <a class="comp" style="margin:0" data-link="job:ingestJobId:eqds-ingest-news"><b>job_ingest_news</b>classic job cluster · every 15 min · MERGE</a><span>→</span>
+        <a class="comp" style="margin:0" data-link="lineage:news_items"><b>news_items</b>UC Delta · lineage</a><span>→</span>
+        <a class="comp" style="margin:0" data-link="table:news_chunks_index"><b>news_chunks_index</b>Vector Search</a></div>
+      <p class="small muted" style="margin:10px 0 0">The live tail (&lt; 15 min) is served by the bridge tool <code>news_latest</code>. Trades and research are never landed: they are queried in place.</p></div>
+  </div>
+
+  <div class="sub" id="sub-reg" style="display:none">
+    <div class="card">
+      <div class="row"><h3>Specialist registry</h3><span class="muted small">Lakebase <code>registry.specialists</code> · the moderator caches it for 60 s · no moderator redeploy needed</span>
+        <button class="btn sm" id="regBtn" style="margin-left:auto" onclick="registerGeo()">+ Register “Geographic revenue”</button></div>
+      <table class="t" style="margin-top:12px"><thead><tr><th>Key</th><th>Name</th><th>Tag</th><th>Tools</th><th>App</th><th>Version</th><th>Owner</th></tr></thead><tbody id="regBody"></tbody></table>
+    </div>
+  </div>
+
+  <div class="sub" id="sub-qa" style="display:none">
+    <div class="grid2" style="grid-template-columns:1fr 1fr">
+      <div class="card"><div class="row"><h3>Evaluation · eqds staging</h3><a class="ext small" style="margin-left:auto" data-link="experiment">MLflow evaluation runs</a></div>
+        <p class="small muted">40 questions derived from the planted facts · scorers from the design doc §11.2 · values illustrative</p>
+        <div id="evalBars"></div>
+        <button class="btn sm" onclick="runEval()">Run evaluation</button></div>
+      <div class="card"><div class="row"><h3>AgentOps · pull request #42</h3><a class="ext small" style="margin-left:auto" data-link="github">GitHub</a></div>
+        <p class="small muted">“skills/ours 1.3.0: separate rebalancing from active flows” · per-agent release via DABs</p>
+        <div class="pipe" id="pipe"></div>
+        <button class="btn sm" style="margin-top:12px" onclick="runCI()">Run pipeline</button></div>
+    </div>
+  </div>
+  <div class="sub" id="sub-models" style="display:none">
+    <div class="grid2" style="grid-template-columns:1fr 1fr">
+      <div class="card" data-spec="§8.0 endpoints created by the bundle · §8.1 config/models.<env>.yaml"><div class="row"><h3>Model services (created per environment)</h3><a class="ext small" style="margin-left:auto" data-link="endpoints">Serving endpoints</a></div>
+        <p class="small muted" style="margin:6px 0 0">The deployment <b>creates</b> these endpoints (DAB <code>model_serving_endpoints</code>, AI Gateway on each). Fallbacks are the platform pay-per-token endpoints.</p>
+        <table class="t" style="margin-top:10px"><thead><tr><th>Tier</th><th>Endpoint (created)</th><th>Serves</th><th>Fallback</th></tr></thead><tbody id="tierBody"></tbody></table>
+        <pre class="code" id="tierYaml" style="margin-top:12px"></pre>
+        <div class="section-t">Capacity snapshot (lookback)</div>
+        <div class="small">databricks-glm-5-3 · Tier 4 · 20.4M TPM (20.0M in / 400K out) · peak 32% · avg 12% · 429 rate 0%</div></div>
+      <div class="card" data-spec="§8.2 retry/fallback · §8.3 normalize · AC-07 AC-08"><h3>Resilience & normalization</h3>
+        <p class="small muted">All LLM calls go through the shared <code>eqds_llm</code> client. Test-only fault flag: <code>EQDS_LLM_FAULT=429:primary</code>.</p>
+        <div class="row"><button class="btn sm" onclick="inject429()">Inject 429 on standard primary</button><button class="btn ghost sm" onclick="switchModel()">Switch standard tier model</button></div>
+        <div class="logbox" id="modelLog" style="margin-top:12px">Ready.</div></div>
+    </div>
+  </div>
+
+  <div class="sub" id="sub-data" style="display:none">
+    <div class="grid2" style="grid-template-columns:1.1fr .9fr">
+      <div class="card" data-spec="§14.3 placement map · §14.8 sizing"><h3>Synthetic data placement</h3>
+        <p class="small muted">Deterministic seed 42 · DEMO_AS_OF 2026-11-20 · all data labelled SYNTHETIC DEMO DATA</p>
+        <table class="t"><thead><tr><th>Dataset</th><th>Lives in</th><th>Rows</th><th>Access</th></tr></thead><tbody id="dataBody"></tbody></table></div>
+      <div class="card" data-spec="§14.9 job_validate_seed (classic) · AC-16"><div class="row"><h3>Planted facts & validation</h3><a class="ext small" style="margin-left:auto" data-link="job:seedJobId:eqds-validate-seed">job_validate_seed</a></div>
+        <div id="checks" style="margin-top:8px"></div>
+        <button class="btn sm" style="margin-top:12px" onclick="runValidate()">Run job_validate_seed</button><span id="valMsg" class="small" style="margin-left:10px"></span></div>
+    </div>
+  </div>
+
+  <div class="sub" id="sub-caps" style="display:none">
+    <p class="small muted" data-spec="Requirements C-06 · deck capability matrix">Status reflects the discussion and must be confirmed for the EQDS workspace (draft).</p>
+    <div class="cols3" id="caps"></div>
+  </div>
+
+  <div class="sub" id="sub-handoff" style="display:none">
+    <div class="card" data-spec="Design §18 build handoff">
+      <div class="row"><h3>Build handoff for coding agents</h3>
+        <button class="btn sm" style="margin-left:auto" onclick="downloadFixtures()">⤓ Download fixtures JSON</button>
+        <button class="btn ghost sm" onclick="copyBrief()">Copy agent brief</button></div>
+      <p class="small muted">This prototype is the UI and interaction spec. Toggle <b>SPEC</b> in the header to see, on every element, the design-doc section, API route and event behind it. The fixtures follow the §6 contracts exactly and double as contract-test cases and UI mocks.</p>
+      <table class="t" style="margin-top:8px"><thead><tr><th>Screen / element</th><th>Real implementation</th><th>API / event</th><th>Data</th><th>Design</th><th>AC</th></tr></thead><tbody id="handoffBody"></tbody></table>
+    </div>
+  </div>
+
+</section>
+
+<footer>All data is synthetic, for demonstration only. Company names are labels only; brokers, managers, experts, analysts and accounts are fictional. · GIC palette per gic.careers · Built on Databricks Apps, Lakebase, MLflow 3, Unity Catalog, Lakehouse Federation.</footer>
+</main>
+
+<!-- sources drawer -->
+<div class="drawer" id="drawer">
+  <div class="row"><h3>Sources</h3><span class="muted small" id="srcCount"></span><button class="btn ghost sm" style="margin-left:auto" onclick="closeDrawer()">Close</button></div>
+  <p class="small muted">The tables and documents the agents read. External-database sources are queried in place in Azure SQL via the bridge.</p>
+  <div id="srcList"></div>
+</div>
+
+<!-- narrator -->
+<div class="narr" id="narr">
+  <div class="top"><div><div class="step" id="nStep">Step</div><div class="title" id="nTitle">Title</div></div>
+    <div class="ctrls"><button onclick="Demo.prev()">⏮</button><button id="nPause" onclick="Demo.toggle()">❚❚ Pause</button><button onclick="Demo.next()">Next ⏭</button><button onclick="Demo.stop()">✕</button></div></div>
+  <div class="text" id="nText"></div>
+  <div class="prog"><i id="nProg"></i></div>
+</div>
+
+<!-- settings modal -->
+<div class="modal" id="settings"><div class="box">
+  <h2>Databricks workspace links</h2>
+  <p class="small muted">Links throughout the demo are built from these values and stored in this browser only. You can also pass them as URL parameters, e.g. <code>?ws=https://my-ws.cloud.databricks.com&amp;exp=123</code>.</p>
+  <div class="form" id="form"></div>
+  <div class="row" style="margin-top:18px;justify-content:flex-end"><button class="btn ghost" onclick="closeSettings()">Cancel</button><button class="btn" onclick="saveSettings()">Save</button></div>
+</div></div>
+
+<!-- wiki modal -->
+<div class="modal" id="wikiModal"><div class="box" style="width:min(980px,94vw)">
+  <div class="row"><h2 id="wmTitle">Company Wiki</h2><button class="btn ghost sm" style="margin-left:auto" onclick="document.getElementById('wikiModal').classList.remove('on')">← All companies</button></div>
+  <div class="wtabs" id="wmTabs"></div>
+  <div id="wmBody"></div>
+</div></div>
+
+<div id="toast" style="position:fixed;top:80px;right:24px;background:var(--gic-navy);color:#fff;padding:12px 18px;border-radius:4px;font-size:14px;z-index:120;display:none;max-width:420px"></div>
+
+<script>
+/* =====================================================================
+   CONFIG + WORKSPACE LINKS
+   ===================================================================== */
+const CFG_FIELDS = [
+  ["ws","Workspace URL","https://<workspace>.cloud.databricks.com"],
+  ["catalog","Catalog","eqds_demo"],["schema","Schema","prod"],
+  ["appSuffix","App name suffix","(blank for prod, e.g. -stg)"],
+  ["exp","MLflow experiment ID",""],["genie","Genie space ID",""],
+  ["lakebase","Lakebase instance","eqds-lakebase"],
+  ["bridgeJobId","Bridge worker job ID",""],["ingestJobId","News ingestion job ID",""],
+  ["wikiJobId","Wiki refresh job ID",""],["seedJobId","Seed validation job ID",""],["evalJobId","Eval job ID",""],
+  ["foreignCatalog","Foreign catalog","azure_oms"],["connection","UC connection","azure_oms_conn"],
+  ["github","GitHub repo URL",""]
+];
+const DEFAULTS = {catalog:"eqds_demo",schema:"prod",lakebase:"eqds-lakebase",foreignCatalog:"azure_oms",connection:"azure_oms_conn",appSuffix:""};
+let CFG = Object.assign({}, DEFAULTS, JSON.parse(localStorage.getItem("eqdsCfg")||"{}"));
+(function(){const p=new URLSearchParams(location.search);for(const [k] of CFG_FIELDS){if(p.get(k))CFG[k]=p.get(k)}})();
+
+function wsBase(){return (CFG.ws||"").replace(/\/+$/,"")}
+function linkFor(spec){
+  const ws=wsBase(); if(!ws||ws.includes("<")) return null;
+  const [kind,a,b]=spec.split(":"); const c=CFG.catalog,s=CFG.schema;
+  switch(kind){
+    case "app": return `${ws}/apps/${a}${CFG.appSuffix||""}`;
+    case "table": return `${ws}/explore/data/${c}/${s}/${a}`;
+    case "lineage": return `${ws}/explore/data/${c}/${s}/${a}?activeTab=lineage`;
+    case "schema": return `${ws}/explore/data/${c}/${s}`;
+    case "catalog": return `${ws}/explore/data/${c}`;
+    case "foreign": {const [sc,t]=(a||"oms/trades").split("/");return `${ws}/explore/data/${CFG.foreignCatalog}/${sc}/${t}`;}
+    case "connection": return `${ws}/explore/connections/${CFG.connection}`;
+    case "experiment": return CFG.exp?`${ws}/ml/experiments/${CFG.exp}/traces`:`${ws}/ml/experiments`;
+    case "genie": return CFG.genie?`${ws}/genie/rooms/${CFG.genie}`:`${ws}/genie`;
+    case "lakebase": return `${ws}/compute/database-instances/${CFG.lakebase}`;
+    case "endpoints": return `${ws}/ml/endpoints`;
+    case "endpoint": return `${ws}/ml/endpoints/${a}`;
+    case "job": return CFG[a]?`${ws}/jobs/${CFG[a]}`:`${ws}/jobs?search=${encodeURIComponent(b||"")}`;
+    case "volume": return `${ws}/explore/data/volumes/${c}/${s}/${a}`;
+    case "github": return CFG.github||null;
+  }
+  return null;
+}
+function applyLinks(root=document){
+  root.querySelectorAll("[data-link]").forEach(el=>{
+    const href=linkFor(el.dataset.link);
+    if(href){el.href=href;el.target="_blank";el.rel="noopener";el.classList.remove("needs-config");el.title="Open in Databricks";el.onclick=null}
+    else{el.removeAttribute("href");el.classList.add("needs-config");el.title="Set the workspace URL in ⚙ to enable this link";el.onclick=(e)=>{e.preventDefault();openSettings()}}
+  });
+}
+function L(spec,label){return `<a class="ext" data-link="${spec}">${label}</a>`}
+function openSettings(){
+  document.getElementById("form").innerHTML=CFG_FIELDS.map(([k,l,ph])=>`<label>${l}</label><input id="cfg_${k}" value="${CFG[k]||""}" placeholder="${ph}">`).join("");
+  document.getElementById("settings").classList.add("on");
+}
+function closeSettings(){document.getElementById("settings").classList.remove("on")}
+function saveSettings(){for(const [k] of CFG_FIELDS){CFG[k]=document.getElementById("cfg_"+k).value.trim()}localStorage.setItem("eqdsCfg",JSON.stringify(CFG));closeSettings();applyLinks();toast("Workspace links updated.")}
+function toast(m,ms=3200){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",ms)}
+
+/* =====================================================================
+   DATA (synthetic; mirrors the design doc §14 planted facts)
+   ===================================================================== */
+const SPECS = [
+  {key:"efm",name:"External managers",tag:"EF",color:"#8A5D24",tools:"UC Functions MCP · efm_buy_basket",app:"eqds-sp-efm",zone:"serverless",ver:"1.1.0",owner:"EQDS · data science",on:true},
+  {key:"ours",name:"Our trades",tag:"US",color:"#0033FF",tools:"Bridge MCP · oms_* → Azure SQL (in place)",app:"eqds-sp-ours",zone:"external",ver:"1.2.0",owner:"EQDS · data science",on:true},
+  {key:"emquant",name:"EM Quant",tag:"EQ",color:"#04258B",tools:"UC Functions MCP · quant_rank",app:"eqds-sp-emquant",zone:"serverless",ver:"1.0.3",owner:"EQDS · quant",on:true},
+  {key:"broker",name:"Brokers",tag:"B",color:"#071D49",tools:"Vector Search MCP · broker_chunks",app:"eqds-sp-broker",zone:"serverless",ver:"1.0.1",owner:"EQDS · research",on:true},
+  {key:"experts",name:"Expert calls",tag:"X",color:"#7A3E6E",tools:"Vector Search MCP · expert_chunks",app:"eqds-sp-experts",zone:"serverless",ver:"1.0.0",owner:"EQDS · research",on:true},
+  {key:"research",name:"GIC research",tag:"R",color:"#5A6FA8",tools:"Bridge MCP · research_* → Azure SQL (in place)",app:"eqds-sp-research",zone:"external",ver:"0.9.0",owner:"EQDS · research",on:true},
+  {key:"earnings",name:"Earnings calls",tag:"EC",color:"#A0742E",tools:"Vector Search MCP · earnings_chunks",app:"eqds-sp-earnings",zone:"serverless",ver:"0.9.0",owner:"EQDS · research",on:true},
+  {key:"news",name:"News",tag:"N",color:"#3C3C40",tools:"Bridge MCP · news_latest, web_search (live)",app:"eqds-sp-news",zone:"external",ver:"0.8.0",owner:"EQDS · platform",on:true},
+];
+const GEO = {key:"georev",name:"Geographic revenue",tag:"G",color:"#2F7F7A",tools:"UC Functions MCP · geo_revenue",app:"eqds-sp-georev",zone:"serverless",ver:"0.1.0",owner:"EQDS · data science",on:true,isNew:true};
+const spec = k => SPECS.find(s=>s.key===k) || (k===GEO.key?GEO:null) || {key:"moderator",name:"Moderator",tag:"Md",color:"#040F25"};
+const MOD = {key:"moderator",name:"Moderator",tag:"Md",color:"#040F25"};
+
+/* source catalogue (subset described; others generated) */
+function buildSources(){
+  const S={}; const add=(id,ty,ref,detail)=>S[id]={id,ty,ref,detail};
+  add("EF1","uc_function",`${CFG.catalog}.${CFG.schema}.efm_buy_basket`,"Top-50 basket, month-ends 2026-08-31 … 2026-10-31, score and distinct better-half buyers");
+  add("US1","external_db","azure_oms.oms.trades · oms_trade_flows@1","pm_name not populated on any trade (Azure SQL, queried in place)");
+  add("US2","external_db","azure_oms.oms.trades ⋈ efm_buy_basket · oms_confirm_conflict@1","Last 30 days (2026-10-22..11-20): book-wide confirms/conflicts; Kioxia, Renesas, Resonac, Murata, Weichai flows");
+  add("US3","external_db","azure_oms.oms.trades · oms_post_trade_move@1","Laurus Labs NC EM Replication sell; +5.7% after");
+  add("US4","external_db","azure_oms.oms.trades · oms_post_trade_move@1","JD Health EMA Active +USD 36.6m; +6.8% one month later (raw price move, not risk-adjusted)");
+  ["US5","US6","US7"].forEach((id,i)=>add(id,"external_db","azure_oms.oms.trades · oms_trade_flows@1",["Adani Energy Solutions","Haitian Intl","CR Beer"][i]+": NC EM Replication sell USD 0.1–0.5m, rebalance flag"));
+  add("US8","external_db","azure_oms.oms.trades · oms_trade_flows@1","Komatsu: no trades in window");
+  add("US9","external_db","azure_oms.oms.positions · oms_positions@1","Weichai Power A positions by account, as of 2026-11-20");
+  add("US10","external_db","azure_oms.oms.trades · oms_post_trade_move@1","Z.AI: one account bought USD 12.9m; −46.9% afterwards");
+  add("EQ1","uc_function",`${CFG.catalog}.${CFG.schema}.quant_rank`,"Quant universe = MSCI EM only, 2026-10-31 month-end; Haitian Intl lookup 1 of 3 failed");
+  add("EQ2","uc_function",`${CFG.catalog}.${CFG.schema}.quant_rank`,"Laurus Labs: top quintile");
+  ["EQ3","EQ4","EQ5"].forEach((id,i)=>add(id,"uc_function",`${CFG.catalog}.${CFG.schema}.quant_rank`,["Adani Energy Solutions","CR Beer","JD Health"][i]+": middle fifths"));
+  add("EQ6","uc_function",`${CFG.catalog}.${CFG.schema}.quant_rank`,"Z.AI: bottom quintile");
+  add("EQ7","uc_function",`${CFG.catalog}.${CFG.schema}.quant_rank`,"Bilibili: bottom quintile");
+  add("EQ8","uc_function",`${CFG.catalog}.${CFG.schema}.quant_rank`,"Haitian Intl lookup 2 of 3 failed");
+  add("EQ9","uc_function",`${CFG.catalog}.${CFG.schema}.quant_rank`,"Haitian Intl lookup 3 of 3 failed");
+  const brokers=["Harbour Lane Securities","Meridian Capital Research","Northbridge Securities","Pacific Crest Partners","Kestrel Research","Lionsgate Asia Securities","Summit Ridge Research","Tanjong Equities","Aster & Co.","Bayview Global Markets"];
+  const bnotes={1:"Kioxia: capacity sold out for CY27",4:"Kioxia: Buy, target ¥24,000",6:"Kioxia: Buy; target cut; calls NAND prices to fall from 2H CY27",7:"Kioxia: Buy, target ¥43,500; FY3/28E P/E 2–3x vs peers 3–5x",9:"Kioxia: risk that AI capex may not last",11:"Kioxia: peer valuation table",12:"Weichai: Q3 recurring profit +14%",13:"Weichai: genset shipments 500 → 1,300 units",20:"Weichai: ~9x 2027 earnings, 5% yield",21:"Weichai: target cut",22:"Weichai: October heavy-truck sales −13%",26:"Weichai: target cut",27:"Weichai: target cut",28:"Weichai: target cut",29:"Weichai: US ruling on Chinese power equipment expected late December"};
+  for(let i=1;i<=29;i++) add("B"+i,"vector_search",`${CFG.catalog}.${CFG.schema}.broker_chunks · ${brokers[i%10]}`,bnotes[i]||(i<12?"Kioxia / Japan memory sector note":"Weichai / China industrials note"));
+  add("X1","vector_search",`${CFG.catalog}.${CFG.schema}.expert_chunks`,"Former Kioxia insider (2026-11-04): meets ~50% of data-centre demand; NAND-only cannot cross-subsidise");
+  for(let i=1;i<=6;i++) add("R"+i,"external_db","azure_oms.research."+(i===1||i===6?"analyst_views":"notes")+" · research_views@1",i===1?"Weichai: OW 60 → 30 bps on 2026-09-15 (US data-centre equipment ban)":i===6?"Weichai note 2026-09-18: pause in data-centre genset orders":"GIC research note");
+  add("EC1","vector_search",`${CFG.catalog}.${CFG.schema}.earnings_chunks`,"Kioxia Q2 FY3/27 call (2026-11-13): data-centre eSSD demand exceeds supply through 2027");
+  add("N1","external_db","azure_oms.feeds.news_wire · news_latest (live)","2026-11-12: US ruling on Chinese power equipment expected in late December");
+  add("G1","uc_function",`${CFG.catalog}.${CFG.schema}.geo_revenue`,"Weichai North America revenue share 6% (FY2023) → 14% (FY2026), data-centre gensets");
+  return S;
+}
+
+/* tag renderer */
+function T(text){return text.replace(/\[([A-Z]{1,3}\d+)\]/g,(m,id)=>`<span class="tag" data-src="${id}" onclick="openDrawer('${id}')">${id}</span>`)}
+
+/* ---------------- scenario: headline debate ---------------- */
+const HEADLINE = {
+  q:"What are the best external managers buying now, and do we own or trade any of it?",
+  reform:"Identify the names the higher-quality external managers bought at each of the last three month-ends, then check whether GIC funds (NGC85) own or trade them, using the EM quant score as a second check.",
+  opens:["efm","ours","emquant"],
+  briefs:{efm:"The question is about what the best external managers are buying now.",ours:"Checks whether our NGC85 funds own or trade the names the top external managers are buying.",emquant:"Adds the EM quant score as a second check on the external managers' buys."},
+  round1:[
+    {from:"emquant",first:"I do not have a tool that returns external managers' buy lists or any recent purchase data from outside NGC2383.",body:"Give me the names and I will score them. Quant scores cover MSCI EM only, at the 2026-10-31 month-end [EQ1].",tool:"UC Functions MCP · quant_rank",zone:"serverless",ms:9},
+    {from:"efm",first:"Here are the four strongest points from the EFM data:",body:"1. Eight names score 3 at the Oct-26 month-end and sit in the tested top-50 basket [EF1].\n2. No name has more than 2 distinct buyers [EF1].\n3. India and China lead; Industrials and Staples are the main sectors [EF1].\n4. Kioxia was bought by the better half of managers at each of the last three month-ends [EF1].",tool:"UC Functions MCP · efm_buy_basket",zone:"serverless",ms:12},
+    {from:"ours",first:"Here are the four strongest points from our data, strongest first.",body:"1. Kioxia: we net sold USD 83m across seven accounts while two bought [US2].\n2. Renesas (USD 86.2m sold), Resonac (42.5m) and Murata (25.5m) follow the same pattern [US2].\n3. Weichai Power A: sold USD 31m [US2].\n4. Across the book, 56 strong conflicts (USD 4,024m) slightly outweigh 45 strong confirms (USD 3,722m) [US2].",tool:"Bridge MCP · oms_confirm_conflict@1 → azure_oms.oms.trades (Azure SQL) · 2.8 s",zone:"external",ms:18},
+  ],
+  points:[
+    {type:"ONE_SOURCE",status:"RESOLVED",claim:"The best external managers' buy list is real but thin. The eight score-3 names, all in the tested top-50 basket, are Laurus Labs, Adani Energy Solutions, Haitian Intl, Weichai Power A, JD Health, Komatsu, CR Beer and Kioxia. No name has more than 2 distinct buyers. India and China lead, and Industrials and Staples are the main sectors.",st:{efm:"✓",ours:"·",emquant:"·"},verdict:"The buy list is real but thin. Eight names score 3 at the Oct-26 month-end [EF1]. Two of the eight cannot be quant-checked: Haitian Intl was not found in the EM universe after three attempts [EQ1] [EQ8] [EQ9], and Komatsu is a Japan (developed-market) stock, outside the quant universe by design. Read this as a few managers' ideas, not broad consensus."},
+    {type:"ONE_SOURCE",status:"RESOLVED",claim:"Over the last 30 days we have no confirming trades in the top-50 EM-buy basket, only conflicts. Across all names: 56 strong conflicts (USD 4.0bn) and 45 strong confirms (USD 3.7bn).",st:{ours:"✓",efm:"·",emquant:"·"},verdict:"The 'no confirms' claim is corrected: JD Health is a confirm. EMA Active net bought +USD 36.6m and the stock is up +6.8% one month later, while the managers' buys are down −3.4% [US4]. The other score-3 China and India conflicts (Laurus, Adani, Haitian, CR Beer) are tiny NC EM Replication sells of USD 0.1–0.5m, likely index rebalancing [US3] [US5] [US6] [US7]. Komatsu had no trades [US8]. The real active conflicts are larger: Weichai and the Japan tech names [US2]."},
+    {type:"CONSENSUS",status:"RESOLVED",claim:"Kioxia is the clearest clash: managers bought it 3x and it sits in the top-50 basket, while we net sold USD 83m across 7 accounts. Japan tech names Renesas (−86m), Resonac (−42m) and Murata (−25m) are similar.",st:{efm:"✓",ours:"✓",emquant:"·",broker:"✓",experts:"~"},verdict:"Kioxia is the clearest active clash, and the research leans against our selling. We net sold USD 83m, with 7 accounts selling and 2 buying, so part of it is rebalancing [US2]. Every broker rates it Buy, with targets of ¥24,000–43,500 and FY3/28E P/E of 2–3x versus peers at 3–5x [B6] [B7] [B4] [B11]. Capacity is sold out for CY27 [B1] and management says data-centre eSSD demand exceeds supply through 2027 [EC1]. An expert says Kioxia meets only about 50% of data-centre demand [X1]. Risks: one broker's target cut and its call that prices fall from 2H CY27 [B6]; Kioxia sells only NAND, so it cannot cross-subsidise like its memory rivals [X1]; concern that AI capex may not last [B9]."},
+    {type:"CONSENSUS",status:"OPEN",claim:"Weichai Power A (score 3): we sold USD 31m across EMA Active, GEM Focus and NC EM Replication, while the quant book net bought +0.2m.",st:{efm:"✓",ours:"✓",research:"✓",broker:"~",news:"✓"},verdict:"Still open: our USD 31m Weichai sell matches GIC's own call. Analysts trimmed it from 60 to 30 bps overweight in Sep-26 on the US ban on Chinese data-centre equipment and the pause in data-centre genset orders [R1] [R6]. The managers' case is a 14% rise in Q3 recurring profit [B12], genset shipments up from 500 to 1,300 units [B13] and about 9x 2027 earnings with a 5% yield [B20]. Since then, four brokers have cut targets [B27] [B26] [B21] [B28] and October heavy-truck sales fell 13% [B22]. A US ruling on Chinese power equipment is expected in late December [B29] [N1]."},
+    {type:"CONSENSUS",status:"RESOLVED",claim:"The quant score backs only some of the buys.",st:{emquant:"✓",ours:"✓",efm:"~"},verdict:"Laurus ranks in the top fifth [EQ2], and our small sell has lost as the stock rose 5.7% [US3]. Adani, CR Beer and JD Health are middle fifths, so the quant score does not confirm them [EQ3] [EQ4] [EQ5]. Bilibili and Z.AI rank in the bottom fifth [EQ7] [EQ6]; one of our accounts bought USD 12.9m of Z.AI before it fell 46.9% [US10]."},
+    {type:"CONSENSUS",status:"RESOLVED",claim:"The evidence is limited in three ways: thin buyer counts, no quant score for Japan or developed-market names, and two-way account trading that blurs the net direction.",st:{efm:"✓",emquant:"✓",ours:"✓"},verdict:"The evidence has five limits. Each name has at most 2 buyers [EF1]. Quant scores cover MSCI EM only, at one month-end, so there are none for Japan or Haitian [EQ1]. Two-way account trading and index-replication flows blur the net direction [US2]. Timing edges are raw price moves, not risk-adjusted [US4]. PM names are not populated, so trades cannot be tied to decision-makers [US1]."},
+  ],
+  deep:[
+    {round:2,to:["ours","emquant"],q:"For the score-3 names not yet reported (Laurus Labs, Adani Energy Solutions, Haitian Intl, JD Health, CR Beer, Komatsu), plus Bilibili and Z.AI: what did we trade in the last 30 days, and by strategy? For the EM members, what is the quant rank and what drives it?",
+     ans:[{from:"ours",first:"Seven of eight are conflicts; JD Health is the sole confirm, and the best-timed trade.",body:"JD Health: EMA Active net bought +USD 36.6m; +6.8% one month later [US4]. Laurus, Adani, Haitian, CR Beer: NC EM Replication sells of USD 0.1–0.5m flagged as rebalancing [US3] [US5] [US6] [US7]. Komatsu: no trades [US8]. Z.AI: one account bought USD 12.9m before a −46.9% fall [US10].",tool:"Bridge MCP · oms_trade_flows@1, oms_post_trade_move@1 → Azure SQL · 3.4 s",zone:"external"},
+          {from:"emquant",first:"EM Quant check on the seven names: 2026-10-31 month-end, NGC2383 window.",body:"Laurus: top quintile [EQ2]. Adani, CR Beer, JD Health: middle fifths [EQ3] [EQ4] [EQ5]. Bilibili and Z.AI: bottom quintile [EQ7] [EQ6]. Haitian Intl: not found after three attempts [EQ1] [EQ8] [EQ9]. Komatsu: outside the universe (Japan, developed market).",tool:"UC Functions MCP · quant_rank ×3",zone:"serverless"}]},
+    {round:3,to:["broker","experts","earnings"],q:"Does the outlook for Kioxia justify selling a name the managers are buying?",
+     ans:[{from:"experts",first:"FOR (supports owning): the supply constraint is real and demand-led.",body:"A former insider says Kioxia meets about half of data-centre demand, but NAND-only exposure leaves it vulnerable to rivals who can cross-subsidise [X1].",tool:"Vector Search MCP · expert_chunks",zone:"serverless"},
+          {from:"broker",first:"NAND pricing & AI/DC demand: bullish consensus, diverging conviction.",body:"All major brokers agree the NAND upcycle is intact through CY27–28, driven by AI/DC eSSD demand [B1] [B4] [B7] [B11]. One broker cut its target and calls price falls from 2H CY27 [B6]; another flags AI-capex durability [B9].",tool:"Vector Search MCP · broker_chunks (filter company_id=C0101)",zone:"serverless"},
+          {from:"earnings",first:"Q2 FY3/27 call (13 Nov): management says eSSD demand exceeds supply through 2027.",body:"Results date 2026-11-13; the call and results note are landed, so the Kioxia wiki refresh is due [EC1].",tool:"Vector Search MCP · earnings_chunks",zone:"serverless"}]},
+    {round:3,to:["research","broker","news"],q:"What has changed on Weichai Power A since GIC's September view cut, and what would change the view?",
+     ans:[{from:"research",first:"Our view: trimmed from 60 to 30 bps overweight on 15 Sep 2026.",body:"Rationale: the US order banning Chinese equipment in data centres and a pause in data-centre genset orders [R1] [R6].",tool:"Bridge MCP · research_views@1 → azure_oms.research (Azure SQL) · 1.9 s",zone:"external"},
+          {from:"broker",first:"Managers' case vs target cuts.",body:"Q3 recurring profit +14% [B12], genset shipments 500 → 1,300 [B13], ~9x 2027 earnings with a 5% yield [B20]; four brokers have since cut targets [B21] [B26] [B27] [B28]; October heavy-truck sales −13% [B22]; US ruling expected late December [B29].",tool:"Vector Search MCP · broker_chunks",zone:"serverless"},
+          {from:"news",first:"Live: the US ruling on Chinese power equipment is still expected in late December.",body:"Latest wire, 2026-11-12 [N1]. Nothing newer in the last 48 hours; web search returns no newer filings.",tool:"Bridge MCP · news_latest (live) + web_search → azure_oms.feeds · 1.2 s",zone:"external"}]},
+  ],
+  answer:{stance:"Mostly against them, though not firmly.",paras:[
+    "Our largest active trades sell what the better external managers bought, chiefly Kioxia and Weichai Power. Each of those ideas rests on two buyers at most [EF1] [US2].",
+    "Kioxia is the clearest clash. We net sold USD 83 million across seven accounts, while two others bought [US2]. The better half of managers bought it in each of the last three month-ends, and it sits in their tested top-50 basket [EF1]. Renesas (USD 86.2 million sold), Resonac (USD 42.5 million) and Murata (USD 25.5 million) follow the same pattern [US2]. We also sold USD 31 million of Weichai Power A shares [US2]. JD Health is the one confirm: our EMA Active strategy bought USD 36.6 million, and the stock was up 6.8% a month later [US4]. Across the book, 56 strong conflicts worth USD 4,024 million slightly outweigh 45 strong confirms worth USD 3,722 million [US2].",
+    "On Kioxia, outside research leans against our selling. Every broker rates it a buy [B6] [B7] [B4]. Brokers put it at two to three times earnings for the year to March 2028, against three to five times for peers [B6] [B7] [B11]. Capacity for 2027 is sold out [B1], and management said on 13 November that data-centre demand exceeds supply through 2027 [EC1]. A former Kioxia insider said it meets only about half of data-centre demand, but warned that selling only flash memory leaves it exposed to rivals who can cross-subsidise [X1].",
+    "Weichai stays open. GIC's analyst cut it from 60 to 30 basis points overweight in September 2026, citing a US order banning Chinese equipment from data centres [R1] [R6]. The managers' case is a 14% rise in third-quarter recurring profit [B12], genset shipments climbing from 500 to 1,300 units [B13] and a valuation of about 9 times 2027 earnings with a 5% yield [B20]. Since then, four brokers have cut their targets [B27] [B26] [B21] [B28], and October heavy-truck sales fell 13% [B22].",
+    "The quant score backs only some buys. Laurus ranks top fifth [EQ2], and our small sell has lost as the stock rose 5.7% [US3]. Bilibili and Z.AI rank bottom fifth [EQ7] [EQ6]; one of our accounts bought USD 12.9 million of Z.AI before it fell 46.9% [US10]. Quant scores cover MSCI emerging-markets stocks only, at 31 October [EQ1]. Timing gains are raw price moves, not risk-adjusted [US4].",
+    "Two things would change this view: a US ruling on Chinese power equipment, expected around late December [B29] [N1], and evidence that our Japan technology selling was rebalancing rather than a deliberate view."]},
+  asknext:["Which account bought USD 12.9m of Z.AI, a bottom-fifth quant name, before its −46.9% fall, and was that an active view?",
+           "Is the USD 83m Kioxia sell (and Renesas, Resonac, Murata) a deliberate Japan-tech view or rebalancing, given unanimous broker Buys at 2–3x forward P/E?",
+           "Should we keep Weichai at 30bps overweight into the late-December US ruling, or wait for clarity before adding or cutting further?"],
+  usage:{dur:"4 min 56 s",cost:"about USD 1.94",tokens:"410K in · 38K out"}
+};
+
+/* ---------------- scenario: Weichai follow-up (uses georev if registered) ---------------- */
+function weichaiScenario(){
+  const geo = SPECS.some(s=>s.key==="georev");
+  const opens = geo?["research","georev","broker","news"]:["research","broker","news"];
+  const r1=[
+    {from:"research",first:"GIC view: 30 bps overweight since 15 Sep 2026 (cut from 60).",body:"Rationale: US data-centre equipment ban; genset order pause [R1] [R6].",tool:"Bridge MCP · research_views@1 → Azure SQL · 1.8 s",zone:"external",ms:8},
+    {from:"broker",first:"Fundamentals still improving, but targets are being cut.",body:"Q3 recurring profit +14% [B12]; gensets 500 → 1,300 units [B13]; four target cuts since [B21] [B26] [B27] [B28].",tool:"Vector Search MCP · broker_chunks",zone:"serverless",ms:10},
+    {from:"news",first:"The ruling is still expected in late December.",body:"Latest wire 2026-11-12 [N1].",tool:"Bridge MCP · news_latest (live) → Azure SQL feeds · 1.1 s",zone:"external",ms:6}];
+  if(geo) r1.splice(1,0,{from:"georev",first:"US exposure has more than doubled.",body:"North America share of Weichai revenue: 6% (FY2023) → 14% (FY2026), driven by data-centre gensets [G1]. A negative ruling hits the fastest-growing segment.",tool:"UC Functions MCP · geo_revenue",zone:"serverless",ms:7});
+  return {q:"Should we keep Weichai at 30bps overweight into the late-December US ruling, or wait for clarity before adding or cutting further?",
+    reform:"Assess whether to hold Weichai Power A at 30 bps overweight into the late-December US ruling, weighing GIC's view, broker evidence, US revenue exposure and the latest news.",
+    opens, briefs:Object.fromEntries(opens.map(k=>[k,"Evidence on Weichai Power A relevant to the late-December US ruling."])),
+    round1:r1,
+    points:[{type:"CONSENSUS",status:"OPEN",claim:"Holding at 30 bps is defensible; adding before the ruling is not supported.",st:Object.fromEntries(opens.map(k=>[k,"✓"])),verdict:geo?"US revenue exposure has risen to 14% [G1], so the ruling matters more than when the view was cut [R1]. Fundamentals are improving [B12] [B13] but brokers are cutting targets [B27] [B28]. No new information since 12 Nov [N1].":"Fundamentals are improving [B12] [B13] but brokers are cutting targets [B27] [B28]; the view was cut for exactly this risk [R1]. No new information since 12 Nov [N1]."}],
+    deep:[],
+    answer:{stance:"Hold at 30 bps; don't add before the ruling.",paras:[
+      "GIC already cut Weichai to 30 bps overweight for this risk [R1] [R6]. The operating case keeps improving: Q3 recurring profit rose 14% [B12] and genset shipments grew from 500 to 1,300 units [B13]. But four brokers have cut targets since [B21] [B26] [B27] [B28].",
+      geo?"The new geographic-revenue specialist adds the key fact: North America is now 14% of revenue, up from 6% in FY2023, mostly data-centre gensets [G1]. A negative ruling would hit the fastest-growing part of the business, so adding before late December takes on binary risk.":"Without revenue-by-region data, the size of the US exposure is unclear.",
+      "Nothing new has come out since 12 November [N1]. Revisit after the ruling."]},
+    asknext:["What share of Weichai's genset shipments go to US data centres?","How did Weichai trade around previous US policy announcements?","Which of our accounts still hold Weichai, and at what active weight?"],
+    usage:{dur:"1 min 48 s",cost:"about USD 0.41",tokens:"96K in · 9K out"}};
+}
+
+/* =====================================================================
+   RUN ENGINE
+   ===================================================================== */
+let SOURCES = buildSources();
+let LAST = null;          // last run result for trace view
+const STAGES = ["Who opens","Opening round","Map of the debate","Deep dive","Verdicts","The answer"];
+const ctl = {paused:false,abort:false,speed:1};
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+async function wait(ms){let left=ms/ctl.speed;while(left>0){if(ctl.abort)throw new Error("aborted");if(ctl.paused){await sleep(120);continue}const s=Math.min(100,left);await sleep(s);left-=s}}
+
+let t0=0;
+function clock(){const s=Math.floor((performance.now()-t0)/1000*SIM_FACTOR);return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`}
+const SIM_FACTOR = 6; // simulated seconds per real second (≈5-min debate in ~50 s)
+function ev(zone,label,html,comp){
+  const log=document.getElementById("evlog");
+  if(log.dataset.empty!=="0"){log.innerHTML="";log.dataset.empty="0"}
+  const d=document.createElement("div");d.className="ev";
+  d.innerHTML=`<div class="t">${clock()}</div><div><span class="c c-${zone}">${label}</span><div>${html}</div></div>`;
+  log.prepend(d); applyLinks(d);
+  if(comp) light(comp);
+}
+function light(comps){[].concat(comps).forEach(c=>{document.querySelectorAll(`[data-comp="${c}"]`).forEach(el=>{el.classList.add("lit");clearTimeout(el._h);el._h=setTimeout(()=>el.classList.remove("lit"),1800)})})}
+
+function av(s,size=36){return `<div class="av" style="background:${s.color};width:${size}px;height:${size}px">${s.tag}</div>`}
+
+function stageSet(i,state){const el=document.querySelectorAll("#stages .stage")[i];if(el){el.className="stage "+state}}
+
+let running=false;
+async function runScenario(sc, opts={}){
+  if(running) return; running=true;
+  const area=document.getElementById("runArea");
+  const rounds=+document.getElementById("rounds").value;
+  const runId="r-20261121-"+String(Math.floor(Math.random()*9000)+1000);
+  const traceId="tr-"+Math.random().toString(16).slice(2,10);
+  t0=performance.now();
+  document.getElementById("askBtn").disabled=true;
+  document.getElementById("evlog").dataset.empty="1";
+  area.innerHTML=`
+    <div class="card" style="margin-top:20px" id="runCard">
+      <div class="runhead"><h2>${sc.q}</h2>
+      <div class="meta" id="runMeta" data-spec="SSE: status, usage, done · trace link">Full debate · <b id="runStatus">running</b> · ${rounds} rounds · run <code>${runId}</code> · <a href="#" onclick="requestRestart();return false">⟲ simulate moderator restart</a></div></div>
+      <div class="stages" id="stages" data-spec="SSE event: stage {stage,status}">${STAGES.map(s=>`<span class="stage">${s}</span>`).join("")}</div>
+      <div id="banners"></div>
+      <div id="answerSlot" data-spec="SSE: answer · citation validator §5.2"></div>
+      <div id="debateSlot" data-spec="SSE: map, verdict"></div>
+      <div class="section-t">The discussion</div>
+      <div id="discussion" data-spec="SSE: who_opens, message (claims[], tool_calls[])"></div>
+      <div id="asknextSlot" data-spec="SSE: ask_next"></div>
+      <div id="sourcesSlot" data-spec="RunResult.sources · drawer"></div>
+    </div>`;
+  const disc=document.getElementById("discussion");
+  const spans=[{n:`run · ${runId}`,d:"",lvl:0}];
+  try{
+    ev("serverless","eqds-ui",`POST /runs → ${L("app:eqds-moderator","eqds-moderator")} · 202 {run_id}`,["ui","moderator"]);
+    await wait(500);
+    ev("state","Lakebase",`INSERT ops.runs (status=QUEUED) · SSE stream opened on ops.run_events · ${L("lakebase","instance")}`,"lakebase");
+    await wait(700);
+    INV=[];
+    if(CONV.turns.length){ev("state","Lakebase · mem.conversation",`loaded ${CONV.turns.length} prior turn(s) for ${CONV.id} into the reformulate prompt`,"lakebase");await wait(400)}
+    ev("state","UC Volume · skills",`moderator skill moderator@1.4.0 + prompts pinned · ${L("volume:skills","skills/")}`,"uc");
+    stageSet(0,"active");
+    ev("model","AI Gateway · fast tier",`reformulate + select specialists · ${epL("fast")}`,"gateway");
+    await wait(1200);
+    const auto=document.getElementById("autoSel").checked;
+    let opens=sc.opens;
+    if(!auto){const picked=SPECS.filter(s=>s.on).map(s=>s.key);opens=sc.opens.filter(k=>picked.includes(k));if(!opens.length)opens=sc.opens}
+    disc.innerHTML+=`<div class="section-t" style="margin-top:6px">Round 1 · Opening</div>`;
+    disc.innerHTML+=msgHTML(MOD,"reformulates",`<i>${sc.reform}</i>${CONV.turns.length?`<br><span class="tiny muted">Context from this conversation: “${CONV.turns[CONV.turns.length-1].q.slice(0,90)}…” → ${CONV.turns[CONV.turns.length-1].stance}</span>`:""}`,null,true);
+    disc.innerHTML+=msgHTML(MOD,"who opens",sc.opens.filter(k=>opens.includes(k)).map(k=>`<b>@${k}</b>: ${sc.briefs[k]}`).join("<br>"),null,true);
+    stageSet(0,"done");stageSet(1,"active");
+    ev("serverless","eqds-moderator",`Who opens: ${opens.map(k=>"@"+k).join(" ")} · ${auto?"auto-selected from registry":"manual selection"}`,"moderator");
+    spans.push({n:"round 1 · opening",d:"",lvl:1},{n:"moderator.plan (LLM, fast tier)",d:"6.1 s",lvl:2});
+    // round 1 parallel
+    const r1=sc.round1.filter(m=>opens.includes(m.from));
+    r1.forEach(m=>ev(m.zone==="external"?"serverless":"serverless",`eqds-sp-${m.from}`,`POST /invocations (round 1) · ${L("app:eqds-sp-"+m.from,"app")}`,["sp-"+m.from]));
+    for(const m of r1){
+      await wait(900+ (m.ms||8)*90);
+      if(m.zone==="external"){
+        ev("serverless","eqds-bridge-mcp",`tools/call · request queued in Lakebase bridge.requests`,["mcp-bridge","lakebase"]);
+        await wait(500);
+        ev("classic","Bridge worker",`claimed request · spark.sql(template) on ${L("foreign:oms/trades","azure_oms")} · ${L("job:bridgeJobId:eqds-bridge-worker","job")}`,["worker","foreign"]);
+        await wait(500);
+        ev("external","Azure SQL",`eqds_oms queried in place · rows returned to bridge (no copy in UC)`,"azure");
+        await wait(300);
+      } else {
+        ev("serverless",m.tool.split(" · ")[0],m.tool.split(" · ").slice(1).join(" · "),[m.tool.includes("Vector")?"mcp-vs":"mcp-uc","uc"]);
+      }
+      disc.innerHTML+=msgHTML(spec(m.from),"",m.first,m.body,false,m.tool);
+      INV.push(mkInv(m.from,1,sc.briefs[m.from]||sc.reform,m,runId));
+      spans.push({n:`specialist.${m.from}`,d:`${(m.ms||8)+4}.${Math.floor(Math.random()*9)} s`,lvl:2},{n:`tool · ${m.tool.split(" · ")[1]||m.tool}`,d:m.tool.match(/[\d.]+ s/)?.[0]||"0.9 s",lvl:3},{n:`llm.standard (${TIERS.standard.primary})`,d:"4.2 s",lvl:3});
+      ev("model","AI Gateway · standard",`${spec(m.from).name} analysis · ${epL("standard")}`,"gateway");
+    }
+    applyLinks(disc);
+    await wait(500);
+    ev("state","Lakebase · checkpoint",`round 1 checkpointed (LangGraph, thread_id=${runId})`,"lakebase");
+    stageSet(1,"done");
+    budgetCheck(sc,1,rounds);
+    await maybeRestart(runId,1,null);
+    // map of debate
+    stageSet(2,"active");
+    ev("model","AI Gateway · reasoning",`map_debate: group findings, find conflicts & gaps · ${epL("reasoning")}`,"gateway");
+    spans.push({n:"moderator.map_debate (LLM, reasoning tier)",d:"18.4 s",lvl:2});
+    await wait(1500);
+    renderDebateMap(sc,false);
+    stageSet(2,"done");
+    // deep dive rounds
+    const nDeep=rounds===1?0:sc.deep.length;
+    if(nDeep>0){stageSet(3,"active")}
+    let lastRound=1;
+    for(let i=0;i<nDeep;i++){
+      const dd=sc.deep[i]; const rn=Math.min(rounds, dd.round||i+2);
+      if(rn!==lastRound){disc.innerHTML+=`<div class="section-t">Round ${rn} · Deep dive</div>`;lastRound=rn}
+      disc.innerHTML+=msgHTML(MOD,"→ "+dd.to.map(k=>"@"+k).join(" "),dd.q,null,true);
+      spans.push({n:`round ${rn} · deep dive`,d:"",lvl:1});
+      ev("serverless","eqds-moderator",`deep dive → ${dd.to.map(k=>"@"+k).join(" ")}`,"moderator");
+      for(const a of dd.ans){
+        if(!SPECS.some(s=>s.key===a.from)) continue;
+        ev("serverless",`eqds-sp-${a.from}`,`POST /invocations (round ${rn}) · idempotency_key ${runId}:${rn}:${a.from}`,["sp-"+a.from]);
+        if(i===0 && a===dd.ans[0]) await maybeRestart(runId,rn,a.from);
+        await wait(1300);
+        if(a.zone==="external"){ev("classic","Bridge worker",`${a.tool.split(" · ")[1]} · ${L("foreign:oms/trades","azure_oms")}`,["mcp-bridge","worker","foreign","azure"]);await wait(400);}
+        else ev("serverless",a.tool.split(" · ")[0],a.tool.split(" · ").slice(1).join(" · "),[a.tool.includes("Vector")?"mcp-vs":"mcp-uc"]);
+        disc.innerHTML+=msgHTML(spec(a.from),"",a.first,a.body,false,a.tool);
+        INV.push(mkInv(a.from,rn,dd.q,a,runId));
+        spans.push({n:`specialist.${a.from}`,d:`${9+Math.floor(Math.random()*9)}.${Math.floor(Math.random()*9)} s`,lvl:2},{n:`tool · ${a.tool.split(" · ")[1]}`,d:a.tool.match(/[\d.]+ s/)?.[0]||"1.1 s",lvl:3});
+      }
+      applyLinks(disc);
+      ev("state","Lakebase · checkpoint",`round ${rn} checkpointed`,"lakebase");
+      budgetCheck(sc,rn,rounds);
+      await wait(500);
+    }
+    if(nDeep>0) stageSet(3,"done");
+    // verdicts
+    stageSet(4,"active");
+    ev("model","AI Gateway · reasoning","verdicts + citation validator (every factual sentence has ≥1 valid tag)","gateway");
+    spans.push({n:"moderator.verdicts (LLM, reasoning tier)",d:"21.7 s",lvl:2});
+    await wait(1500);
+    renderDebateMap(sc,true);
+    stageSet(4,"done");
+    // answer
+    stageSet(5,"active");
+    ev("model","AI Gateway · reasoning","synthesize_answer + suggest_next","gateway");
+    spans.push({n:"synthesis · answer + citations",d:"24.9 s",lvl:1},{n:"suggest_next (LLM, fast tier)",d:"2.3 s",lvl:2});
+    await wait(1600);
+    renderAnswer(sc,runId,traceId);
+    stageSet(5,"done");
+    document.getElementById("runStatus").textContent="done";
+    const used=new Set((JSON.stringify(sc).match(/\[([A-Z]{1,3}\d+)\]/g)||[]).map(x=>x.slice(1,-1)));
+    const cnum=parseFloat(sc.usage.cost.replace(/[^\d.]/g,""));
+    document.getElementById("runMeta").innerHTML=`Full debate · <b>done</b> · ${sc.usage.dur} · ${sc.usage.cost} · ${sc.usage.tokens} · ${used.size} sources · budget ${Math.round(cnum/BUDGET.cost*100)}% of USD ${BUDGET.cost.toFixed(2)} · run <code>${runId}</code> · ${L("experiment","MLflow trace "+traceId)}`;
+    applyLinks(document.getElementById("runMeta"));
+    ev("state","Lakebase",`ops.runs status=DONE · result persisted`,"lakebase");
+    ev("serverless","MLflow 3",`trace ${traceId} logged · tags run_id, conversation_id, user_id, specialists · ${L("experiment","open")}`,"mlflow");
+    LAST={sc,runId,traceId,spans,opens,inv:INV};
+    CONV.turns.push({turn:CONV.turns.length+1,q:sc.q,stance:sc.answer.stance,runId});
+    HISTORY.unshift({q:sc.q,runId,when:new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}),stance:sc.answer.stance});
+    renderHistory();
+    ev("state","Lakebase · mem.conversation",`turn ${CONV.turns.length} saved for ${CONV.id}`,"lakebase");
+    renderTrace();
+  }catch(e){ if(e.message!=="aborted") console.error(e); }
+  finally{ running=false; document.getElementById("askBtn").disabled=false; }
+}
+
+function msgHTML(s,to,first,body,open,tool){
+  return `<div class="msg">${av(s)}<div><div class="who" style="color:${s.color}">${s.name}${to?` <span class="to">· ${to}</span>`:""}</div>
+    ${body?`<details><summary>${T(first)}</summary><div class="body">${T(body)}</div>${tool?`<div class="toolline">⚙ ${tool}</div>`:""}</details>`:`<div class="body" style="margin-top:2px">${T(first)}</div>`}</div></div>`;
+}
+function renderDebateMap(sc,withVerdicts){
+  const slot=document.getElementById("debateSlot");
+  slot.innerHTML=`<div class="section-t">The debate · ${sc.points.length} points · ✓ agrees · ✗ disagrees · ~ partly · · didn't address it</div>`+
+    sc.points.map(p=>`<div class="point ${p.type==="CONSENSUS"?(p.status==="OPEN"?"OPEN":"CONSENSUS"):""}">
+      <span class="badge b-${p.type}">${p.type.replace("_"," ")}</span><span class="badge b-${p.status}">${p.status}</span>
+      <span class="claim">${p.claim}</span>
+      <div class="stances">${Object.entries(p.st).map(([k,v])=>{const s=spec(k);return `<span>${av(s,16)} ${v}</span>`}).join("")}</div>
+      ${withVerdicts?`<div class="verdict"><b>${p.status==="OPEN"?"Still open":"Verdict"}:</b> ${T(p.verdict)}</div>`:`<div class="verdict muted small">Verdict pending…</div>`}
+    </div>`).join("");
+}
+function renderAnswer(sc,runId,traceId){
+  const a=sc.answer;
+  document.getElementById("answerSlot").innerHTML=`<div class="answer" id="answerBox"><div class="muted small">The answer</div>
+    <p><span class="stance">${a.stance}</span> ${T(a.paras[0])}</p>${a.paras.slice(1).map(p=>`<p>${T(p)}</p>`).join("")}
+    <div class="feedback">Was this useful? <button onclick="fb(this,'up','${traceId}')">👍</button><button onclick="fb(this,'down','${traceId}')">👎</button><span id="fbMsg"></span></div></div>`;
+  document.getElementById("asknextSlot").innerHTML=`<div class="section-t">Ask next</div><div class="asknext">${sc.asknext.map(q=>`<button onclick="askText(this.textContent)">${q}</button>`).join("")}</div>`;
+  const used=[...new Set((JSON.stringify(sc).match(/\[([A-Z]{1,3}\d+)\]/g)||[]).map(x=>x.slice(1,-1)))];
+  document.getElementById("sourcesSlot").innerHTML=`<p style="margin-top:16px"><a href="#" onclick="openDrawer();return false">▸ Sources (${used.length}): the tables and documents the agents read</a></p>`;
+  LAST_USED=used;
+}
+let LAST_USED=[];
+function fb(btn,v,tid){btn.parentElement.querySelectorAll("button").forEach(b=>b.classList.remove("sel"));btn.classList.add("sel");
+  document.getElementById("fbMsg").innerHTML=` Logged to MLflow as assessment <code>user_rating=${v==="up"}</code> on trace ${tid} · ${L("experiment","view")}`;applyLinks(document.getElementById("fbMsg"));
+  ev("serverless","MLflow 3",`mlflow.log_feedback(trace_id=${tid}, name="user_rating", value=${v==="up"})`,"mlflow")}
+
+function openDrawer(hl){
+  SOURCES=buildSources();
+  const ids=(LAST_USED.length?LAST_USED:Object.keys(SOURCES));
+  const order=s=>({EF:0,US:1,EQ:2,B:3,X:4,R:5,EC:6,N:7,G:8}[s.replace(/\d+/,"")]??9)*100+parseInt(s.replace(/\D/g,""));
+  ids.sort((a,b)=>order(a)-order(b));
+  document.getElementById("srcCount").textContent=`${ids.length} sources`;
+  document.getElementById("srcList").innerHTML=ids.map(id=>{const s=SOURCES[id]||{id,ty:"source",ref:"",detail:""};
+    const link=s.ty==="external_db"?L("foreign:"+(s.ref.includes("research")?"research/analyst_views":s.ref.includes("feeds")?"feeds/news_wire":"oms/trades"),s.ref):L("table:"+(s.ref.split(" ")[0].split(".").pop()),s.ref);
+    return `<div class="src ${id===hl?"hl":""}" id="src-${id}"><span class="id">${id}</span><span class="ty">${s.ty.replace("_"," ")}${s.ty==="external_db"?" · Azure SQL (in place)":""}</span><div>${s.detail}</div><div class="tiny">${link}</div></div>`}).join("");
+  applyLinks(document.getElementById("srcList"));
+  document.getElementById("drawer").classList.add("open");
+  if(hl){const el=document.getElementById("src-"+hl);el&&el.scrollIntoView({block:"center"})}
+}
+function closeDrawer(){document.getElementById("drawer").classList.remove("open")}
+
+/* trace view */
+function renderTrace(){
+  renderSkills();
+  if(!LAST) return;
+  renderInvSel();renderMem();
+  document.getElementById("traceId").textContent=LAST.traceId+" · "+LAST.runId;
+  document.getElementById("spans").innerHTML=LAST.spans.map(s=>`<div class="sp" style="margin-left:${s.lvl*22}px;background:${["#071D49","#04258B","#E8EDFF","#F2F2F2"][Math.min(s.lvl,3)]};color:${s.lvl<2?"#fff":"#000"}"><span>${s.n}</span><span class="d" style="color:${s.lvl<2?"#cfd8ff":""}">${s.d}</span></div>`).join("");
+  document.getElementById("traceTags").textContent=JSON.stringify({run_id:LAST.runId,conversation_id:"c-7f3a",user_id:"pm.demo@gic.example",caller:"ui",app_version:"eqds-moderator 0.4.2",rounds:+document.getElementById("rounds").value,specialists:LAST.opens.join(","),cost_usd:LAST.sc.usage.cost.replace("about USD ","")},null,2);
+}
+
+/* =====================================================================
+   ASK UI
+   ===================================================================== */
+function renderChips(){
+  const auto=document.getElementById("autoSel").checked;
+  document.getElementById("chips").innerHTML=SPECS.map(s=>`<span class="chip ${s.on&&!auto?"on":""} ${auto?"auto":""}" data-k="${s.key}" onclick="toggleSpec('${s.key}')">${`<span class="av" style="background:${s.color}">${s.tag}</span>`}${s.name}${s.isNew?' <span class="new">new</span>':""}</span>`).join("");
+  document.getElementById("archSpecs").innerHTML=SPECS.map(s=>`<a class="comp" data-comp="sp-${s.key}" data-link="app:${s.app}"><b>${s.app}</b>${s.tools}</a>`).join("");
+  document.getElementById("regBody").innerHTML=SPECS.map(s=>`<tr style="${s.isNew?"background:#F6EEE3":""}"><td><code>${s.key}</code></td><td>${s.name}${s.isNew?' <span class="badge b-OPEN">NEW</span>':""}</td><td>${s.tag}</td><td>${s.tools}</td><td>${L("app:"+s.app,s.app)}</td><td>${s.ver}</td><td>${s.owner}</td></tr>`).join("");
+  applyLinks();
+}
+function toggleSpec(k){if(document.getElementById("autoSel").checked){document.getElementById("autoSel").checked=false}const s=SPECS.find(x=>x.key===k);s.on=!s.on;renderChips()}
+function pickScenario(q){
+  const t=q.toLowerCase();
+  if(t.includes("weichai")) return weichaiScenario();
+  if(t.includes("z.ai")) return zaiScenario();
+  return HEADLINE;
+}
+function zaiScenario(){return {q:"Which account bought USD 12.9m of Z.AI, a bottom-fifth quant name, before its −46.9% fall, and was that an active view?",reform:"Identify the account behind the Z.AI purchase and whether it was an active decision.",opens:["ours","emquant"],briefs:{ours:"Which account bought Z.AI, when, and was it flagged as rebalancing?",emquant:"Z.AI quant rank and drivers at the time of purchase."},
+  round1:[{from:"ours",first:"One account, ACC-004 (EMA Active), bought USD 12.9m over three days in early October; not a rebalance trade.",body:"is_rebalance = 0 on all three trades; no PM name is recorded, so the decision-maker cannot be identified [US10] [US1].",tool:"Bridge MCP · oms_trade_flows@1 → Azure SQL · 2.1 s",zone:"external",ms:8},
+          {from:"emquant",first:"Z.AI was already bottom quintile at the September month-end.",body:"Bottom-fifth at both 2026-09-30 and 2026-10-31; weakest drivers: revisions and momentum [EQ6].",tool:"UC Functions MCP · quant_rank",zone:"serverless",ms:6}],
+  points:[{type:"CONSENSUS",status:"RESOLVED",claim:"An active purchase against the quant signal.",st:{ours:"✓",emquant:"✓"},verdict:"ACC-004 (EMA Active) bought USD 12.9m, not flagged as rebalancing [US10], while the quant score was bottom-fifth [EQ6]. PM attribution is unavailable [US1]."}],deep:[],
+  answer:{stance:"It looks like an active view, made against the quant signal.",paras:["One EMA Active account (ACC-004) bought USD 12.9 million of Z.AI over three days in early October. None of the trades was flagged as rebalancing [US10]. Z.AI was already in the bottom fifth of the EM quant ranking at the September month-end [EQ6]. Because PM names are not recorded on trades, we cannot say who made the call [US1]."]},
+  asknext:["What else did ACC-004 buy against a bottom-fifth quant score?","How have bottom-fifth quant buys performed across EMA Active this year?","Show Z.AI's quant drivers over the last 6 months."],
+  usage:{dur:"1 min 12 s",cost:"about USD 0.22",tokens:"48K in · 5K out"}}}
+function ask(){const q=document.getElementById("q").value.trim()||HEADLINE.q;document.getElementById("q").value=q;runScenario(Object.assign({},pickScenario(q),{q}))}
+function askText(q){document.getElementById("q").value=q;window.scrollTo({top:0,behavior:"smooth"});ask()}
+
+/* =====================================================================
+   UNDER THE HOOD
+   ===================================================================== */
+function showView(v){document.querySelectorAll(".view").forEach(x=>x.classList.toggle("active",x.id==="view-"+v));document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));window.scrollTo({top:0})}
+function showSub(s){document.querySelectorAll(".sub").forEach(x=>x.style.display=x.id==="sub-"+s?"block":"none");document.querySelectorAll("#subnav button").forEach(b=>b.classList.toggle("on",b.dataset.sub===s));if(s==="trace")renderTrace();if(s==="models")renderTiers();if(s==="data")renderData();if(s==="caps")renderCaps();if(s==="handoff")renderHandoff()}
+document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>showView(b.dataset.view));
+document.querySelectorAll("#subnav button").forEach(b=>b.onclick=()=>showSub(b.dataset.sub));
+
+async function netServerless(){
+  const o=document.getElementById("netSOut");o.innerHTML=`<div class="banner warn"><span class="spinner"></span> Connecting to eqds-oms-demo.database.windows.net:1433 from serverless compute…</div>`;
+  light(["foreign"]);await wait(3500);
+  o.innerHTML=`<div class="banner err">✕ <div><b>Connection timed out.</b> The host is not reachable from serverless compute: no private connectivity, and the firewall allows only the classic bridge egress IP. <span class="tiny">(This is the GIC restriction, reproduced on purpose.)</span></div></div>`;
+}
+async function netBridge(){
+  const o=document.getElementById("netBOut");o.innerHTML=`<div class="banner warn"><span class="spinner"></span> Queued in bridge.requests → classic worker claimed → spark.sql(oms_confirm_conflict@1)…</div>`;
+  light(["mcp-bridge","lakebase"]);await wait(900);light(["worker","foreign"]);await wait(900);light("azure");await wait(800);
+  o.innerHTML=`<div class="banner ok">✓ 2.8 s · 50 rows (showing 6) · source <code>azure_sql · azure_oms.oms.trades · oms_confirm_conflict@1</code></div>
+  <table class="t"><thead><tr><th>Company</th><th>Score</th><th>Buyers</th><th>Net USD m</th><th>Sell / buy accts</th><th>Class</th></tr></thead><tbody>
+  <tr><td>Kioxia</td><td>3</td><td>2</td><td>−83.0</td><td>7 / 2</td><td>strong_conflict</td></tr>
+  <tr><td>Weichai Power A</td><td>3</td><td>2</td><td>−30.8</td><td>6 / 1</td><td>strong_conflict</td></tr>
+  <tr><td>JD Health</td><td>3</td><td>1</td><td>+36.6</td><td>0 / 2</td><td>strong_confirm</td></tr>
+  <tr><td>Laurus Labs</td><td>3</td><td>2</td><td>−0.3</td><td>1 / 0</td><td>conflict (rebalance)</td></tr>
+  <tr><td>CR Beer</td><td>3</td><td>1</td><td>−0.2</td><td>1 / 0</td><td>conflict (rebalance)</td></tr>
+  <tr><td>Komatsu</td><td>3</td><td>2</td><td>0.0</td><td>0 / 0</td><td>none</td></tr></tbody></table>
+  <p class="tiny muted">Book totals (all names, last 30 days): 56 strong conflicts USD 4,024m · 45 strong confirms USD 3,722m. No copy of trades exists in UC.</p>`;
+}
+function registerGeo(){
+  if(SPECS.some(s=>s.key==="georev")){toast("Already registered.");return}
+  SPECS.push(GEO);renderChips();document.getElementById("regBtn").disabled=true;
+  ev("state","Lakebase",`INSERT registry.specialists (georev, tag G, url ${GEO.app}) · moderator picks it up within 60 s, no redeploy`,"lakebase");
+  toast("“Geographic revenue” registered. The moderator will consider it for the next question.");
+}
+const EVALS=[["correctness","≥ 0.75",.81],["retrieval_groundedness","≥ 0.85",.89],["citation_validity","≥ 0.95",.98],["claim_citation_coverage","≥ 0.95",.96],["research_style (guidelines)","≥ 0.80",.88],["safety","= 1.00",1],["within_budget (≤ 8 min, ≤ USD 2)","≥ 0.90",.93]];
+function renderEval(fill){document.getElementById("evalBars").innerHTML=EVALS.map(([n,th,v])=>`<div style="margin:10px 0"><div class="row small" style="justify-content:space-between"><span>${n}</span><span class="muted">threshold ${th} · <b style="color:var(--gic-navy)">${fill?v.toFixed(2):"—"}</b></span></div><div class="bar"><i style="width:${fill?v*100:0}%"></i></div></div>`).join("")}
+async function runEval(){renderEval(false);light("mlflow");await wait(1200);renderEval(true);ev("serverless","MLflow 3","mlflow.genai.evaluate · 40 questions · all thresholds met (illustrative)","mlflow")}
+const PIPE=[["Lint & unit","ruff · pytest · normalize golden files"],["Bundle validate","databricks bundle validate -t staging"],["Ephemeral deploy","-t dev · suffix -pr42"],["Integration","contract · MCP tools · bridge round-trip"],["Eval gate","10-question smoke · thresholds"],["Staging","bundle deploy -t staging"],["Approval → prod","reviewer sign-off · SP deploy"]];
+function renderPipe(i){document.getElementById("pipe").innerHTML=PIPE.map(([n,d],k)=>`<div class="st ${k<i?"ok":k===i?"run":""}"><b>${n}</b><span class="tiny muted">${d}</span><div class="s small">${k<i?"✓ passed":k===i?'<span class="spinner"></span> running':"queued"}</div></div>`).join("")}
+async function runCI(){for(let i=0;i<=PIPE.length;i++){renderPipe(i);await wait(i===4?1600:800)}ev("serverless","DABs","eqds-sp-ours 1.3.0 deployed to staging · prod awaiting approval")}
+
+/* =====================================================================
+   WIKI
+   ===================================================================== */
+const SECTORS=[["Energy",6],["Materials",4],["Industrials",8],["Consumer Discretionary",8],["Consumer Staples",2],["Health Care",8],["Financials",18],["Information Technology",26],["Communication Services",6],["Utilities",2],["Real Estate",2]];
+let wSector="Energy";
+const WIKI={
+  "Energy":[{n:"DHT Holdings, Inc.",r:3,t:"DHT-US"},{n:"Hornbeck Offshore Services, Inc.",r:4,t:"HOS-US"},{n:"Summit Midstream Corp.",r:10,t:"SMC-US"},{n:"VAALCO Energy, Inc.",r:36,t:"EGY-US"},{n:"Equital Ltd.",r:39,t:"EQTL-IL"},{n:"Reliance Industries Ltd",wiki:{upd:"19 Oct 2026",pages:47,src:97,cit:"2,577",note:"Nothing new since the Nov 2 build"}}],
+  "Information Technology":[{n:"Kioxia Holdings",wiki:{upd:"14 Oct 2026",pages:41,src:88,cit:"2,104",due:"Refresh due at 07:30 SGT: results 13 Nov + 2 days, call and results note landed"}},{n:"Samsung Electronics",wiki:{upd:"18 Nov 2026",pages:52,src:121,cit:"3,310",note:"Up to date"}},{n:"TSMC",wiki:{upd:"17 Nov 2026",pages:49,src:110,cit:"2,980",note:"Up to date"}}],
+  "Industrials":[{n:"Recruit Holdings Co., Ltd",wiki:{upd:"19 Nov 2026",pages:44,src:93,cit:"2,412",note:"Built this week"}},{n:"Weichai Power A",wiki:{upd:"20 Sep 2026",pages:38,src:84,cit:"1,960",due:"Refresh due: ≥3 rating/target changes since last build"}}],
+};
+function renderWiki(){
+  document.getElementById("sectors").innerHTML=SECTORS.map(([s,c])=>`<button class="${s===wSector?"on":""}" onclick="wSector='${s}';renderWiki()">${s} <span class="muted">${c}</span></button>`).join("");
+  const q=document.getElementById("wsearch").value.toLowerCase();
+  const list=(WIKI[wSector]||[{n:"(synthetic placeholder holdings)",r:"–",t:"–"}]).filter(c=>c.n.toLowerCase().includes(q));
+  const wikis=list.filter(c=>c.wiki).length;
+  document.getElementById("wikiBody").innerHTML=`<h3 style="margin:14px 0 12px;font-family:var(--sans);font-weight:600;font-size:20px;border-left:4px solid var(--gic-navy);padding-left:10px">${wSector} <span class="muted small" style="font-weight:400">${wikis} wiki · ${list.length-wikis} to request</span></h3>
+  <div class="wcards">${list.map(c=>c.wiki?`<div class="wcard has"><div class="row"><h4>${c.n}</h4><button class="btn ghost sm" style="margin-left:auto" onclick="toast('PDF export: synthetic demo')">⤓ Download PDF</button></div>
+    <div class="small muted">Updated ${c.wiki.upd}<br>${c.wiki.pages} pages · ${c.wiki.src} sources · ${c.wiki.cit} citations</div><hr class="sep" style="margin:10px 0">
+    ${c.wiki.due?`<div class="due">⟳ ${c.wiki.due}</div>`:`<div class="small muted">${c.wiki.note}</div>`}
+    <button class="btn sm" style="margin-top:10px" onclick="openWiki('${c.n.replace(/'/g,"")}')">Open wiki</button></div>`
+    :`<div class="wcard"><h4>${c.n}</h4><div class="small muted"><span class="rank">#${c.r}</span>${c.t} · no wiki yet</div><button class="btn ghost sm" style="margin-top:12px" onclick="requestWiki('${c.n.replace(/'/g,"")}')">Request a wiki</button></div>`).join("")}</div>`;
+}
+async function requestWiki(n){
+  const qd=document.getElementById("queue");qd.innerHTML=`<span class="spinner"></span> <b>${n}</b>: first build queued · for-each task in ${L("job:wikiJobId:eqds-wiki-refresh","eqds-wiki-refresh")} · moderator invoked once per page (Company, Industry, Catalysts, Debate, Internal View, External View, ESG)`;applyLinks(qd);
+  toast(`Wiki requested for ${n}.`);
+}
+const WTABS=["Home","Company","Industry","Catalysts","Debate","Internal View","External View","ESG","References","Ask AI"];
+function openWiki(n){
+  document.getElementById("wmTitle").textContent=n+" · Company Wiki";
+  const tabs=document.getElementById("wmTabs");tabs.innerHTML=WTABS.map((t,i)=>`<button class="${i===0?"on":""}" onclick="wikiTab(this,'${t}','${n}')">${t}</button>`).join("");
+  wikiTab(tabs.children[0],"Home",n);document.getElementById("wikiModal").classList.add("on");
+}
+function wikiTab(btn,t,n){
+  btn.parentElement.querySelectorAll("button").forEach(b=>b.classList.remove("on"));btn.classList.add("on");
+  const b=document.getElementById("wmBody");
+  if(t==="Ask AI"){b.innerHTML=`<h2 style="font-size:30px">Ask AI</h2><p class="muted">Ask a question about ${n}. Ask AI brings in several of the research agents behind this wiki, each with its own sources: GIC's research notes, broker reports, earnings calls, the news and more. They debate your question, dig into where they disagree, and answer in plain words with every source cited. It takes a few minutes.</p>
+    <textarea id="wq" style="width:100%;min-height:80px;font:inherit;padding:12px;border:1px solid var(--gic-border-dark);border-radius:4px" placeholder="Your question: for example, how durable is the margin expansion into next year?"></textarea>
+    <div class="row" style="margin-top:10px"><select><option>3 rounds</option><option>1 round</option><option>5 rounds</option></select><button class="btn" onclick="document.getElementById('wikiModal').classList.remove('on');showView('ask');askText(document.getElementById('wq').value||'Does the outlook for ${n} justify selling a name the managers are buying?')">Ask</button></div>
+    <h3 style="margin-top:20px">Your questions on ${n}</h3><p class="muted">None yet.</p>`;return}
+  b.innerHTML=`<p class="muted small">Page built by the research agents from cited sources · synthetic demo content</p><h3>${t}</h3><p>${{Home:"Overview, key numbers and what changed since the last build.",Company:"Business model, segments and geographic revenue mix [G1].",Industry:"Industry structure, cycle and competitors.",Catalysts:"Upcoming results (earnings_calendar), policy events and broker flow.",Debate:"Where the specialists agree and disagree, with verdicts.","Internal View":"GIC research view and active-weight history (Azure SQL, queried in place) [R1].","External View":"Broker ratings, targets and external-manager positioning [B1] [EF1].",ESG:"ESG topics raised in broker reports, calls and news.",References:"All sources with links to UC tables, documents and foreign tables."}[t]}</p>`;
+  b.innerHTML=T(b.innerHTML);
+}
+
+/* =====================================================================
+   DEMO PLAYER
+   ===================================================================== */
+const Demo={i:0,active:false,
+  steps:[
+    {t:"The target state on Databricks",n:"EQDS's moderator-led research agents run as serverless Databricks Apps: one app per specialist. The OMS and research database stay in Azure SQL, outside Databricks, and are reached through a governed classic bridge.",run:async()=>{showView("hood");showSub("arch");await wait(1500);spot(".lane.ex");await wait(4500);spot(".lane.cl");await wait(4000);unspot()}},
+    {t:"Ask the headline question",n:"A PM asks the question from the prototype. The moderator reformulates it, auto-selects specialists from the registry and runs three rounds.",run:async()=>{showView("ask");await typeInto(document.getElementById("q"),HEADLINE.q);document.getElementById("rounds").value="3";document.getElementById("autoSel").checked=true;renderChips();await wait(800);spot("#askBtn");await wait(1200);unspot();
+      RESTART={at:2,onTrigger:()=>Demo.goto(2,true)};Demo._run=runScenario(HEADLINE);await wait(500)}},
+    {t:"Live debate, with resilience",n:"Stages stream in through server-sent events, with no table polling. Our trades is queried live in Azure SQL through the bridge. During round 2 we restart the moderator app: the reaper resumes from the round 1 checkpoint in Lakebase, and the re-issued specialist call returns its cached response through the idempotency key.",run:async()=>{await Demo._run}},
+    {t:"The answer",n:"A headline stance, a cited narrative and the debate map with verdicts: Kioxia is the clearest clash, Weichai stays open. Every tag resolves to a source.",run:async()=>{const box=document.getElementById("answerBox");box&&box.scrollIntoView({behavior:"smooth",block:"start"});await wait(2500);const tg=document.querySelector('#answerBox .tag[data-src="US2"]');tg&&tg.classList.add("flash");await wait(1500);openDrawer("US2");await wait(4500);closeDrawer();await wait(800)}},
+    {t:"Trace, contract and memory",n:"MLflow 3 traces every round, specialist, tool and model call. Below it is the exact request/response contract each specialist implements, and the Lakebase memory the moderator and specialists keep.",run:async()=>{showView("hood");showSub("trace");await wait(3500);document.getElementById("invSel").scrollIntoView({behavior:"smooth",block:"center"});await wait(5000)}},
+    {t:"The restricted network, for real",n:"From serverless, the Azure SQL OMS is unreachable. The same data comes through the bridge: an allowlisted template runs on classic compute against the Unity Catalog foreign catalog. It's governed and audited, and nothing is copied into Unity Catalog. Only news history is landed.",run:async()=>{showSub("net");await wait(800);await netServerless();await wait(1500);await netBridge();await wait(3000);spot('[data-link="lineage:news_items"]');await wait(3000);unspot()}},
+    {t:"Model resilience",n:"Model tiers live in config. A forced 429 on the standard primary is absorbed by retries and the fallback endpoint, with no user-visible error. Switching models is a config change, and the shared client normalizes the different response formats.",run:async()=>{showSub("models");await wait(800);await inject429();await wait(1500);await switchModel();await wait(3000)}},
+    {t:"Add a specialist, no redeploy",n:"A developer registers a new Geographic revenue specialist. The follow-up question reuses the conversation memory, and the moderator selects the new specialist automatically.",run:async()=>{showSub("reg");await wait(1200);spot("#regBtn");await wait(1000);unspot();registerGeo();await wait(2500);showView("ask");await typeInto(document.getElementById("q"),weichaiScenario().q);await wait(600);await runScenario(weichaiScenario());await wait(1500);const b=document.getElementById("answerBox");b&&b.scrollIntoView({behavior:"smooth",block:"start"});await wait(4500)}},
+    {t:"Data, quality gates and AgentOps",n:"The seed validation job proves the planted facts hold across Unity Catalog and Azure SQL. Evaluations score correctness, groundedness and citation coverage, and a pull request runs CI with an evaluation gate before deploying to staging.",run:async()=>{showView("hood");showSub("data");await wait(600);await runValidate();await wait(1200);showSub("qa");await wait(600);await runEval();await wait(800);await runCI();await wait(2000)}},
+    {t:"Company Wiki that refreshes itself",n:"The 07:30 SGT job checks triggers. Kioxia reported on 13 November, so its wiki refresh is due. The target state builds wikis in parallel instead of one at a time.",run:async()=>{showView("wiki");wSector="Information Technology";renderWiki();await wait(1200);spot(".due");await wait(4500);unspot();await requestWiki("DHT Holdings, Inc.");await wait(3000)}},
+    {t:"What's usable today",n:"The critical path uses generally available building blocks. Some items need GIC enablement, and beta features are adopted behind config when enabled. Next steps: the pilot workflow, this matrix, and quotas.",run:async()=>{showView("hood");showSub("caps");await wait(7000)}},
+  ],
+  async start(){if(this.active)return;this.active=true;ctl.abort=false;ctl.paused=false;document.getElementById("narr").classList.add("on");resetAll();this.goto(0)},
+  async goto(i,noRun){this.i=i;const s=this.steps[i];document.getElementById("nStep").textContent=`Step ${i+1} of ${this.steps.length}`;document.getElementById("nTitle").textContent=s.t;document.getElementById("nText").textContent=s.n;document.getElementById("nProg").style.width=((i+1)/this.steps.length*100)+"%";
+    if(noRun) return;
+    const token=this._tok=Symbol();
+    try{await s.run();}catch(e){if(e.message==="aborted")return;console.error(e)}
+    if(this._tok!==token||!this.active) return;
+    if(i<this.steps.length-1){await wait(800).catch(()=>{});if(this._tok===token&&this.active)this.goto(this.i===i?i+1:this.i+1)} else {document.getElementById("nPause").textContent="✓ Done"}},
+  toggle(){ctl.paused=!ctl.paused;document.getElementById("nPause").textContent=ctl.paused?"▶ Resume":"❚❚ Pause"},
+  next(){if(running){ctl.speed=8;setTimeout(()=>ctl.speed=1,4000);return}this.jump(Math.min(this.i+1,this.steps.length-1))},
+  prev(){if(running)return;this.jump(Math.max(this.i-1,0))},
+  jump(i){ctl.abort=true;setTimeout(()=>{ctl.abort=false;ctl.paused=false;document.getElementById("nPause").textContent="❚❚ Pause";this.goto(i)},150)},
+  stop(){ctl.abort=true;this.active=false;document.getElementById("narr").classList.remove("on");unspot();setTimeout(()=>{ctl.abort=false;ctl.paused=false;ctl.speed=1},200)}
+};
+let RESTART=null; // {at: round number, onTrigger?}  set by the player or the "Simulate restart" button
+async function maybeRestart(runId,round,specKey){
+  if(!RESTART||RESTART.at!==round) return;
+  const r=RESTART;RESTART=null; if(r.onTrigger) r.onTrigger();
+  const b=document.getElementById("banners");
+  b.innerHTML=`<div class="banner warn"><span class="spinner"></span><div><b>eqds-moderator restarted</b> during round ${round} (simulated app restart). Heartbeat lost for run <code>${runId}</code>.</div></div>`;
+  ev("serverless","eqds-moderator",`app restarted during round ${round} · heartbeat lost`,"moderator");
+  setStatus("INTERRUPTED");
+  await wait(3500);
+  const cp=round-1;
+  ev("state","Lakebase · reaper",`stale heartbeat (> 60 s) → graph.invoke(None, thread_id=${runId}) · resumed from checkpoint after round ${cp}`,["lakebase","moderator"]);
+  if(specKey) ev("state","Lakebase · mem.specialist",`eqds-sp-${specKey}: idempotency_key ${runId}:${round}:${specKey} → cached response returned (no double billing)`,["lakebase","sp-"+specKey]);
+  b.innerHTML=`<div class="banner ok">✓ <div><b>Resumed from checkpoint</b> after round ${cp} (LangGraph checkpointer on Lakebase). Completed rounds were not repeated, and the re-issued specialist call was served from its idempotency cache.</div></div>`;
+  setStatus("RESUMED");
+  await wait(1500);
+}
+function setStatus(st){const el=document.getElementById("runStatus");if(el)el.textContent=st.toLowerCase();ev("state","SSE · status",`status=${st}`)}
+function requestRestart(){if(!running){toast("Start a run first.");return}RESTART={at:(document.querySelectorAll("#discussion .section-t").length>1)?99:2};if(RESTART.at===99){toast("Too late for this run: restart is simulated at round 2.");RESTART=null;return}toast("Restart will be simulated at the start of round 2.")}
+function spot(sel){unspot();const el=document.querySelector(sel);if(el){el.classList.add("spot");el.scrollIntoView({behavior:"smooth",block:"center"})}}
+function unspot(){document.querySelectorAll(".spot").forEach(e=>e.classList.remove("spot"))}
+async function typeInto(el,text){el.value="";el.focus();for(let i=0;i<text.length;i+=2){el.value=text.slice(0,i+2);await wait(18)}}
+function resetAll(){
+  const gi=SPECS.findIndex(s=>s.key==="georev");if(gi>=0)SPECS.splice(gi,1);document.getElementById("regBtn").disabled=false;
+  SPECS.forEach(s=>s.on=true);renderChips();
+  document.getElementById("runArea").innerHTML="";document.getElementById("evlog").innerHTML='<div class="small muted">Starting demo…</div>';document.getElementById("evlog").dataset.empty="1";
+  document.getElementById("netSOut").innerHTML="";document.getElementById("netBOut").innerHTML="";renderEval(false);renderPipe(-1);LAST=null;
+  CONV.turns=[];HISTORY.length=0;renderHistory();TIERS=JSON.parse(JSON.stringify(TIERS0));document.getElementById("modelLog").textContent="Ready.";VALID=-1;renderData();RESTART=null;
+}
+
+/* =====================================================================
+   v2: memory, contract, models, data, capabilities, handoff, spec mode
+   ===================================================================== */
+const CONV={id:"c-7f3a",turns:[]}; const HISTORY=[]; let INV=[];
+const BUDGET={cost:2.00,secs:480};
+const TIERS0={reasoning:{use:"Moderator map, verdicts, synthesis",primary:"eqds-llm-reasoning",serves:"claude-opus-5-5",kind:"pay-per-token proxy",fallback:"databricks-glm-5-3"},
+  standard:{use:"Specialist analysis",primary:"eqds-llm-standard",serves:"system.ai.glm-5-3",kind:"provisioned throughput",fallback:"databricks-claude-sonnet-5-5"},
+  fast:{use:"Reformulate, select, suggest-next",primary:"eqds-llm-fast",serves:"claude-haiku-5-5",kind:"pay-per-token proxy",fallback:"databricks-glm-5-3"},
+  embed:{use:"Vector Search embeddings",primary:"eqds-embed",serves:"system.ai.gte-large-en",kind:"provisioned throughput",fallback:"—"}};
+let TIERS=JSON.parse(JSON.stringify(TIERS0));
+function epL(tier){const e=TIERS[tier].primary;return L("endpoint:"+e,e)}
+function budgetCheck(sc,round,rounds){const c=parseFloat(sc.usage.cost.replace(/[^\d.]/g,""));const pct=Math.round(c*Math.min(1,round/(rounds+1))/BUDGET.cost*100);ev("state","Budget",`before round ${round+1}: ${pct}% of USD ${BUDGET.cost.toFixed(2)} · skip to verdicts if > 80%`)}
+function toggleSpecMode(){document.body.classList.toggle("spec");document.getElementById("specBtn").classList.toggle("on")}
+function renderHistory(){const h=document.getElementById("hist");if(!h)return;h.innerHTML=HISTORY.length?`<div class="section-t" style="margin:4px 0 4px">Your recent questions</div>`+HISTORY.slice(0,5).map(x=>`<a onclick="askText(this.dataset.q)" data-q="${x.q.replace(/"/g,"&quot;")}">${x.when} · ${x.q} <span class="muted tiny">→ ${x.stance}</span></a>`).join(""):""}
+const STANCE={"✓":"support","✗":"oppose","~":"partial","·":"not_addressed"};
+function toClaims(m){const txt=(m.body||m.first);const parts=txt.split(/\n/).flatMap(l=>l.split(/(?<=[a-z%)\]]\.)\s+(?=[A-Z])/)).map(x=>x.trim().replace(/^\d+\.\s*/,"")).filter(x=>x.replace(/\s*\[[A-Z]{1,3}\d+\]/g,"").trim().length>2);
+  return parts.map((p,i)=>({id:"c"+(i+1),text:p.replace(/\s*\[[A-Z]{1,3}\d+\]/g,"").trim(),stance:/not found|do not have|outside the|not populated|cannot|no trades|unavailable/i.test(p)?"gap":"support",confidence:/about|likely|may/i.test(p)?0.6:0.8,citations:(p.match(/\[([A-Z]{1,3}\d+)\]/g)||[]).map(x=>x.slice(1,-1))}))}
+function srcObj(id){const s=SOURCES[id]||{ty:"source",ref:"",detail:""};const o={id,type:s.ty,ref:s.ref.split(" · ")[0],as_of:"2026-11-20"};if(s.ty==="external_db"){o.system="azure_sql";o.template=(s.ref.split(" · ")[1]||"").trim()||undefined}return o}
+function mkInv(key,round,brief,m,runId){
+  const claims=toClaims(m);const cites=[...new Set(claims.flatMap(c=>c.citations))];
+  const req={input:[{role:"user",content:brief}],custom_inputs:{contract_version:"1",conversation_id:CONV.id,run_id:runId,round,caller:"moderator",user_id:"pm.demo@gic.example",company_id:null,model_tier:"standard",idempotency_key:`${runId}:${round}:${key}`,prior_findings:[]}};
+  const res={output:[{type:"message",role:"assistant",content:[{type:"output_text",text:m.first}]}],custom_outputs:{specialist:key,claims,sources:cites.map(srcObj),tool_calls:[{tool:m.tool,zone:m.zone}],trace_id:"tr-"+key+"-"+round,usage:{input_tokens:4000+Math.floor(Math.random()*3000),output_tokens:400+Math.floor(Math.random()*400),cost_usd:+(0.03+Math.random()*0.03).toFixed(3),latency_ms:(m.ms||10)*1000+3000}}};
+  return {key,round,req,res,created:new Date().toISOString()};
+}
+function renderInvSel(){const sel=document.getElementById("invSel");if(!LAST||!LAST.inv.length){sel.innerHTML="";return}sel.innerHTML=LAST.inv.map((v,i)=>`<option value="${i}">round ${v.round} · ${v.key}</option>`).join("");const oi=LAST.inv.findIndex(v=>v.key==="ours");sel.value=oi>=0?oi:0;renderInv()}
+function renderInv(){const v=LAST&&LAST.inv[+document.getElementById("invSel").value];if(!v)return;document.getElementById("invReq").textContent="POST https://"+spec(v.key).app+"…databricksapps.com/invocations\n"+JSON.stringify(v.req,null,2);document.getElementById("invRes").textContent=JSON.stringify(v.res,null,2)}
+function renderMem(){
+  document.getElementById("memConv").innerHTML=CONV.turns.length?`<table class="t"><thead><tr><th>conversation_id</th><th>turn</th><th>question</th><th>answer_summary</th></tr></thead><tbody>${CONV.turns.map(t=>`<tr><td>${CONV.id}</td><td>${t.turn}</td><td>${t.q.slice(0,60)}…</td><td>${t.stance}</td></tr>`).join("")}</tbody></table>`:"No turns yet.";
+  const inv=(LAST&&LAST.inv)||[];document.getElementById("memSpec").innerHTML=inv.length?`<table class="t"><thead><tr><th>specialist</th><th>idempotency_key</th><th>brief</th></tr></thead><tbody>${inv.slice(0,8).map(v=>`<tr><td>${v.key}</td><td><code>${v.req.custom_inputs.idempotency_key}</code></td><td>${v.req.input[0].content.slice(0,50)}…</td></tr>`).join("")}</tbody></table>`:"No interactions yet.";
+}
+function renderSkills(){const el=document.getElementById("skills");if(!el)return;el.innerHTML=[["moderator","1.4.0"]].concat(SPECS.map(s=>[s.key,s.ver])).map(([k,v])=>`${L("volume:skills",`skills/${k}/${v}/SKILL.md`)}`).join(" · ");applyLinks(el)}
+
+function renderTiers(){
+  document.getElementById("tierBody").innerHTML=Object.entries(TIERS).map(([k,t])=>`<tr><td><b>${k}</b><div class="tiny muted">${t.use}</div></td><td>${L("endpoint:"+t.primary,t.primary)}</td><td>${t.serves}<div class="tiny muted">${t.kind}</div></td><td>${t.fallback==="—"?"—":L("endpoint:"+t.fallback,t.fallback)}</td></tr>`).join("");
+  document.getElementById("tierYaml").textContent="# config/models.prod.yaml  (endpoints created by resources/serving/llm.yml)\ntiers:\n"+Object.entries(TIERS).filter(([k])=>k!=="embed").map(([k,t])=>`  ${k}:\n    primary: ${t.primary}\n    fallback: ${t.fallback}`).join("\n")+"\nserved_entities:\n"+Object.entries(TIERS).map(([k,t])=>`  ${k}: {entity: ${t.serves}, kind: ${t.kind.replace(/ /g,"_").replace(/-/g,"_")}}`).join("\n")+"\nretry: {max_attempts: 4, base_delay_s: 1.0, max_delay_s: 16, retry_on: [429, 500, 502, 503, 504]}";
+  applyLinks(document.getElementById("tierBody"));
+}
+async function logLines(lines){const lg=document.getElementById("modelLog");lg.innerHTML="";for(const [cls,txt,ms] of lines){lg.innerHTML+=`<span class="${cls}">${txt}</span>\n`;await wait(ms||450)}}
+async function inject429(){const p=TIERS.standard.primary,f=TIERS.standard.fallback;light("gateway");
+  await logLines([["w","EQDS_LLM_FAULT=429:primary   (test flag)"],["","llm.chat(tier=standard) → "+p],["e","attempt 1 → 429 Too Many Requests (retry-after 1s)"],["","backoff 1.0 s"],["e","attempt 2 → 429"],["","backoff 2.0 s"],["e","attempt 3 → 429"],["","backoff 4.0 s"],["e","attempt 4 → 429 · max_attempts reached"],["w","failover: tier standard → fallback "+f],["o","attempt 1 → 200 OK · normalized · 2.9 s",700],["o","span llm.standard {endpoint: "+f+", fallback: true, retries: 4}"],["o","✓ run continued, no user-visible error (NFR-08, AC-08)"]]);
+  ev("model","eqds_llm",`429 on ${p} absorbed: 4 retries → fallback ${f}`,"gateway")}
+async function switchModel(){const ep=TIERS.standard.primary;const old=TIERS.standard.serves;const neu=old==="system.ai.glm-5-3"?"system.ai.gpt-oss-120b":"system.ai.glm-5-3";TIERS.standard.serves=neu;renderTiers();light("gateway");
+  await logLines([["w",`config change: served_entities.standard ${old} → ${neu}`],["","databricks bundle deploy → updates endpoint "+ep+" (same name; no agent code change)"],["","endpoint "+ep+": new served entity ready · AI Gateway settings unchanged"],["","raw response A ("+old+"):  message.content = \"Seven of eight are conflicts…\"   (string)"],["","raw response B ("+neu+"):  message.content = [{type:'reasoning',…},{type:'text',text:'Seven of eight…'}]   (list)"],["o","normalize() → {text: 'Seven of eight are conflicts…', reasoning: &lt;hidden&gt;, tool_calls: [], usage: {input, output}}"],["o","structured output parsed against SpecialistAnswer schema ✓"],["o","golden-file tests: 12/12 pass · eval smoke: within thresholds (AC-07)"]]);
+  ev("model","Model Serving",`${ep} now serves ${neu} (bundle deploy); normalization verified`,"gateway")}
+
+const DATASETS=[["ref_companies","UC",600,"table"],["ref_holdings","UC",120,"table"],["prices_daily","UC","156K","table"],["efm_managers / efm_holdings / efm_buy_basket","UC","120 / 80K / 600","table:efm_buy_basket"],["em_quant_scores","UC","5K","table"],["broker_reports + PDFs · broker_chunks","UC + Volume","1,500 / 250 / 6K","table:broker_chunks"],["expert_calls · expert_chunks","UC + Volume","80 / 1.5K","table:expert_chunks"],["earnings_calendar","UC","2.4K","table"],["earnings_calls · earnings_chunks","UC + Volume","400 / 8K","table:earnings_chunks"],["geo_revenue","UC","6K","table"],["news_items (landed)","UC","30K","table"],["oms.strategies / accounts","Azure SQL","6 / 40","foreign:oms/accounts"],["oms.trades","Azure SQL","150K","foreign:oms/trades"],["oms.positions","Azure SQL","150K","foreign:oms/positions"],["research.analyst_views / notes","Azure SQL","2.4K / 2K","foreign:research/analyst_views"],["feeds.news_wire / web_index","Azure SQL","30K / 800","foreign:feeds/news_wire"],["eval_questions","UC",40,"table"]];
+const CHECKS=[["RI","Trades company ids ⊂ UC ref_companies","0 orphans"],["PF-01","8 score-3 names in top-50, each ≤2 buyers","8 ✓"],["PF-02","Haitian Intl not in quant universe","not found ✓"],["PF-05","Kioxia net −83.0m, 7 sellers / 2 buyers","−83.0m ✓"],["PF-06","Renesas −86.2m · Resonac −42.5m · Murata −25.5m","✓"],["PF-07","Weichai −31m (EMA, GEMF, NCREP); EMQ +0.2m","−30.8m ✓"],["PF-08","Weichai view 60 → 30 bps (2026-09-15)","✓"],["PF-09","JD Health +36.6m, +6.8% after 21d","✓"],["PF-11","Z.AI ACC-004 +12.9m, −46.9% after","✓"],["PF-13","56 conflicts USD 4,024m vs 45 confirms USD 3,722m (±2%)","4,031 / 3,716 ✓"],["PF-14","Kioxia broker chunks contain planted facts","11 docs ✓"],["PF-18","pm_name NULL on all trades","0 non-null ✓"],["PF-20","Kioxia results 2026-11-13; wiki trigger fires","✓"],["PF-21","Weichai NA revenue share FY2026 = 14%","14.0% ✓"],["NET","Serverless SELECT on azure_oms fails (expected)","timeout ✓"]];
+let VALID=-1;
+function renderData(){
+  const db=document.getElementById("dataBody");if(!db)return;
+  db.innerHTML=DATASETS.map(([n,w,r,lk])=>{const spec=lk.includes(":")?lk:"table:"+n.split(" ")[0];return `<tr><td>${L(spec,n)}</td><td>${w==="Azure SQL"?'<span class="badge b-OPEN">Azure SQL</span>':'<span class="badge b-CONSENSUS">'+w+'</span>'}</td><td>${r}</td><td class="small">${w==="Azure SQL"?"bridge → azure_oms (classic)":n.includes("chunks")?"Vector Search MCP":"UC Functions / Genie"}</td></tr>`}).join("");
+  document.getElementById("checks").innerHTML=CHECKS.map(([id,d,res],i)=>`<div class="check ${i<VALID?"ok":i===VALID?"run":""}"><span class="st">${i<VALID?"✓":i===VALID?'<span class="spinner"></span>':"○"}</span><b>${id}</b><span>${d}</span><span class="muted">${i<VALID?res:""}</span></div>`).join("");
+  applyLinks(db);
+}
+async function runValidate(){light(["worker","foreign","azure","uc"]);for(VALID=0;VALID<=CHECKS.length;VALID++){renderData();await wait(260)}document.getElementById("valMsg").innerHTML='<b style="color:var(--ok)">✓ all checks passed (AC-16)</b>';ev("classic","job_validate_seed","15/15 checks passed across UC and Azure SQL","worker")}
+
+const CAPS=[["Use now","GA building blocks for the critical path","#1E7B4F",["Databricks Apps (agents, UI, custom MCP)","Lakebase (memory, checkpoints, queue)","Model Serving endpoints created by the bundle (PT + FMAPI fallback)","Vector Search, Genie, UC Functions","Databricks-managed MCP servers (validate per workspace)","Lakehouse Federation (from classic)","Lakeflow Jobs: classic job clusters & serverless","MLflow 3 tracing & evaluation","DABs + GitHub CI/CD"]],
+  ["Needs GIC approval / enablement","GIC platform team + Databricks","#8A5D24",["Unity AI Gateway (legacy gateway today)","Model quota confirmation & capacity","Serverless private connectivity (NCC / PrivateLink)","External / vendor MCP approval path","Apollo onboarding","Azure SQL network path from classic","Classic → Lakebase connectivity","GPU, open-weight & fine-tuning (SG / JP)"]],
+  ["Beta / roadmap: don't block on","Adopt behind config when enabled","#0033FF",["Managed agent memory & sessions","UC-governed skills","Sandbox execution","Managed durable execution","Gateway smart routing & gateway traces","Prompt Registry (confirm)","UC trace storage over PrivateLink (~early Feb)","Agent Bricks CLI (beta)"]]];
+function renderCaps(){document.getElementById("caps").innerHTML=CAPS.map(([h,sub,c,items])=>`<div class="capcol"><h4 style="background:${c}">${h}<div style="font-size:12px;font-weight:400;opacity:.9">${sub}</div></h4><ul>${items.map(i=>`<li>${i}</li>`).join("")}</ul></div>`).join("")}
+
+const HANDOFF=[
+ ["Ask AI · question, rounds, specialists","eqds-ui (FastAPI + React) · Databricks App","POST /api/ask → moderator POST /runs; GET /api/specialists","registry.specialists","§5.1, §5.4, §6.2","AC-01, AC-11"],
+ ["Stage chips, discussion, debate map, answer, ask next","React views bound to SSE events","GET /api/runs/{id}/stream → events stage, who_opens, message, map, verdict, answer, ask_next, usage, status, done","ops.run_events","§5.2, §6.2 (event payloads)","AC-02, AC-03"],
+ ["Citation chips + sources drawer","answer renderer + drawer","RunResult.sources","sources dict","§6.2, §5.2 validator","AC-03, AC-17"],
+ ["Live run panel","activity feed","SSE event: activity {component, zone, label, detail, link}","ops.run_events","§6.2","—"],
+ ["Restart & resume","moderator reaper + LangGraph checkpointer","POST /runs/{id}/resume; SSE status INTERRUPTED/RESUMED","lg.*, ops.runs heartbeat, mem.specialist","§5.2.2","AC-04"],
+ ["Feedback 👍/👎","backend → mlflow.log_feedback","POST /api/feedback","MLflow trace assessments","§11.3","AC-14"],
+ ["History","list of user's runs","GET /api/history?company_id=","ops.runs","§5.1","FR-UI-10"],
+ ["Company Wiki","wiki list, request, page tabs","GET /api/wiki, POST /api/wiki/request","wiki_state, wiki_pages, ref_holdings, earnings_calendar","§10","FR-WK"],
+ ["Dev console · Architecture","static diagram + workspace links","GET /api/config/links","bundle variables","§2, §5.1.1","—"],
+ ["Dev console · Trace / contract / memory","MLflow search_traces; invocation log","GET /api/dev/runs/{id}/trace, /invocations, /memory","MLflow, mem.*","§6.1, §9, §11.1","AC-05"],
+ ["Dev console · Network","SQL warehouse probe (expected fail) + bridge tool call","POST /api/dev/net/serverless-probe, /api/dev/net/bridge-probe","azure_oms","§5.6.1, §7.4","AC-09, AC-10, AC-15"],
+ ["Dev console · Models","tier config + fault-injection test","GET /api/dev/models; test flag EQDS_LLM_FAULT","config/models.<env>.yaml","§8","AC-07, AC-08"],
+ ["Dev console · Data & seed","seed validation results","GET /api/dev/seed/validation ← seed_validation_results","UC + azure_oms","§14.9","AC-16"],
+ ["Dev console · Registry","CRUD on registry rows","GET/POST /api/dev/registry","registry.specialists","§5.4","AC-11"],
+ ["Dev console · Quality & AgentOps","latest eval metrics + CI status","GET /api/dev/eval/latest, /api/dev/ci (GitHub API)","MLflow eval runs","§11.2, §12.3","AC-06, AC-12"],
+ ["Model services","Model Serving endpoints created by the bundle (eqds-llm-*, eqds-embed) + AI Gateway","OpenAI-compatible chat/embeddings via eqds_llm","config/models.<t>.yaml","§8.0, §8.1","AC-07, AC-08"],
+ ["Environments & assets","DAB targets + config/env/<t>.yaml; bootstrap/manifest.yaml","make preflight · bundle deploy · job_env_bootstrap · job_demo_reset · job_state_export/import · teardown","all assets","§4.1, §4.2","AC-18"],
+ ["Play demo + narrator","keep as-is (prototype JS) or omit in prod","—","fixtures","§15.4","—"]];
+function renderHandoff(){document.getElementById("handoffBody").innerHTML=HANDOFF.map(r=>`<tr>${r.map((c,i)=>`<td class="${i>1?"small":""}">${c}</td>`).join("")}</tr>`).join("")}
+function toRunResult(sc,runId){
+  const used=[...new Set((JSON.stringify(sc).match(/\[([A-Z]{1,3}\d+)\]/g)||[]).map(x=>x.slice(1,-1)))];
+  const msgs=[{round:1,from:"moderator",to:sc.opens,text:sc.reform}].concat(sc.round1.map(m=>({round:1,from:m.from,to:["moderator"],first_line:m.first,text:m.body,claims:toClaims(m),tool_calls:[{tool:m.tool,zone:m.zone}]})));
+  sc.deep.forEach(d=>{msgs.push({round:d.round,from:"moderator",to:d.to,text:d.q});d.ans.forEach(a=>msgs.push({round:d.round,from:a.from,to:["moderator"],first_line:a.first,text:a.body,claims:toClaims(a),tool_calls:[{tool:a.tool,zone:a.zone}]}))});
+  return {run_id:runId,question:sc.q,rounds_run:1+new Set(sc.deep.map(d=>d.round)).size,
+    answer:{stance:sc.answer.stance,text:sc.answer.paras.join("\n\n")},
+    points:sc.points.map((p,i)=>({id:"p"+(i+1),verdict:p.type,status:p.status,claim:p.claim,text:p.verdict,stances:Object.fromEntries(Object.entries(p.st).map(([k,v])=>[k,STANCE[v]||v]))})),
+    messages:msgs,sources:Object.fromEntries(used.map(id=>[id,srcObj(id)])),ask_next:sc.asknext,
+    usage:{cost_usd:parseFloat(sc.usage.cost.replace(/[^\d.]/g,"")),duration_s:sc.usage.dur,tokens:sc.usage.tokens},trace_id:"tr-fixture"};
+}
+function toEvents(sc,runId){const E=[];let seq=0;const e=(type,payload)=>E.push({id:++seq,event:type,data:payload});
+  e("status",{status:"RUNNING"});e("stage",{stage:"who_opens",status:"active"});
+  e("who_opens",{reformulated:sc.reform,selected:sc.opens,briefs:sc.briefs,selection:"auto"});
+  e("stage",{stage:"who_opens",status:"done"});e("stage",{stage:"opening_round",status:"active"});
+  sc.round1.forEach(m=>{e("activity",{component:"eqds-sp-"+m.from,zone:m.zone==="external"?"external":"serverless",label:"POST /invocations",detail:m.tool,link:{kind:"app",ref:"eqds-sp-"+m.from}});e("message",{round:1,from:m.from,to:["moderator"],first_line:m.first,text:m.body,claims:toClaims(m),tool_calls:[{tool:m.tool,zone:m.zone}]})});
+  e("stage",{stage:"opening_round",status:"done"});e("stage",{stage:"map",status:"active"});
+  e("map",{points:sc.points.map((p,i)=>({id:"p"+(i+1),verdict:p.type,status:p.status,claim:p.claim,stances:Object.fromEntries(Object.entries(p.st).map(([k,v])=>[k,STANCE[v]||v]))}))});
+  e("stage",{stage:"map",status:"done"});
+  if(sc.deep.length){e("stage",{stage:"deep_dive",status:"active"});sc.deep.forEach(d=>{e("message",{round:d.round,from:"moderator",to:d.to,text:d.q});d.ans.forEach(a=>e("message",{round:d.round,from:a.from,to:["moderator"],first_line:a.first,text:a.body,claims:toClaims(a),tool_calls:[{tool:a.tool,zone:a.zone}]}))});e("stage",{stage:"deep_dive",status:"done"})}
+  e("stage",{stage:"verdicts",status:"active"});sc.points.forEach((p,i)=>e("verdict",{point_id:"p"+(i+1),verdict:p.type,status:p.status,text:p.verdict}));e("stage",{stage:"verdicts",status:"done"});
+  e("stage",{stage:"answer",status:"active"});e("answer",{stance:sc.answer.stance,paragraphs:sc.answer.paras});e("ask_next",{questions:sc.asknext});
+  e("usage",{cost_usd:parseFloat(sc.usage.cost.replace(/[^\d.]/g,"")),duration:sc.usage.dur,tokens:sc.usage.tokens,budget:{cost_usd_max:BUDGET.cost,seconds_max:BUDGET.secs}});
+  e("stage",{stage:"answer",status:"done"});e("status",{status:"DONE"});e("done",{run_id:runId,trace_id:"tr-fixture"});return E}
+function downloadFixtures(){
+  SOURCES=buildSources();
+  const scen=[["headline",HEADLINE],["weichai_followup_with_georev",(()=>{const had=SPECS.some(s=>s.key==="georev");if(!had)SPECS.push(GEO);const w=weichaiScenario();if(!had)SPECS.pop();return w})()],["zai_followup",zaiScenario()]];
+  const fx={fixture_version:"1",generated_for:"EQDS_Target_State_Design.md v0.4 §6 contracts",note:"SYNTHETIC DEMO DATA",
+    registry:SPECS.concat(SPECS.some(s=>s.key==="georev")?[]:[GEO]).map(s=>({key:s.key,display_name:s.name,tag_prefix:s.tag,tools:s.tools,app:s.app,version:s.ver,owner:s.owner})),
+    model_tiers:TIERS0,budget:BUDGET,link_patterns:LINK_PATTERNS,
+    scenarios:scen.map(([name,sc])=>{const rid="r-fixture-"+name;const inv=[];sc.round1.forEach(m=>inv.push(mkInv(m.from,1,sc.briefs[m.from]||sc.reform,m,rid)));sc.deep.forEach(d=>d.ans.forEach(a=>inv.push(mkInv(a.from,d.round,d.q,a,rid))));
+      return {name,request:{question:sc.q,rounds:name==="headline"?3:1,specialists:null,caller:"ui"},run_result:toRunResult(sc,rid),sse_events:toEvents(sc,rid),specialist_invocations:inv.map(v=>({specialist:v.key,round:v.round,request:v.req,response:v.res}))}}),
+    seed_checks:CHECKS.map(([id,d,res])=>({id,check:d,expected:res}))};
+  const blob=new Blob([JSON.stringify(fx,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="eqds_demo_fixtures.json";a.click();toast("Fixtures downloaded: eqds_demo_fixtures.json")}
+const LINK_PATTERNS={app:"{host}/apps/{name}{suffix}",table:"{host}/explore/data/{catalog}/{schema}/{table}",lineage:"{host}/explore/data/{catalog}/{schema}/{table}?activeTab=lineage",foreign:"{host}/explore/data/azure_oms/{schema}/{table}",connection:"{host}/explore/connections/{connection}",experiment:"{host}/ml/experiments/{experiment_id}/traces",genie:"{host}/genie/rooms/{space_id}",lakebase:"{host}/compute/database-instances/{instance}",endpoint:"{host}/ml/endpoints/{name}",job:"{host}/jobs/{job_id}",volume:"{host}/explore/data/volumes/{catalog}/{schema}/{volume}"};
+function copyBrief(){const t=`Build the EQDS multi-agent research platform exactly as specified in EQDS_Target_State_Design.md (v0.4) and EQDS_Target_State_Requirements.md (v0.4).
+UI spec: eqds_research_demo.html. Reproduce its screens, states and interactions in eqds-ui (FastAPI + React on Databricks Apps). Replace the simulated run engine with the SSE stream from eqds-moderator (§6.2 event payloads). The "Under the hood" tabs become a developer console behind the eqds-developers group (§5.1.1).
+Contracts and fixtures: eqds_demo_fixtures.json (exported from the prototype) defines request, RunResult, SSE event sequences and specialist invocations. Use it for UI mocks and contract tests.
+Order: follow §15.2 milestones M0 → M10. Definition of done: AC-01..AC-18 pass (requirements §7.2), in staging and in a fresh demo environment recreated from nothing. Resolve every "⚠ validate" item in M0 and record the result in docs/validation.md.
+Constraints: serverless must never call non-Databricks hosts; Azure SQL only via the bridge templates (§5.6.1); no beta features on the critical path; everything deployed with DABs.
+Portability (§4.1–4.2): nothing environment-specific in code; every asset (model serving endpoints the bundle creates per §8.0, synthetic data, pipelines, Lakebase memory schemas, indexes, Genie space, experiments, dashboards) is created, rebuilt and torn down by idempotent commands listed in bootstrap/manifest.yaml.`;
+  navigator.clipboard.writeText(t).then(()=>toast("Agent brief copied to clipboard."),()=>{const w=window.open("");w.document.write("<pre>"+t+"</pre>")})}
+
+/* init */
+renderChips();renderWiki();renderEval(false);renderPipe(-1);renderHistory();renderTiers();renderData();renderCaps();renderHandoff();renderSkills();applyLinks();
+document.getElementById("q").value="";
+if(!wsBase()) setTimeout(()=>toast("Tip: set your Databricks workspace URL in ⚙ to enable the workspace links.",5000),800);
+</script>
+</body>
+</html>

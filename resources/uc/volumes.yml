@@ -1,0 +1,27 @@
+resources:
+  volumes:
+    raw_docs:
+      catalog_name: ${var.catalog}
+      schema_name: ${resources.schemas.uc_main.name}
+      name: raw_docs
+      comment: "Raw documents: broker PDFs, expert and earnings transcripts (SYNTHETIC in the demo)"
+    skills:
+      catalog_name: ${var.catalog}
+      schema_name: ${resources.schemas.uc_main.name}
+      name: skills
+      comment: "Versioned agent skills: skills/<agent>/<semver>/SKILL.md"
+    prompts:
+      catalog_name: ${var.catalog}
+      schema_name: ${resources.schemas.uc_main.name}
+      name: prompts
+      comment: "Versioned prompts: prompts/<agent>/<name>/<semver>.md"
+    artifacts:
+      catalog_name: ${var.catalog}
+      schema_name: ${resources.schemas.uc_main.name}
+      name: artifacts
+      comment: "Wheels, bootstrap outputs, eval reports"
+    state_exports:
+      catalog_name: ${var.catalog}
+      schema_name: ${resources.schemas.uc_main.name}
+      name: state_exports
+      comment: "job_state_export output (Parquet + manifest)"
