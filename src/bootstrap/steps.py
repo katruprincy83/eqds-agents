@@ -297,7 +297,8 @@ def _components(ctx) -> dict[str, dict]:
     comps = {k: v for k, v in access.items()}
     for f in sorted(glob.glob(os.path.join(ctx.root, "agents", "specialists", "*", "specialist.yaml"))):
         sp = yaml.safe_load(open(f))
-        comps[f"sp-{sp['key']}"] = {**(sp.get("access") or {}), "lakebase": ["mem"]}
+        indexes = [i["name"] for t in sp.get("tools", []) if t.get("type") == "vector_search" for i in t.get("indexes", [])]
+        comps[f"sp-{sp['key']}"] = {**(sp.get("access") or {}), "lakebase": ["mem"], "vector_indexes": indexes}
     return comps
 
 
@@ -323,6 +324,7 @@ def app_grants_apply(ctx) -> None:
         stmts += [f"GRANT SELECT ON TABLE {uc}.{t} TO `{sp}`" for t in spec.get("tables", [])]
         stmts += [f"GRANT EXECUTE ON FUNCTION {uc}.{f} TO `{sp}`" for f in spec.get("functions", [])]
         stmts += [f"GRANT READ VOLUME ON VOLUME {uc}.{v} TO `{sp}`" for v in spec.get("volumes", [])]
+        stmts += [f"GRANT SELECT ON TABLE {uc}.{ix} TO `{sp}`" for ix in spec.get("vector_indexes", [])]
         for s in stmts:
             try:
                 ctx.sql(s)
@@ -330,6 +332,8 @@ def app_grants_apply(ctx) -> None:
                 ctx.say(f"grant failed ({s[:70]}...): {str(e)[:100]}")
         if comp != "bridge-mcp":  # the bridge makes no LLM calls
             _grant_model_services(ctx, sp)
+        if spec.get("vector_indexes"):  # managed Vector Search embeds the query on the embedding endpoint as the caller
+            _grant_embedding_endpoint(ctx, sp)
         if conn is not None:
             try:  # the app's service principal needs a Postgres role (OAuth) before it can be granted anything
                 conn.execute("CREATE EXTENSION IF NOT EXISTS databricks_auth")
@@ -368,6 +372,21 @@ def _grant_model_services(ctx, principal: str) -> None:
                                 body={"changes": [{"principal": principal, "add": ["EXECUTE"]}]})
         except Exception as e:  # noqa: BLE001
             ctx.say(f"EXECUTE on model service {full} not granted to {principal}: {str(e)[:100]}")
+
+
+def _grant_embedding_endpoint(ctx, principal: str) -> None:
+    """CAN_QUERY on the project's embedding endpoint (the only serving endpoint) for principals that run Vector Search."""
+    from databricks.sdk.service.serving import ServingEndpointAccessControlRequest, ServingEndpointPermissionLevel
+
+    name = f"{ctx.env.prefix}-embed{ctx.env.suffix}"
+    try:
+        ep = ctx.w.serving_endpoints.get(name)
+        ctx.w.serving_endpoints.update_permissions(
+            serving_endpoint_id=ep.id,
+            access_control_list=[ServingEndpointAccessControlRequest(service_principal_name=principal,
+                                                                     permission_level=ServingEndpointPermissionLevel.CAN_QUERY)])
+    except Exception as e:  # noqa: BLE001
+        ctx.say(f"CAN_QUERY on {name} not granted to {principal}: {str(e)[:100]}")
 
 
 def _grant_job_caller(ctx) -> None:

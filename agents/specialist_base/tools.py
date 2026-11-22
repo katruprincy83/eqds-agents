@@ -3,7 +3,8 @@
 Tool sources, all returning LangChain tools whose results are wrapped so every result carries citation tags:
 * bridge MCP (custom app)                      → `DatabricksMultiServerMCPClient`-style streamable HTTP, always MCP
 * UC functions / Vector Search                 → managed MCP when `flags.use_managed_mcp` is true, otherwise the SDK adapters below
-  (same functions, same indexes, same arguments; selectable per environment because managed MCP is a preview feature)
+  (same functions, same indexes, same arguments; selectable per environment because managed MCP is a preview feature).
+  Managed Vector Search takes only `query`; company-filtered searches use the adapter so the filter runs on the server.
 """
 from __future__ import annotations
 
@@ -147,22 +148,29 @@ def _short(s: Any, n: int) -> Any:
     return s[:n] + "…" if isinstance(s, str) and len(s) > n else s
 
 
+def _parse_text(txt: str) -> Any:
+    try:
+        return json.loads(txt)
+    except Exception:  # noqa: BLE001
+        return txt
+
+
+def _table_to_rows(x: Any) -> Any:
+    """Managed UC functions return a table ({columns, rows}); the SDK path returns row dicts. Normalise to row dicts."""
+    if isinstance(x, dict) and isinstance(x.get("columns"), list) and isinstance(x.get("rows"), list) and x["rows"] and isinstance(x["rows"][0], list):
+        return [dict(zip(x["columns"], row)) for row in x["rows"]]
+    return x
+
+
 def _unwrap(raw: Any) -> Any:
-    """MCP tools return a list of content blocks (or a str); SDK tools return python objects."""
+    """MCP tools return a list of content blocks (or a str); SDK tools return python objects. Tables become row dicts."""
     if isinstance(raw, tuple):  # (content, artifact)
         raw = raw[0]
-    if isinstance(raw, list) and raw and isinstance(raw[0], dict) and "text" in raw[0]:
-        txt = "".join(b.get("text", "") for b in raw)
-        try:
-            return json.loads(txt)
-        except Exception:  # noqa: BLE001
-            return txt
-    if isinstance(raw, str):
-        try:
-            return json.loads(raw)
-        except Exception:  # noqa: BLE001
-            return raw
-    return raw
+    if isinstance(raw, list) and raw and isinstance(raw[0], dict) and raw[0].get("type") == "text" and "text" in raw[0]:
+        raw = _parse_text("".join(b.get("text", "") for b in raw))
+    elif isinstance(raw, str):
+        raw = _parse_text(raw)
+    return _table_to_rows(raw)
 
 
 def tagged(base: StructuredTool, ctx: ToolContext, kind: str, ref: str, server: str, uc_schema: str = "", fc: str = "azure_oms") -> StructuredTool:
@@ -241,6 +249,22 @@ async def build_bridge_tools(spec: dict, w, bridge_url: str, headers: dict[str, 
     return [(t, {"kind": "bridge", "ref": t.name, "server": "bridge-mcp"}) for t in await client.get_tools() if not allow or t.name in allow]
 
 
+def managed_vector_search_tool(inner: StructuredTool, adapter: StructuredTool, short: str, description: str) -> StructuredTool:
+    """Managed Vector Search takes only `query` and returns its top matches, so a company filter applied after the search
+    would drop most results. Company-filtered calls therefore go to the SDK adapter, which filters on the server.
+    Unfiltered calls use managed MCP. Both return the same row shape."""
+    async def call(query: str, num_results: int = 6, company_id: str | None = None):
+        if company_id:
+            raw = await adapter.ainvoke({"query": query, "num_results": num_results, "company_id": company_id})
+        else:
+            raw = await inner.ainvoke({"query": query})
+        rows = _unwrap(raw)
+        rows = rows if isinstance(rows, list) else []
+        return json.dumps(rows[:num_results], default=str)
+
+    return StructuredTool.from_function(coroutine=call, name=short, description=description, args_schema=VSArgs)
+
+
 async def build_static_tools(cfg: dict, env, w, warehouse_id: str | None) -> list[tuple[StructuredTool, dict]]:
     """UC functions and Vector Search tools (cached for the life of the app)."""
     out: list[tuple[StructuredTool, dict]] = []
@@ -266,11 +290,13 @@ async def build_static_tools(cfg: dict, env, w, warehouse_id: str | None) -> lis
                 from databricks_langchain import DatabricksMCPServer, DatabricksMultiServerMCPClient
 
                 c = DatabricksMultiServerMCPClient([DatabricksMCPServer(name="vs", url=f"{env.host}/api/2.0/mcp/vector-search/{cat}/{sch}", workspace_client=w, handle_tool_error=True)])
+                desc = {i["name"]: i.get("description", "") for i in spec["indexes"]}
+                adapters = {a.name: a for a in vector_search_tools(w, cat, sch, spec["indexes"])}
                 for t in await c.get_tools():
                     short = t.name.split("__")[-1]
-                    if short in [i["name"] for i in spec["indexes"]]:
-                        t.name = short
-                        out.append((t, {"kind": "vector_search", "ref": f"{cat}.{sch}.{short}", "server": "vector-search-mcp"}))
+                    if short in desc:
+                        vt = managed_vector_search_tool(t, adapters[short], short, desc[short] or f"Semantic search over {short}")
+                        out.append((vt, {"kind": "vector_search", "ref": f"{cat}.{sch}.{short}", "server": "vector-search-mcp"}))
             else:
                 for t in vector_search_tools(w, cat, sch, spec["indexes"]):
                     out.append((t, t.metadata))

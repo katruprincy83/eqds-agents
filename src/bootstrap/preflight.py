@@ -88,10 +88,15 @@ def run(env, w, root: str, spark=None) -> list[Check]:
         return ("ok", f"node type {want} available") if want in nt else ("fail", f"node type {want} not available in this workspace")
 
     def mcp():
-        if env.get("flags.use_managed_mcp", False):
-            w.api_client.do("GET", "/api/2.0/mcp/functions/system/ai")
-            return "ok", "managed MCP reachable"
-        return "ok", "flags.use_managed_mcp=false (SDK adapters used)"
+        if not env.get("flags.use_managed_mcp", False):
+            return "ok", "flags.use_managed_mcp=false (SDK adapters used)"
+        # managed MCP is JSON-RPC over POST; a GET is rejected even when the server is enabled
+        cat, sch = env.catalog, env.schema
+        for path in (f"/api/2.0/mcp/functions/{cat}/{sch}", f"/api/2.0/mcp/vector-search/{cat}/{sch}"):
+            r = w.api_client.do("POST", path, body={"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}})
+            if "error" in r:
+                return "fail", f"managed MCP {path}: {r['error'].get('message', '')[:160]}"
+        return "ok", "managed MCP reachable (UC functions, Vector Search)"
 
     def azure():
         if env.external_db_mode == "none":

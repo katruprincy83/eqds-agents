@@ -384,8 +384,8 @@ async function loadCI() {
   } catch (e) { $('pipe').innerHTML = esc(e.message); }
 }
 function renderCaps() {
-  const cols = [['Available and used', '#1E7B4F', ['Databricks Apps (UI, moderator, specialists, bridge MCP)', 'Lakebase Autoscaling (state, checkpoints, queue)', 'Vector Search + Unity Catalog functions', 'MLflow 3 tracing, feedback and evaluation', 'Lakehouse Federation to Azure SQL (classic compute)', 'Unity AI Gateway model services + inference tables']],
-    ['To confirm in the target workspace', '#8A5D24', ['Managed MCP servers (disabled here; SDK adapters used)', 'Provisioned throughput quota for the embedding endpoint', 'Genie space provisioning permissions', 'Serverless access to the foreign catalog (firewall)']],
+  const cols = [['Available and used', '#1E7B4F', ['Databricks Apps (UI, moderator, specialists, bridge MCP)', 'Lakebase Autoscaling (state, checkpoints, queue)', 'Managed MCP: Vector Search + Unity Catalog functions', 'MLflow 3 tracing, feedback and evaluation', 'Lakehouse Federation to Azure SQL (classic compute)', 'Unity AI Gateway model services + inference tables']],
+    ['To confirm in the target workspace', '#8A5D24', ['Provisioned throughput quota for the embedding endpoint', 'Genie space provisioning permissions', 'Serverless access to the foreign catalog (firewall)']],
     ['Not available or deferred', '#B3261E', ['Private connectivity to Azure SQL', 'Apollo integration (later phase)', 'Bridge p95 under 6 s cross-cloud (measured 6 to 10 s)']]];
   $('caps').innerHTML = cols.map(([t, c, items]) => `<div class="capcol"><h4 style="background:${c}">${t}</h4><ul>${items.map((i) => `<li>${i}</li>`).join('')}</ul></div>`).join('');
 }

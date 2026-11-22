@@ -19,7 +19,7 @@ Workspace: the demo AWS workspace (`config/env/demo.yaml`). External database: A
 
 ## Deviations from the design and requirements
 
-1. **Managed MCP disabled** (`flags.use_managed_mcp: false`): not enabled in the workspace; specialists use SDK adapters over the same UC functions and Vector Search.
+1. **Managed MCP in the demo only** (`flags.use_managed_mcp: true` in `demo.yaml`): UC functions and Vector Search go through Databricks managed MCP. Managed Vector Search takes only a query, so company-filtered searches use the SDK adapter, which filters on the server. dev, staging and prod all point at the one GIC workspace (design C-04), so they share one value: `false` until managed MCP is enabled there, then `true` and `scale_to_zero: false` for all three together.
 2. **Bridge compute is serverless**: the workspace cannot provision classic nodes. Federation to Azure SQL is reachable from serverless here (`network.serverless_blocked: false`); the GIC profiles keep `true`.
 3. **Bridge latency**: each bridge query takes 11-28 s cross-cloud, so the p95 target of 6 s is not met in this topology.
 4. **Seed checks reworded**: `positions_sum` compares day-over-day position changes with that day's net trades (positions are daily snapshots); `skew` uses rebalance-day share of NCREP trades (> 15 %, observed 21.5 %) because month-end calendar days fall on weekends.

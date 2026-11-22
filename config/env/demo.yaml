@@ -37,7 +37,7 @@ secret_scope: eqds-bridge
 service_principals: {ci: "", bridge: "", ingest: "", wiki: "", seed: ""}   # "" = run as deployer (demo)
 models_config: config/models.demo.yaml
 model_serving:                  # embedding endpoint for Vector Search (the only serving endpoint) + AI Gateway model-service limits
-  scale_to_zero: true
+  scale_to_zero: false          # false: cold starts on the embedding endpoint cancel managed Vector Search calls
   embed_entity: system.ai.gte_large_en_v1_5
   embed_version: "1"
   pt_min: 0                     # provisioned throughput (tokens/s), multiples of the model's chunk size (19000 for gte-large)
@@ -57,7 +57,7 @@ flags:
   use_uc_skills: false
   use_prompt_registry: false
   use_uc_trace_storage: false
-  use_managed_mcp: false        # false = specialists call the same UC functions / Vector Search through SDK adapters (managed MCP preview is not enabled in the demo workspace)
+  use_managed_mcp: true         # true = managed MCP (UC functions, Vector Search). Enabled in the demo workspace only; false = SDK adapters
 ui: {app_name: "EQDS Research", subtitle: "Multi-agent research platform", demo_player: true}
 schedules:
   enabled: false                # true = wiki refresh and news ingest run on their cron (costs model tokens)

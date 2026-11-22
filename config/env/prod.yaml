@@ -57,7 +57,7 @@ flags:
   use_uc_skills: false
   use_prompt_registry: false
   use_uc_trace_storage: false
-  use_managed_mcp: false        # false = specialists call the same UC functions / Vector Search through SDK adapters (managed MCP preview is not enabled in the demo workspace)
+  use_managed_mcp: false        # false = SDK adapters. GIC workspace (shared by dev, staging and prod; C-04): managed MCP not enabled there yet. When enabled: set true and scale_to_zero false in all three together, then run preflight
 ui: {app_name: "EQDS Research", subtitle: "Multi-agent research platform", demo_player: true}
 schedules:
   enabled: false                # true = wiki refresh and news ingest run on their cron (costs model tokens)
