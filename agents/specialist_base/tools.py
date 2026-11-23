@@ -201,11 +201,11 @@ def tagged(base: StructuredTool, ctx: ToolContext, kind: str, ref: str, server: 
                 out = []
                 for r in rows[:10]:
                     ident = r.get("note_id") or r.get("news_id") or r.get("doc_id")
-                    tag = ctx.tag(type="external_db", ref=f"{src.get('object')}#{ident}", system="azure_sql", template=tmpl, as_of=src.get("as_of", now),
+                    tag = ctx.tag(type="external_db", ref=f"{src.get('object')}#{ident}", system=src.get("system") or "azure_sql", template=tmpl, as_of=src.get("as_of", now),
                                   detail={"args": kw}, title=r.get("title") or r.get("headline"), snippet=_short(r.get("snippet") or r.get("headline"), 300))
                     out.append({"tag": tag, **{k: _short(v, 700) for k, v in r.items()}})
                 return json.dumps({"status": "ok", "rows": out, "row_count": len(rows)}, default=str)
-            tag = ctx.tag(type="external_db", ref=src.get("object", ref), system="azure_sql", template=tmpl, as_of=src.get("as_of", now), detail={"args": kw})
+            tag = ctx.tag(type="external_db", ref=src.get("object", ref), system=src.get("system") or "azure_sql", template=tmpl, as_of=src.get("as_of", now), detail={"args": kw})
             body = {k: v for k, v in data.items() if k in ("rows", "summary", "truncated", "row_count")}
             body["rows"] = compact((body.get("rows") or [])[:MAX_ROWS_TO_LLM], drop=())
             return json.dumps({"tag": tag, "status": "ok", **body}, default=str)
