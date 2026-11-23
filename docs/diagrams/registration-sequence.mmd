@@ -1,0 +1,28 @@
+sequenceDiagram
+  actor R as Researcher
+  participant UI as UI app
+  participant API as Apps API
+  participant A as Agent app eqds-sp-KEY
+  participant J as Job (registrar SP)
+  participant G as UC + Lakebase + Apps ACL
+  participant DB as registry.specialists
+  participant M as Moderator
+
+  R->>UI: key = KEY, click Register
+  UI->>API: apps.get("eqds-sp-KEY")
+  API-->>UI: url
+  UI->>A: GET /healthz, GET /info
+  A-->>UI: ok + spec (tools, access, tag, description)
+  UI->>UI: validate spec (untrusted input)
+  UI->>J: run_now(key, spec, contract_checked)
+  J->>API: apps.get -> url, service principal id
+  J->>G: grant tables, functions, model EXECUTE, Lakebase role
+  J->>G: moderator CAN_USE on the app
+  J->>DB: upsert row, enabled = false
+  J-->>UI: SUCCESS
+  UI->>A: POST /invocations (one real call)
+  A-->>UI: answer
+  UI->>DB: enabled = true
+  UI->>M: POST /registry/refresh
+  M->>DB: reload roster
+  Note over M,A: from now the moderator selects the agent by its description and calls its stored url

@@ -1,0 +1,30 @@
+flowchart LR
+  subgraph repo["Agent repo (eqds-agent-KEY)"]
+    spec["agent/specialist.yaml<br/>+ skill"]
+    bundle["databricks.yml<br/>app permissions:<br/>registrar, UI, moderator"]
+  end
+
+  subgraph ws["Databricks workspace"]
+    agent["Agent app<br/>eqds-sp-KEY<br/>/healthz  /info  /invocations"]
+    ui["UI app<br/>registry page"]
+    job["Job register_specialist<br/>runs as registrar SP"]
+    mod["Moderator app"]
+    reg[("Lakebase<br/>registry.specialists")]
+    uc["Unity Catalog<br/>tables, functions,<br/>model services"]
+    lb[("Lakebase<br/>mem schema")]
+  end
+
+  researcher(("You")) -- "make deploy" --> repo
+  repo -- "bundle deploy" --> agent
+  researcher -- "type key, Register" --> ui
+  ui -- "1 healthz + info" --> agent
+  ui -- "2 run_now: key + spec" --> job
+  job -- "3 grants" --> uc
+  job -- "3 role + grants" --> lb
+  job -- "3 moderator CAN_USE" --> agent
+  job -- "4 row, disabled" --> reg
+  ui -- "5 live call" --> agent
+  ui -- "6 enable" --> reg
+  ui -- "7 refresh" --> mod
+  mod -- "reads roster, 60 s cache" --> reg
+  mod -- "calls /invocations" --> agent
