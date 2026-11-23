@@ -72,8 +72,7 @@ One workspace hosts two environments. This repo has two long-lived branches and 
 | `dev` | `dev` | pre-production | the same name with `-dev` | `/Shared/eqds-dev/eqds-{{KEY}}` | Unity Catalog, `eqds_dev.traces` |
 
 Work on a feature branch, open a PR into `dev` (checks build the app for both targets), merge: the `deploy-dev` workflow deploys
-to the dev environment and runs the smoke check. When dev is good, open a PR `dev` to `main`; merging it runs `deploy-prod`, which
-waits for approval on the `production` GitHub environment. Manual equivalents: `make deploy TARGET=dev`, `make deploy TARGET=demo`.
+to the dev environment and runs the smoke check. When dev is good, open a PR `dev` to `main`; merging it (`main` is protected) runs `deploy-prod`. Manual equivalents: `make deploy TARGET=dev`, `make deploy TARGET=demo`.
 
 The dev agent registers on the **dev** UI (`eqds-ui-dev`), never on production's, and talks to the dev platform: the dev registry, the
 dev Lakebase branch, the `eqds_dev` catalog. To refresh the platform values of a target (new service principals after a platform

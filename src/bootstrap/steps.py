@@ -523,16 +523,14 @@ def app_grants_teardown(ctx) -> None:
 # ── traces in Unity Catalog (flags.use_uc_trace_storage) ──────────────────────────────────────────
 def _trace_experiments(ctx) -> list[str]:
     """The platform's experiments plus every agent experiment already deployed (`<experiment_path>-<key>`, created by the agents' bundles)."""
-    import posixpath
-
-    from databricks.sdk.service.workspace import ObjectType
+    import mlflow
 
     e = ctx.env
     paths = {e.experiment_path, e.moderator_experiment_path}
     try:
-        for o in ctx.w.workspace.list(posixpath.dirname(e.experiment_path)):
-            if o.object_type == ObjectType.MLFLOW_EXPERIMENT and o.path.startswith(e.experiment_path + "-"):
-                paths.add(o.path)
+        mlflow.set_tracking_uri("databricks")
+        for x in mlflow.search_experiments(filter_string=f"name LIKE '{e.experiment_path}-%'"):
+            paths.add(x.name)
     except Exception as ex:  # noqa: BLE001
         ctx.say(f"could not list agent experiments ({str(ex)[:80]}); binding the platform ones")
     return sorted(paths)

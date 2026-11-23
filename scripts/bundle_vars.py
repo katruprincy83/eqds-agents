@@ -107,7 +107,10 @@ def render(env: Env) -> dict:
         "sp_ci": (env.get("service_principals") or {}).get("ci", ""),
     }
     reg = (env.get("service_principals") or {}).get("registrar", "")
-    if reg:  # registration runs as the registrar service principal (make registrar); otherwise as the deployer (databricks.yml default)
+    # registration runs as the registrar service principal (make registrar); otherwise as the deployer (databricks.yml default).
+    # `registrar_job_identity: deployer` keeps the job on the deployer while the registrar principal exists for app permissions: needed
+    # until a workspace admin grants the deployer 'Service Principal User' on it (no API for that grant in every workspace).
+    if reg and env.get("registrar_job_identity", "registrar") != "deployer":
         v["registrar_run_as"] = {"service_principal_name": reg}
     v.update(compute_vars(env))
     v.update(llm_vars(env))

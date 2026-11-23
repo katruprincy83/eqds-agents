@@ -29,14 +29,16 @@ flowchart LR
   prChecks --> devBranch[dev]
   devBranch --> deployDev["deploy-dev: make infra deploy bootstrap apps + smoke"]
   deployDev --> mainPr["PR dev to main: checks + promotion guard"]
-  mainPr --> approval[production environment approval]
+  mainPr --> approval["merge: the approval (main is protected)"]
   approval --> deployProd["deploy-prod: same steps, target demo"]
 ```
 
 - PR into `dev` or `main`: ruff, manifest check, tests, `bundle_vars` for both targets. A PR into `main` must come from `dev`.
 - Push to `dev`: `deploy-dev` runs `make infra preflight deploy bootstrap apps outputs` for target `dev`, then `make smoke --jobs`
   (apps active, `/healthz`, registry listing, the `validate_seed` job).
-- Push to `main`: `deploy-prod` runs the same steps for target `demo` and waits for a reviewer on the `production` GitHub environment.
+- Push to `main`: `deploy-prod` runs the same steps for target `demo`. `main` is protected (pull request plus the `checks` status), so the
+  merge of the `dev` to `main` PR is the approval. If the GitHub plan supports required reviewers on environments (not the case for the
+  private repos on this plan: the API refuses), add them to the `production` environment and the run will also wait for a reviewer.
   `workflow_dispatch` with a `ref` redeploys an older tag or commit (rollback).
 - Jobs follow the same path: one definition, deployed first to dev (paused schedules; run on demand, `make seed TARGET=dev`), then
   promoted by merging. The `demo` profile turns the schedules on.
@@ -65,18 +67,26 @@ the UI SELECT on the schema (the run trace view reads it through the warehouse).
 
 ## One-time setup
 
-1. GitHub, platform repo: repository variable `DATABRICKS_HOST`; environments `dev` and `production` (required reviewers on
-   `production`), each with secrets `DATABRICKS_CLIENT_ID` and `DATABRICKS_CLIENT_SECRET` of the CI service principal for it. First run only:
+1. GitHub, platform repo: repository variable `DATABRICKS_HOST` (set); environments `dev` and `production` (created), each with secrets `DATABRICKS_CLIENT_ID` and `DATABRICKS_CLIENT_SECRET` of the CI service principal for it. First run only:
    `EQDS_AZURE_SQL_USER` / `EQDS_AZURE_SQL_PASSWORD` if the secret scope does not hold them yet (dev shares production's scope, so it does).
 2. The CI service principal needs: create catalogs and schemas, manage the Lakebase project (it creates the dev branch and connects to it
    with a Postgres role; grant one on `production` before the branch is created so the copy carries it), and `CAN_USE` on the warehouse.
-3. Agent repos: repository variables `DATABRICKS_HOST` and `PLATFORM_REPO`, secret `PLATFORM_REPO_TOKEN` (read access to the platform
+3. Agent repos: repository variables `DATABRICKS_HOST` and `PLATFORM_REPO` (set), secret `PLATFORM_REPO_TOKEN` (read access to the platform
    repo), and the same two environments with the CI credentials.
-4. Branch protection on `main` of every repo: require the `pr` check and a pull request.
+   Secrets are not set yet: until they are, the workflows fail at the Databricks login and deploys are done from a workstation with
+   `make deploy TARGET=dev|demo`.
+4. Branch protection on `main` of every repo (set): a pull request and the `checks` status of the `pr` workflow. Default branch is `dev`.
 5. From a workstation, once: `make registrar TARGET=dev` (creates the dev registrar service principal and records it in `dev.yaml`),
    `make all TARGET=dev`, `make seed TARGET=dev`, then, from the platform repo, `python scripts/new_agent.py <key> --scaffold-update` for
    each agent so its bundle gets the `dev` target (it needs the dev apps' service principals, so the dev platform has to be deployed first).
    Agents are registered by hand on the **dev** UI.
+
+## Registrar identity
+
+The registration job runs as the registrar service principal. Granting a person (or the CI principal) the role 'Service Principal User' on it
+is an admin-console step (no API in this workspace). Until that is done for `eqds-registrar-dev`, `dev.yaml` has
+`registrar_job_identity: deployer`: the job runs as whoever deploys, the principal still exists and holds the agents' app permissions.
+After the grant, delete that line and redeploy dev.
 
 ## Adding another environment
 

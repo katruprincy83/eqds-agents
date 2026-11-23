@@ -11,7 +11,7 @@ from types import SimpleNamespace
 import pytest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path[:0] = [os.path.join(ROOT, "packages", "eqds_agentkit"), os.path.join(ROOT, "packages", "eqds_llm"), os.path.join(ROOT, "src")]
+sys.path[:0] = [os.path.join(ROOT, "packages", "eqds_agentkit"), os.path.join(ROOT, "packages", "eqds_llm"), os.path.join(ROOT, "src"), os.path.join(ROOT, "scripts")]
 
 from databricks.sdk.errors import NotFound  # noqa: E402
 

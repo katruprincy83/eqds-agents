@@ -37,7 +37,8 @@ policies: {bridge: "", ingest: ""}      # cluster policy IDs/names; "" = no poli
 node_types: {bridge: md-fleet.xlarge, ingest: md-fleet.xlarge}
 spark_version: 17.3.x-scala2.13
 secret_scope: eqds-bridge
-service_principals: {ci: "", bridge: "", ingest: "", wiki: "", seed: "", registrar: ""}   # "" = run as deployer; registrar: `make registrar`
+service_principals: {ci: "", bridge: "", ingest: "", wiki: "", seed: "", registrar: "a22a69d2-3acb-4cb7-ad65-4bacfcefae1c"}   # "" = run as deployer; registrar: `make registrar`
+registrar_job_identity: deployer   # registrar | deployer. deployer until an admin grants the deployer (and the CI service principal) 'Service Principal User' on eqds-registrar-dev; then delete this line
 models_config: config/models.dev.yaml
 model_serving:                  # embedding endpoint for Vector Search (the only serving endpoint) + AI Gateway model-service limits
   scale_to_zero: false          # false: cold starts on the embedding endpoint cancel managed Vector Search calls
