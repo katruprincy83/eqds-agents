@@ -85,6 +85,7 @@ def grant_reader(w, warehouse_id: str, catalog: str, schema: str, principal: str
     return stmts
 
 
-def search_location(catalog: str, schema: str) -> str:
-    """The `locations` value for `mlflow.search_traces` over everything stored in the schema."""
-    return f"{catalog}.{schema}"
+def search_location(catalog: str, schema: str, experiment_path: str) -> str:
+    """The `locations` value for `mlflow.search_traces` over the traces of one experiment: `<catalog>.<schema>.<table prefix>`.
+    Search each location on its own (a search over several prefixes returns only the first one's traces)."""
+    return f"{catalog}.{schema}.{table_prefix(experiment_path)}"

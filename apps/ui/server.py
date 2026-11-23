@@ -296,17 +296,37 @@ def _trace_experiments() -> dict[str, str]:
     return out
 
 
+def _trace_paths() -> dict[str, str]:
+    """experiment path -> label, the path-based twin of `_trace_experiments` (UC trace locations are addressed by path, not by id)."""
+    e = get_env()
+    out = {e.moderator_experiment_path: "moderator"}
+    try:
+        with pool().connection() as c:
+            keys = [r["key"] for r in c.execute("SELECT key FROM registry.specialists ORDER BY key").fetchall()]
+    except Exception:  # noqa: BLE001
+        keys = []
+    out.update({e.agent_experiment_path(k): k for k in keys})
+    return out
+
+
 def _search_run_traces(mlflow, exps: dict[str, str], run_id: str) -> list:
     """The traces of one run. Environments that keep traces in MLflow's storage search by experiment id. When the profile stores them
-    in Unity Catalog (`flags.use_uc_trace_storage`), they are searched in that schema (read through the SQL warehouse; the UI service
-    principal has SELECT on it), falling back to the experiment ids."""
+    in Unity Catalog (`flags.use_uc_trace_storage`) each experiment has its own table prefix, so every location (the moderator's and each
+    registered agent's) is searched on its own through the SQL warehouse, within the last two weeks; the UI service principal has SELECT on
+    the schema. Falls back to the experiment ids when the UC search fails."""
+    import time
+
     flt = f"tags.run_id = '{run_id}'"
     e = get_env()
     if e.use_uc_trace_storage:
         try:
             from eqds_agentkit import trace_storage
 
-            return mlflow.search_traces(locations=[trace_storage.search_location(e.catalog, e.traces_schema)], filter_string=flt, return_type="list", max_results=60)
+            uc_filter = f"{flt} AND trace.timestamp_ms > {int(time.time() * 1000) - 14 * 86400000}"
+            out: list = []
+            for path in _trace_paths():
+                out += mlflow.search_traces(locations=[trace_storage.search_location(e.catalog, e.traces_schema, path)], filter_string=uc_filter, return_type="list", max_results=30)
+            return out
         except Exception as ex:  # noqa: BLE001
             log.warning("UC trace search failed, falling back to experiment ids: %s", str(ex)[:160])
     return mlflow.search_traces(locations=list(exps) or None, filter_string=flt, return_type="list", max_results=60)
@@ -329,7 +349,7 @@ async def dev_trace(run_id: str, request: Request):
                 depth[s.span_id] = (depth.get(s.parent_id, -1) + 1) if s.parent_id else 0
             eid = str(getattr(t.info, "experiment_id", "") or "")
             tags = dict(t.info.tags or {})
-            label = exps.get(eid) or (tags.get("specialist") if tags.get("caller") else "") or ""   # UC-stored traces may not carry the experiment id
+            label = exps.get(eid) or tags.get("specialist") or ("moderator" if get_env().use_uc_trace_storage else "")   # UC-stored traces may not carry the experiment id
             out.append({"trace_id": t.info.trace_id, "experiment_id": eid, "experiment": label, "tags": tags, "duration_ms": t.info.execution_duration,
                         "spans": [{"name": s.name, "type": str(s.span_type), "level": depth.get(s.span_id, 0), "ms": int((s.end_time_ns - s.start_time_ns) / 1e6)} for s in spans][:200]})
         return out
