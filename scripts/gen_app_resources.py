@@ -23,16 +23,20 @@ def e(name, value=None, value_from=None):
 
 COMMON_ENV = [e("EQDS_TARGET", "${var.target_name}"), e("EQDS_ROOT", "."), e("EQDS_APP_VERSION", "${var.app_version}"),
               e("MLFLOW_EXPERIMENT_ID", value_from="experiment"), e("DATABRICKS_WAREHOUSE_ID", value_from="warehouse"), e("MLFLOW_DISABLE_AGENT_HINT", "1")]
-COMMON_RES = [{"name": "experiment", "experiment": {"experiment_id": "${resources.experiments.exp_main.id}", "permission": "CAN_MANAGE"}},
-              {"name": "warehouse", "sql_warehouse": {"id": "${resources.sql_warehouses.wh_main.id}", "permission": "CAN_USE"}}]
+WAREHOUSE_RES = {"name": "warehouse", "sql_warehouse": {"id": "${resources.sql_warehouses.wh_main.id}", "permission": "CAN_USE"}}
 
 
-def app(key, desc, kind, env_extra, res_extra, perms=None):
+def experiment_res(exp: str, name: str = "experiment", permission: str = "CAN_MANAGE") -> dict:
+    return {"name": name, "experiment": {"experiment_id": f"${{resources.experiments.{exp}.id}}", "permission": permission}}
+
+
+def app(key, desc, kind, env_extra, res_extra, perms=None, exp="exp_main"):
+    """`exp`: the experiment this app writes its traces to (MLFLOW_EXPERIMENT_ID). The moderator has its own."""
     mod = {"ui": "apps.ui.server:app", "moderator": "agents.moderator.app:app", "bridge_mcp": "apps.bridge_mcp.server:app", "specialist": "agents.specialist_base.app:app"}[kind]
     d = {"name": f"${{var.name_prefix}}-{key.replace('_', '-') if not key.startswith('sp_') else 'sp-' + key[3:]}${{var.suffix}}", "description": desc,
          "source_code_path": SRC(key),
          "config": {"command": ["python", "-m", "uvicorn", mod, "--host", "0.0.0.0", "--port", "8000"], "env": COMMON_ENV + env_extra},
-         "resources": COMMON_RES + res_extra}
+         "resources": [experiment_res(exp), WAREHOUSE_RES] + res_extra}
     if perms:
         d["permissions"] = perms
     return d
@@ -47,11 +51,12 @@ bridge_ref = {"name": "bridge-mcp", "app": {"name": "${resources.apps.bridge_mcp
 jobs = [("wiki_refresh", "WIKI_REFRESH"), ("validate_seed", "VALIDATE_SEED"), ("eval", "EVAL"), ("bridge_worker", "BRIDGE_WORKER"), ("ingest_news", "INGEST_NEWS"), ("register_specialist", "REGISTER_SPECIALIST")]
 
 write("bridge_mcp.yml", {"bridge_mcp": app("bridge_mcp", "MCP server that queues allowlisted bridge requests for the classic worker", "bridge_mcp", [], [])})
-write("moderator.yml", {"moderator": app("moderator", "LangGraph moderator: async run API, SSE, durable resume", "moderator", [], [])})
+write("moderator.yml", {"moderator": app("moderator", "LangGraph moderator: async run API, SSE, durable resume", "moderator", [], [], exp="exp_moderator")})
 write("ui.yml", {"ui": app("ui", "EQDS research UI", "ui",
-                           [e("GENIE_SPACE_ID", "${var.genie_space_id}")]
+                           [e("GENIE_SPACE_ID", "${var.genie_space_id}"), e("MODERATOR_EXPERIMENT_ID", value_from="experiment-moderator")]
                            + [e(f"JOB_ID_{u}", f"${{resources.jobs.{k}.id}}") for k, u in jobs],
-                           [{"name": "moderator", "app": {"name": "${resources.apps.moderator.name}", "permission": "CAN_USE"}}, bridge_ref]
+                           [experiment_res("exp_moderator", "experiment-moderator", "CAN_READ"),  # the UI reads the moderator's traces (run trace view)
+                            {"name": "moderator", "app": {"name": "${resources.apps.moderator.name}", "permission": "CAN_USE"}}, bridge_ref]
                            + [{"name": f"job-{k.replace('_', '-')}", "job": {"id": f"${{resources.jobs.{k}.id}}", "permission": "CAN_MANAGE_RUN"}} for k, _ in jobs],
                            perms="${var.ui_permissions}")})
 print("wrote resources/apps/*.yml for", ["ui", "moderator", "bridge_mcp"])

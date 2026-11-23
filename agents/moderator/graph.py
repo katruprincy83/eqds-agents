@@ -323,17 +323,31 @@ class Moderator:
             body = contract.request(brief, run_id=st["run_id"], round=rnd, key=key, conversation_id=st.get("conversation_id", ""), user_id=st.get("user_id", ""),
                                     caller="moderator", company_id=st.get("company_id"), prior_findings=st.get("prior", []))
             self.activity(st, f"eqds-sp-{key}", "serverless", "POST /invocations", f"→ {spec.url}", {"kind": "app", "ref": f"eqds-sp-{key}"})
-            with tracing.span(f"specialist.{key}", "AGENT", run_id=st["run_id"], round=rnd, specialist=key) as sp:
+            with tracing.span(f"specialist.{key}", "AGENT", inputs={"brief": brief[:4000], "round": rnd}, run_id=st["run_id"], round=rnd, specialist=key,
+                              endpoint=spec.url) as sp:
+                # The specialist records its own trace in ITS experiment. We pass our trace id so that trace can point back, and we
+                # keep its trace id on this span (`child_trace_id`) so the two can be followed in either direction.
+                hdrs = {**auth.bearer(self.w), "x-eqds-user": st.get("user_id", ""), "x-eqds-run-id": st["run_id"]}
+                if (tid := tracing.current_trace_id()):
+                    hdrs["x-eqds-parent-trace"] = tid
                 try:
-                    r = self.http.post(f"{spec.url.rstrip('/')}/invocations", json=body, timeout=httpx.Timeout(10.0, read=float(spec.timeout_s) + 15),
-                                       headers={**auth.bearer(self.w), "x-eqds-user": st.get("user_id", ""), "x-eqds-run-id": st["run_id"]})
+                    r = self.http.post(f"{spec.url.rstrip('/')}/invocations", json=body, timeout=httpx.Timeout(10.0, read=float(spec.timeout_s) + 15), headers=hdrs)
                     r.raise_for_status()
                     out = contract.parse_response(r.json())
-                    if sp is not None and out.trace_id:
-                        sp.set_attribute("child_trace_id", out.trace_id)
                 except Exception as e:  # noqa: BLE001  FR-OR-07: a failing specialist degrades to not_addressed
                     log.warning("specialist %s failed: %s", key, str(e)[:160])
                     out = contract.error_outputs(key, f"{spec.display_name} did not respond ({type(e).__name__}).", "not_addressed")
+                    if sp is not None:
+                        sp.set_attribute("error", f"{type(e).__name__}: {str(e)[:200]}")
+                if sp is not None:
+                    try:
+                        if out.trace_id:
+                            sp.set_attribute("child_trace_id", out.trace_id)
+                        sp.set_outputs({"text": out.text[:4000], "claims": len(out.claims), "sources": len(out.sources), "cached": out.cached,
+                                        "tool_calls": [{"tool": t.tool, "server": t.server, "latency_ms": t.latency_ms} for t in out.tool_calls],
+                                        "usage": out.usage.model_dump(mode="json")})
+                    except Exception:  # noqa: BLE001
+                        pass
         for a in out.activity:
             self.ev(st, "activity", a)
         tcs = [t.model_dump() for t in out.tool_calls]
@@ -463,6 +477,7 @@ class Moderator:
         msgs = [{"round": m["round"], "from": m["from"], "to": m["to"], "text": m["text"], "claims": m.get("claims", [])} for m in st["messages"]]
         trace_id = tracing.tag_trace(run_id=st["run_id"], conversation_id=st.get("conversation_id"), user_id=st.get("user_id"), caller=st.get("caller"),
                                      rounds=st.get("round"), specialists=",".join(st.get("selected", [])))
+        tracing.preview(st["question"], (st.get("answer") or {}).get("text"))
         result = {"run_id": st["run_id"], "question": st["question"], "reformulated": st["reformulated"], "company_id": st.get("company_id"), "rounds_run": st.get("round", 1),
                   "answer": st["answer"], "points": points, "messages": msgs, "sources": st.get("sources", {}), "ask_next": st.get("ask_next", []),
                   "usage": {"cost_usd": round(u.get("cost_usd", 0), 4), "duration_s": int(self.elapsed(st)), "tokens_in": int(u.get("input_tokens", 0)), "tokens_out": int(u.get("output_tokens", 0))},
@@ -511,7 +526,7 @@ class Moderator:
         t = threading.Thread(target=beat, daemon=True)
         t.start()
         try:
-            with tracing.span("moderator.run", "AGENT", run_id=run_id):
+            with tracing.span("moderator.run", "AGENT", inputs={"question": (init or {}).get("question"), "resumed": init is None}, run_id=run_id):
                 self.graph.invoke(init, self.config(run_id))
         except Crash:
             log.warning("run %s: simulated crash; waiting for the reaper", run_id)

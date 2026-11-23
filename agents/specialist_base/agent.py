@@ -64,10 +64,34 @@ class SpecialistAgent:
             "tools_summary": c.get("tools_summary", ""), "tool_config": c.get("tools") or [], "access": c.get("access") or {}}
 
     # ── invocation ─────────────────────────────────────────────────────────────────────────
-    async def invoke(self, body: dict, user: str = "anonymous") -> InvocationOutputs:
-        timer = contract.Timer()
+    async def invoke(self, body: dict, user: str = "anonymous", parent_trace: str | None = None) -> InvocationOutputs:
+        """One invocation = one trace in THIS agent's own MLflow experiment (MLFLOW_EXPERIMENT_ID).
+
+        The root span `specialist.<key>` wraps everything (cache lookup, the tool loop, the finalising LLM call), so the LLM and tool
+        spans nest under it instead of landing as loose traces. The trace is tagged with the run / conversation ids and with the
+        moderator's trace id (`moderator_trace_id`), and its own id goes back to the moderator in the response (`trace_id`).
+        """
         ci = body.get("custom_inputs") or {}
         brief = next((m["content"] for m in reversed(body.get("input", [])) if m.get("role") == "user"), "")
+        with tracing.span(f"specialist.{self.key}", "AGENT", inputs={"brief": brief[:4000], "round": ci.get("round", 1), "company_id": ci.get("company_id")},
+                          specialist=self.key, run_id=ci.get("run_id", "")) as sp:
+            out = await self._invoke(body, user, ci, brief)
+            first = out.claims[0].stance if out.claims else ""
+            tid = tracing.tag_trace(run_id=ci.get("run_id"), conversation_id=ci.get("conversation_id"), user_id=user, caller=ci.get("caller"),
+                                    specialist=self.key, round=ci.get("round"), moderator_trace_id=parent_trace, cached=out.cached or None,
+                                    outcome="error" if first == "error" else "ok", tools=None if out.cached else (",".join(t.tool for t in out.tool_calls) or None))
+            tracing.preview(brief, out.text)
+            out.trace_id = tid or out.trace_id
+            if sp is not None:
+                try:
+                    sp.set_outputs({"text": out.text[:4000], "claims": len(out.claims), "sources": len(out.sources),
+                                    "tool_calls": [t.tool for t in out.tool_calls], "usage": out.usage.model_dump(mode="json"), "cached": out.cached})
+                except Exception:  # noqa: BLE001
+                    pass
+            return out
+
+    async def _invoke(self, body: dict, user: str, ci: dict, brief: str) -> InvocationOutputs:
+        timer = contract.Timer()
         run_id, rnd = ci.get("run_id", ""), ci.get("round", 1)
         idem = ci.get("idempotency_key") or f"{run_id}:{rnd}:{self.key}"
         if self.store is not None and ci.get("caller") != "eval":
@@ -165,9 +189,7 @@ class SpecialistAgent:
         text = ans.summary
         usage = Usage(input_tokens=model.usage.get("input_tokens", 0) + fin.usage.input, output_tokens=model.usage.get("output_tokens", 0) + fin.usage.output,
                       cost_usd=round(model.usage.get("cost_usd", 0.0) + fin.cost_usd, 5))
-        trace_id = tracing.tag_trace(run_id=ci.get("run_id"), conversation_id=ci.get("conversation_id"), user_id=user, caller=ci.get("caller"),
-                                     specialist=key, round=ci.get("round"))
         ctx.activity.insert(0, {"component": f"eqds-sp-{key}", "zone": "serverless", "label": "POST /invocations", "detail": cfg.get("tools_summary", ""),
                                 "link": {"kind": "app", "ref": f"eqds-sp-{key}"}})
         return InvocationOutputs(specialist=key, text=text, claims=claims, sources=[s for s in ctx.sources if s.id in set(tags)],
-                                 tool_calls=ctx.tool_calls, activity=ctx.activity, trace_id=trace_id, usage=usage)
+                                 tool_calls=ctx.tool_calls, activity=ctx.activity, usage=usage)

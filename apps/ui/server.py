@@ -112,7 +112,7 @@ async def me(request: Request):
 async def links():
     e = get_env()
     jid = lambda k: os.environ.get(f"JOB_ID_{k}", "")  # noqa: E731
-    return {"ws": e.host, "catalog": e.catalog, "schema": e.schema, "appSuffix": e.suffix, "namePrefix": e.prefix, "exp": os.environ.get("MLFLOW_EXPERIMENT_ID", ""),
+    return {"ws": e.host, "catalog": e.catalog, "schema": e.schema, "appSuffix": e.suffix, "namePrefix": e.prefix, "exp": os.environ.get("MLFLOW_EXPERIMENT_ID", ""), "modExp": os.environ.get("MODERATOR_EXPERIMENT_ID", ""),
             "genie": ("" if os.environ.get("GENIE_SPACE_ID", "") == "unset" else os.environ.get("GENIE_SPACE_ID", "")), "lakebase": e.lakebase_project, "bridgeJobId": jid("BRIDGE_WORKER"), "ingestJobId": jid("INGEST_NEWS"),
             "wikiJobId": jid("WIKI_REFRESH"), "seedJobId": jid("VALIDATE_SEED"), "evalJobId": jid("EVAL"), "foreignCatalog": e.foreign_catalog, "connection": e.connection,
             "github": e.get("github_repo_url", ""), "vsEndpoint": e.vs_endpoint, "demo": e.target}
@@ -272,6 +272,30 @@ async def dev(request: Request):
         raise HTTPException(403, "developers only")
 
 
+def _trace_experiments() -> dict[str, str]:
+    """experiment id -> label for every place a run leaves traces: the moderator's experiment and each registered agent's own one
+    (`<experiment_path>-<key>`, created by that agent's bundle). Agents whose experiment is missing or unreadable are skipped."""
+    import mlflow
+
+    e = get_env()
+    out: dict[str, str] = {}
+    if os.environ.get("MODERATOR_EXPERIMENT_ID"):
+        out[os.environ["MODERATOR_EXPERIMENT_ID"]] = "moderator"
+    try:
+        with pool().connection() as c:
+            keys = [r["key"] for r in c.execute("SELECT key FROM registry.specialists ORDER BY key").fetchall()]
+    except Exception:  # noqa: BLE001
+        keys = []
+    for k in keys:
+        try:
+            x = mlflow.get_experiment_by_name(e.agent_experiment_path(k))
+            if x:
+                out[x.experiment_id] = k
+        except Exception:  # noqa: BLE001
+            pass
+    return out
+
+
 @app.get("/api/dev/runs/{run_id}/trace")
 async def dev_trace(run_id: str, request: Request):
     await dev(request)
@@ -279,15 +303,16 @@ async def dev_trace(run_id: str, request: Request):
     def go():
         import mlflow
 
-        eid = os.environ.get("MLFLOW_EXPERIMENT_ID")
-        traces = mlflow.search_traces(locations=[eid] if eid else None, filter_string=f"tags.run_id = '{run_id}'", return_type="list", max_results=40)
+        exps = _trace_experiments() or ({os.environ["MLFLOW_EXPERIMENT_ID"]: "platform"} if os.environ.get("MLFLOW_EXPERIMENT_ID") else {})
+        traces = mlflow.search_traces(locations=list(exps) or None, filter_string=f"tags.run_id = '{run_id}'", return_type="list", max_results=60)
         out = []
         for t in traces:
             spans = sorted(t.data.spans, key=lambda s: s.start_time_ns)
             depth = {}
             for s in spans:
                 depth[s.span_id] = (depth.get(s.parent_id, -1) + 1) if s.parent_id else 0
-            out.append({"trace_id": t.info.trace_id, "tags": dict(t.info.tags or {}), "duration_ms": t.info.execution_duration,
+            eid = str(getattr(t.info, "experiment_id", "") or "")
+            out.append({"trace_id": t.info.trace_id, "experiment_id": eid, "experiment": exps.get(eid, ""), "tags": dict(t.info.tags or {}), "duration_ms": t.info.execution_duration,
                         "spans": [{"name": s.name, "type": str(s.span_type), "level": depth.get(s.span_id, 0), "ms": int((s.end_time_ns - s.start_time_ns) / 1e6)} for s in spans][:200]})
         return out
 

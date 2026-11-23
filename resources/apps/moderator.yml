@@ -31,7 +31,7 @@ resources:
       resources:
       - name: experiment
         experiment:
-          experiment_id: ${resources.experiments.exp_main.id}
+          experiment_id: ${resources.experiments.exp_moderator.id}
           permission: CAN_MANAGE
       - name: warehouse
         sql_warehouse:

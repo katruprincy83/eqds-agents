@@ -43,7 +43,7 @@ function linkFor(kind, ref = '') {
     case 'endpoints': return `${ws}/ml/endpoints`;
     case 'endpoint': return `${ws}/ml/endpoints/${ref}`;
     case 'lakebase': return `${ws}/lakebase/projects`;
-    case 'experiment': return setting('exp') ? `${ws}/ml/experiments/${setting('exp')}/traces` : null;
+    case 'experiment': { const id = ref === 'moderator' ? setting('modExp') : setting('exp'); return id ? `${ws}/ml/experiments/${id}/traces` : null; }
     case 'genie': return setting('genie') ? `${ws}/genie/rooms/${setting('genie')}` : null;
     case 'github': return setting('github') || null;
     default: return null;

@@ -31,32 +31,72 @@ def setup(app_version: str = "dev", experiment_id: str | None = None, autolog: b
 
 
 @contextlib.contextmanager
-def span(name: str, span_type: str = "CHAIN", **attrs: Any):
+def span(name: str, span_type: str = "CHAIN", inputs: Any = None, **attrs: Any):
+    """A span that is also a no-op when MLflow is missing or misconfigured: tracing must never fail a request. Exceptions from the
+    body propagate (and are recorded on the span)."""
+    stack = contextlib.ExitStack()
     try:
         import mlflow
 
-        with mlflow.start_span(name=name, span_type=span_type) as s:
-            for k, v in attrs.items():
-                try:
-                    s.set_attribute(k, v)
-                except Exception:  # noqa: BLE001
-                    pass
-            yield s
-    except ImportError:
-        yield None
+        s = stack.enter_context(mlflow.start_span(name=name, span_type=span_type))
+    except Exception:  # noqa: BLE001
+        s = None
+    with stack:
+        if s is not None:
+            try:
+                if inputs is not None:
+                    s.set_inputs(inputs)
+                s.set_attributes({k: v for k, v in attrs.items() if v is not None})
+            except Exception:  # noqa: BLE001
+                pass
+        yield s
 
 
-def tag_trace(**tags: Any) -> str | None:
-    """Tag the active trace (conversation_id, run_id, user_id, caller, app_version, rounds, specialists) and return its id."""
+def tag_trace(user_id: Any = None, conversation_id: Any = None, **tags: Any) -> str | None:
+    """Tag the active trace and return its id. Call it inside the root span.
+
+    Tags (searchable): conversation_id, run_id, user_id, caller, app_version, rounds, specialists ...
+    Metadata: `mlflow.trace.session` = conversation_id and `mlflow.trace.user` = user_id, so the Traces UI groups a conversation
+    into a session and filters by user.
+    """
     try:
         import mlflow
 
-        clean = {k: str(v) for k, v in tags.items() if v is not None}
+        clean = {k: str(v) for k, v in {**tags, "user_id": user_id, "conversation_id": conversation_id}.items() if v not in (None, "")}
         clean.setdefault("app_version", os.environ.get("EQDS_APP_VERSION", "dev"))
-        mlflow.update_current_trace(tags=clean)
+        meta = {}
+        if conversation_id:
+            meta["mlflow.trace.session"] = str(conversation_id)
+        if user_id:
+            meta["mlflow.trace.user"] = str(user_id)
+        try:
+            mlflow.update_current_trace(tags=clean, metadata=meta or None)
+        except TypeError:  # older MLflow without `metadata`
+            mlflow.update_current_trace(tags=clean)
         return mlflow.get_current_active_span().trace_id
     except Exception:  # noqa: BLE001
         return None
+
+
+def current_trace_id() -> str | None:
+    """Id of the trace the caller is inside (None outside a trace). Sent to specialists so their trace can point back."""
+    try:
+        import mlflow
+
+        s = mlflow.get_current_active_span()
+        return s.trace_id if s is not None else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def preview(request: str | None = None, response: str | None = None) -> None:
+    """Set the request / response text shown in the Traces table for the active trace."""
+    try:
+        import mlflow
+
+        mlflow.update_current_trace(request_preview=(request or "")[:1000] or None, response_preview=(response or "")[:1000] or None)
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def log_feedback(trace_id: str, value: bool, comment: str = "", user_id: str = "") -> None:

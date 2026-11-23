@@ -13,12 +13,20 @@ variables:
   platform_target: {default: {{TARGET}}}                     # which platform environment the agent plugs into (config/env/<target>.yaml)
   app_name:        {default: {{APP_NAME}}}          # <name_prefix>-sp-<key><suffix>
   warehouse_id:    {default: {{WAREHOUSE_ID}}}             # platform SQL warehouse (tool calls run on it)
-  experiment_id:   {default: "{{EXPERIMENT_ID}}"}           # platform MLflow experiment (traces)
+  experiment_path: {default: "{{EXPERIMENT_PATH}}"}   # this agent's own MLflow experiment (traces); sibling of the platform experiment
   registrar_sp:    {default: {{REGISTRAR_SP}}}   # registrar service principal: manages the app during registration
   ui_sp:           {default: {{UI_SP}}}   # UI service principal: runs the registration contract check
   moderator_sp:    {default: {{MODERATOR_SP}}}   # moderator service principal: calls the agent at run time
 
 resources:
+  # Every call the moderator makes to this agent lands here as one trace. The bundle creates it, so a new workspace needs nothing
+  # extra; its parent folder is the platform experiment's parent, which the platform deploy has already created.
+  experiments:
+    traces:
+      name: ${var.experiment_path}
+      permissions:
+        - {level: CAN_READ, service_principal_name: "${var.ui_sp}"}   # the UI's run trace view reads it
+
   apps:
     {{KEY}}:
       name: ${var.app_name}
@@ -36,7 +44,7 @@ resources:
           - {name: SPECIALIST_CONFIG, value: agents/specialists/{{KEY}}/specialist.yaml}
       resources:
         - name: experiment
-          experiment: {experiment_id: "${var.experiment_id}", permission: CAN_MANAGE}
+          experiment: {experiment_id: "${resources.experiments.traces.id}", permission: CAN_MANAGE}
         - name: warehouse
           sql_warehouse: {id: "${var.warehouse_id}", permission: CAN_USE}
       # The bundle owns the app's whole permission list: anything granted outside it is removed on the next deploy.

@@ -52,5 +52,5 @@ async def info():
 async def invocations(req: Request):
     body = await req.json()
     user = auth.user_from_headers(req.headers)
-    out = await agent.invoke(body, user)
+    out = await agent.invoke(body, user, parent_trace=req.headers.get("x-eqds-parent-trace"))
     return JSONResponse(contract.response(out))

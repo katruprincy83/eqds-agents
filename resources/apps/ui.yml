@@ -30,6 +30,8 @@ resources:
           value: '1'
         - name: GENIE_SPACE_ID
           value: ${var.genie_space_id}
+        - name: MODERATOR_EXPERIMENT_ID
+          value_from: experiment-moderator
         - name: JOB_ID_WIKI_REFRESH
           value: ${resources.jobs.wiki_refresh.id}
         - name: JOB_ID_VALIDATE_SEED
@@ -51,6 +53,10 @@ resources:
         sql_warehouse:
           id: ${resources.sql_warehouses.wh_main.id}
           permission: CAN_USE
+      - name: experiment-moderator
+        experiment:
+          experiment_id: ${resources.experiments.exp_moderator.id}
+          permission: CAN_READ
       - name: moderator
         app:
           name: ${resources.apps.moderator.name}

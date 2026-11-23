@@ -1,4 +1,8 @@
 resources:
   experiments:
+    # platform experiment: UI, bridge, evaluation runs and feedback
     exp_main:
       name: ${var.experiment_path}
+    # the moderator's own traces (run, graph nodes, LLM calls, one span per specialist call)
+    exp_moderator:
+      name: ${var.experiment_path}-moderator

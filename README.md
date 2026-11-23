@@ -28,7 +28,7 @@ Everything is idempotent. `make teardown` removes bootstrap assets; `make destro
 | Path | Contents |
 |---|---|
 | `config/env/<target>.yaml`, `config/models.<target>.yaml` | environment profile and model tiers (the only per-environment inputs) |
-| `databricks.yml`, `resources/` | bundle: schemas, volumes, warehouse, embed endpoint, experiment, jobs, 3 platform apps (ui, moderator, bridge-mcp), dashboard |
+| `databricks.yml`, `resources/` | bundle: schemas, volumes, warehouse, embed endpoint, experiments (platform and moderator), jobs, 3 platform apps (ui, moderator, bridge-mcp), dashboard |
 | `agents/` | moderator graph and the specialist runtime (`specialist_base`) that every agent repo vendors at build time |
 | `templates/agent/`, `scripts/new_agent.py` | scaffolding for a specialist agent repo (`make agent KEY=<key>`) |
 | `apps/` | UI and bridge MCP app |

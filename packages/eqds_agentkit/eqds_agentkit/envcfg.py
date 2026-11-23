@@ -102,6 +102,14 @@ class Env:
     def vs_endpoint(self) -> str: return self.raw.get("vector_search_endpoint", f"{self.prefix}-vs")
     @property
     def experiment_path(self) -> str: return self.raw.get("experiment_path", f"/Shared/{self.prefix}/{self.target}")
+    @property
+    def moderator_experiment_path(self) -> str:
+        """Traces of the moderator. A sibling of `experiment_path` (an experiment cannot contain another), so the parent folder that the platform deploy creates is enough."""
+        return self.raw.get("moderator_experiment_path", f"{self.experiment_path}-moderator")
+
+    def agent_experiment_path(self, key: str) -> str:
+        """Traces of one specialist agent, created by that agent's own bundle. Same parent folder as the platform experiment."""
+        return f"{self.experiment_path}-{key}"
 
     def app_name(self, component: str) -> str:
         return f"{self.prefix}-{component}{self.suffix}"

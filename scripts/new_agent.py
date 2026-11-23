@@ -4,8 +4,8 @@
     python scripts/new_agent.py <key> [--out ../eqds-agent-<key>] [--target demo] [--display "Name"] [--tag XY]
     python scripts/new_agent.py <key> --from-spec path/specialist.yaml --skills path/to/skills/<key>   # bring an existing agent
 
-Without --from-spec it writes a starter spec and skill to edit. Platform values (workspace host, SQL warehouse, MLflow experiment,
-and the registrar / UI / moderator service principals) are looked up in the target workspace with your CLI login, so the
+Without --from-spec it writes a starter spec and skill to edit. Platform values (workspace host, SQL warehouse, and the
+registrar / UI / moderator service principals) are looked up in the target workspace with your CLI login, so the
 generated bundle deploys as is. The project is not registered: its owner does that on the orchestrator's registry page.
 """
 from __future__ import annotations
@@ -25,7 +25,7 @@ from eqds_agentkit.envcfg import Env  # noqa: E402
 TPL = ROOT / "templates" / "agent"
 
 
-def platform_values(env: Env) -> dict[str, str]:
+def platform_values(env: Env, key: str) -> dict[str, str]:
     from databricks.sdk import WorkspaceClient
 
     w = WorkspaceClient()
@@ -36,7 +36,7 @@ def platform_values(env: Env) -> dict[str, str]:
     if not wh:
         sys.exit(f"SQL warehouse {env.app_name('wh')} not found (deploy the platform first)")
     return {"HOST": w.config.host.rstrip("/"), "WAREHOUSE_ID": wh,
-            "EXPERIMENT_ID": w.experiments.get_by_name(env.experiment_path).experiment.experiment_id,
+            "EXPERIMENT_PATH": env.agent_experiment_path(key),  # created by the agent's own bundle, nothing to look up
             "REGISTRAR_SP": reg, "UI_SP": w.apps.get(env.app_name("ui")).service_principal_client_id,
             "MODERATOR_SP": w.apps.get(env.app_name("moderator")).service_principal_client_id}
 
@@ -61,6 +61,7 @@ def main() -> int:
     ap.add_argument("--from-spec", default="")
     ap.add_argument("--skills", default="", help="folder holding <version>/SKILL.md (with --from-spec)")
     ap.add_argument("--force", action="store_true", help="overwrite generated files in an existing project")
+    ap.add_argument("--bundle-only", action="store_true", help="rewrite only databricks.yml of an existing project (after a template change); keeps every other file")
     a = ap.parse_args()
 
     key = a.key
@@ -71,7 +72,7 @@ def main() -> int:
     if len(app_name) > 30:
         sys.exit(f"app name {app_name} is longer than 30 characters")
     out = pathlib.Path(a.out or ROOT.parent / f"eqds-agent-{key}").resolve()
-    if out.exists() and any(out.iterdir()) and not a.force:
+    if out.exists() and any(out.iterdir()) and not (a.force or a.bundle_only):
         sys.exit(f"{out} exists and is not empty (use --force to regenerate the scaffolding)")
 
     existing = out / "agent" / "specialist.yaml"
@@ -82,10 +83,13 @@ def main() -> int:
     else:
         spec = {"key": key, "display_name": a.display or key.capitalize(), "tag_prefix": (a.tag or key[:2]).upper(), "version": "0.1.0"}
     values = {"KEY": key, "DISPLAY": spec["display_name"], "TAG": spec["tag_prefix"], "OWNER": a.owner, "APP_NAME": app_name,
-              "TARGET": env.target, "VERSION": str(spec.get("version", "0.1.0")), **platform_values(env)}
+              "TARGET": env.target, "VERSION": str(spec.get("version", "0.1.0")), **platform_values(env, key)}
 
     (out / "scripts").mkdir(parents=True, exist_ok=True)
     (out / "databricks.yml").write_text(fill((TPL / "databricks.yml").read_text(), values))
+    if a.bundle_only:
+        print(f"rewrote {out / 'databricks.yml'} (app {app_name}, experiment {env.agent_experiment_path(key)})")
+        return 0
     (out / "Makefile").write_text(fill((TPL / "Makefile").read_text(), values))
     (out / "README.md").write_text(fill((TPL / "README.md").read_text(), values))
     shutil.copy2(TPL / "gitignore", out / ".gitignore")

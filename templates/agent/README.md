@@ -49,3 +49,15 @@ Same page: **Disable** hides the agent from the moderator at once (the app keeps
 Rules: the app name must stay `{{APP_NAME}}`; `tag_prefix` must be unique across agents; only list the tables and functions the
 agent needs. The `permissions:` block in `databricks.yml` is the app's full permission list (each deploy resets it), so keep the
 registrar, UI and moderator entries in it.
+
+## 5. Traces
+
+Every call the moderator makes to this agent is **one MLflow trace in this agent's own experiment**, `<platform experiment path>-{{KEY}}`
+(`{{EXPERIMENT_PATH}}` for {{TARGET}}). The bundle creates the experiment (`resources.experiments.traces`) and binds the app to it, so a new
+workspace needs nothing extra beyond the platform deploy, which creates the experiment's parent folder.
+
+- Root span `specialist.{{KEY}}`, with the LLM calls and every tool call nested under it.
+- Tags (searchable): `run_id`, `conversation_id`, `specialist`, `caller`, `tools`, `cached`, and `moderator_trace_id`, the id of the moderator's
+  trace in the moderator's experiment. The Traces tab groups a conversation as one *session*.
+- Find a run: filter `tags.run_id = '<run id>'`. The moderator's span for this agent carries `child_trace_id`, so you can follow the link in either direction.
+- The UI's run trace view reads this experiment through the `CAN_READ` grant for the UI service principal in `databricks.yml`.
