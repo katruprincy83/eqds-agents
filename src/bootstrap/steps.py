@@ -44,6 +44,9 @@ def federation_apply(ctx) -> None:
 
 
 def federation_teardown(ctx) -> None:
+    if ctx.env.shared_external:   # the connection and foreign catalog are shared with the environment that owns them
+        ctx.say(f"shared_external: keeping connection {ctx.env.connection} and foreign catalog {ctx.env.foreign_catalog}")
+        return
     ctx.sql(f"DROP CATALOG IF EXISTS {ctx.env.foreign_catalog} CASCADE")
     ctx.sql(f"DROP CONNECTION IF EXISTS {ctx.env.connection}")
 
@@ -515,6 +518,54 @@ def registrar_grants(ctx) -> None:
 
 def app_grants_teardown(ctx) -> None:
     pass  # revoked implicitly when the apps (and their service principals) are destroyed
+
+
+# ── traces in Unity Catalog (flags.use_uc_trace_storage) ──────────────────────────────────────────
+def _trace_experiments(ctx) -> list[str]:
+    """The platform's experiments plus every agent experiment already deployed (`<experiment_path>-<key>`, created by the agents' bundles)."""
+    import posixpath
+
+    from databricks.sdk.service.workspace import ObjectType
+
+    e = ctx.env
+    paths = {e.experiment_path, e.moderator_experiment_path}
+    try:
+        for o in ctx.w.workspace.list(posixpath.dirname(e.experiment_path)):
+            if o.object_type == ObjectType.MLFLOW_EXPERIMENT and o.path.startswith(e.experiment_path + "-"):
+                paths.add(o.path)
+    except Exception as ex:  # noqa: BLE001
+        ctx.say(f"could not list agent experiments ({str(ex)[:80]}); binding the platform ones")
+    return sorted(paths)
+
+
+def trace_storage_apply(ctx) -> None:
+    """Bind every experiment of this environment to the UC trace location, then grant the platform apps: writers on the platform
+    experiments' tables, the UI SELECT on the whole traces schema. Agent apps are granted by their own `make traces`. Idempotent."""
+    from eqds_agentkit import trace_storage as ts
+
+    e = ctx.env
+    wh = ctx.warehouse_id()
+    for path in _trace_experiments(ctx):
+        res = ts.bind(path, e.catalog, e.traces_schema, wh)
+        ctx.say(f"traces of {path}: {res} ({e.catalog}.{e.traces_schema}.{ts.table_prefix(path)}_otel_*)")
+        if res.startswith("conflict"):
+            ctx.say("  already bound elsewhere: a binding is permanent, create a new experiment to move it")
+    platform = [e.experiment_path, e.moderator_experiment_path]
+    for comp in ("moderator", "bridge-mcp", "ui"):
+        try:
+            sp = ctx.w.apps.get(e.app_name(comp)).service_principal_client_id
+        except Exception as ex:  # noqa: BLE001
+            ctx.say(f"{e.app_name(comp)}: not deployed, trace grants skipped ({str(ex)[:60]})")
+            continue
+        for path in platform:
+            ts.grant_writer(ctx.w, wh, e.catalog, e.traces_schema, path, sp)
+        if comp == "ui":
+            ts.grant_reader(ctx.w, wh, e.catalog, e.traces_schema, sp)
+        ctx.say(f"trace tables granted to {e.app_name(comp)}")
+
+
+def trace_storage_teardown(ctx) -> None:
+    ctx.say("trace tables kept: an experiment's UC binding is permanent; drop the schema manually to discard the traces")
 
 
 # ── specialist registry ──────────────────────────────────────────────────────────────────────────

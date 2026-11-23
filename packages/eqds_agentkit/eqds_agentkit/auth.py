@@ -54,8 +54,8 @@ def job_caller_headers(w, env) -> dict[str, str]:
         from databricks.sdk import WorkspaceClient
         from databricks.sdk.runtime import dbutils
 
-        cid = dbutils.secrets.get(env.secret_scope, "job-caller-client-id")
-        sec = dbutils.secrets.get(env.secret_scope, "job-caller-client-secret")
+        cid = dbutils.secrets.get(env.secret_scope, env.job_caller_secret_keys[0])
+        sec = dbutils.secrets.get(env.secret_scope, env.job_caller_secret_keys[1])
         return WorkspaceClient(host=w.config.host, client_id=cid, client_secret=sec, auth_type="oauth-m2m").config.authenticate()
     except Exception as e:  # noqa: BLE001
         print(f"job_caller_headers: falling back to the ambient identity ({type(e).__name__}: {str(e)[:160]})", flush=True)

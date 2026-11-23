@@ -89,6 +89,10 @@ variables:
 artifacts: {}
 
 targets:
+  # Environments (CI/CD, docs/cicd.md): `demo` is PRODUCTION (git branch main), `dev` is the pre-production environment (git branch dev).
+  # Both live in this one workspace; they differ only by the profile values (suffix, catalog, Lakebase branch, experiment folder).
+  # Not `mode: development`: that prefixes resource names with "[dev user]", which breaks app names and the `-dev` suffix convention.
+  # Job schedules are paused by the profile (`schedules.enabled: false`) instead.
   demo:
     default: true
     workspace:
@@ -96,13 +100,15 @@ targets:
     variables:
       target_name: demo
 
-  # The GIC workspace (single workspace, schema-separated, §4). Hosts are placeholders until the platform team provides them.
   dev:
-    mode: development
     workspace:
-      host: https://REPLACE-ME.cloud.databricks.com
+      host: https://dbc-6ab9fd5d-c871.cloud.databricks.com
+    presets:
+      tags: {environment: dev}
     variables:
       target_name: dev
+
+  # Dormant: kept as templates for a second workspace (hosts are placeholders). CI does not deploy them.
   staging:
     workspace:
       host: https://REPLACE-ME.cloud.databricks.com

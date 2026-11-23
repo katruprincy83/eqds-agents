@@ -296,6 +296,22 @@ def _trace_experiments() -> dict[str, str]:
     return out
 
 
+def _search_run_traces(mlflow, exps: dict[str, str], run_id: str) -> list:
+    """The traces of one run. Environments that keep traces in MLflow's storage search by experiment id. When the profile stores them
+    in Unity Catalog (`flags.use_uc_trace_storage`), they are searched in that schema (read through the SQL warehouse; the UI service
+    principal has SELECT on it), falling back to the experiment ids."""
+    flt = f"tags.run_id = '{run_id}'"
+    e = get_env()
+    if e.use_uc_trace_storage:
+        try:
+            from eqds_agentkit import trace_storage
+
+            return mlflow.search_traces(locations=[trace_storage.search_location(e.catalog, e.traces_schema)], filter_string=flt, return_type="list", max_results=60)
+        except Exception as ex:  # noqa: BLE001
+            log.warning("UC trace search failed, falling back to experiment ids: %s", str(ex)[:160])
+    return mlflow.search_traces(locations=list(exps) or None, filter_string=flt, return_type="list", max_results=60)
+
+
 @app.get("/api/dev/runs/{run_id}/trace")
 async def dev_trace(run_id: str, request: Request):
     await dev(request)
@@ -304,7 +320,7 @@ async def dev_trace(run_id: str, request: Request):
         import mlflow
 
         exps = _trace_experiments() or ({os.environ["MLFLOW_EXPERIMENT_ID"]: "platform"} if os.environ.get("MLFLOW_EXPERIMENT_ID") else {})
-        traces = mlflow.search_traces(locations=list(exps) or None, filter_string=f"tags.run_id = '{run_id}'", return_type="list", max_results=60)
+        traces = _search_run_traces(mlflow, exps, run_id)
         out = []
         for t in traces:
             spans = sorted(t.data.spans, key=lambda s: s.start_time_ns)
@@ -312,7 +328,9 @@ async def dev_trace(run_id: str, request: Request):
             for s in spans:
                 depth[s.span_id] = (depth.get(s.parent_id, -1) + 1) if s.parent_id else 0
             eid = str(getattr(t.info, "experiment_id", "") or "")
-            out.append({"trace_id": t.info.trace_id, "experiment_id": eid, "experiment": exps.get(eid, ""), "tags": dict(t.info.tags or {}), "duration_ms": t.info.execution_duration,
+            tags = dict(t.info.tags or {})
+            label = exps.get(eid) or (tags.get("specialist") if tags.get("caller") else "") or ""   # UC-stored traces may not carry the experiment id
+            out.append({"trace_id": t.info.trace_id, "experiment_id": eid, "experiment": label, "tags": tags, "duration_ms": t.info.execution_duration,
                         "spans": [{"name": s.name, "type": str(s.span_type), "level": depth.get(s.span_id, 0), "ms": int((s.end_time_ns - s.start_time_ns) / 1e6)} for s in spans][:200]})
         return out
 

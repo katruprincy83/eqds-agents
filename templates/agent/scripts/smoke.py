@@ -19,11 +19,14 @@ import yaml
 HERE = pathlib.Path(__file__).resolve().parents[1]
 ap = argparse.ArgumentParser()
 ap.add_argument("--invoke", default="", help="question for one real call")
+ap.add_argument("--target", default="", help="bundle target (default: the bundle's default target)")
 a = ap.parse_args()
 
 cfg = yaml.safe_load((HERE / "agent/specialist.yaml").read_text())
 bundle = yaml.safe_load((HERE / "databricks.yml").read_text())
-app_name = bundle["variables"]["app_name"]["default"]
+targets = bundle.get("targets", {})
+target = a.target or next((n for n, v in targets.items() if v.get("default")), "")
+app_name = ((targets.get(target) or {}).get("variables") or {}).get("app_name") or bundle["variables"]["app_name"]["default"]
 
 
 def cli(*args):

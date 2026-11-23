@@ -1,12 +1,15 @@
-# Environment profile: `dev` — developer sandbox, synthetic data. COPY OF demo.yaml: fill every REPLACE-ME before `make all TARGET=dev`.
+# Environment profile: `dev` — the pre-production environment (git branch `dev`), synthetic data. It lives in the SAME workspace as `demo`
+# (production), so every name that could collide is different: apps and jobs carry `-dev`, catalog eqds_dev, Lakebase branch `dev`,
+# experiments under /Shared/eqds-dev, traces in eqds_dev.traces. What dev deliberately shares with demo is listed under `shared_external`.
+# Promotion: push to `dev` deploys this profile; merging to `main` deploys `demo` (docs/cicd.md).
 # One file per environment (design §4.1). Nothing environment-specific lives in code.
 # Secret VALUES are never stored here: they come from env vars at `make infra` time
 # (EQDS_AZURE_SQL_USER / EQDS_AZURE_SQL_PASSWORD) and live only in the secret scope.
 target: dev
 name_prefix: eqds
-workspace_host: https://REPLACE-ME.cloud.databricks.com
+workspace_host: https://dbc-6ab9fd5d-c871.cloud.databricks.com
 cloud: aws                    # aws | azure | gcp
-bridge_compute: classic
+bridge_compute: serverless    # classic | serverless : same workspace as demo, which cannot provision classic nodes
 bridge: {tool_timeout_s: 45, wait_s: 60}   # per-query timeout in the worker / wait in the MCP app (cross-cloud federation to Azure SQL takes 5-10 s)
 serverless_env_version: "3"
 region: ap-southeast-1
@@ -25,7 +28,7 @@ azure_sql:
   auth: sql_login             # sql_login | entra_sp
 lakebase:
   project: eqds-lakebase      # Lakebase Autoscaling project id (prefix + env)
-  branch: production
+  branch: dev                 # Lakebase branch created from `production` by `make infra` (copy-on-write); registry/mem/ops/lg are reset on it
   database: eqds_prod
   app_db_schema_prefix: ""
 vector_search_endpoint: eqds-vs
@@ -37,14 +40,14 @@ secret_scope: eqds-bridge
 service_principals: {ci: "", bridge: "", ingest: "", wiki: "", seed: "", registrar: ""}   # "" = run as deployer; registrar: `make registrar`
 models_config: config/models.dev.yaml
 model_serving:                  # embedding endpoint for Vector Search (the only serving endpoint) + AI Gateway model-service limits
-  scale_to_zero: true
+  scale_to_zero: false          # false: cold starts on the embedding endpoint cancel managed Vector Search calls
   embed_entity: system.ai.gte_large_en_v1_5
   embed_version: "1"
   pt_min: 0                     # provisioned throughput (tokens/s), multiples of the model's chunk size (19000 for gte-large)
   pt_max: 19000
   rate_limits: {user_per_min: 300, endpoint_per_min: 1200}   # per calling principal / per model service, requests per minute
 web_search:                  # live web search from the classic bridge worker: one fixed vendor endpoint, key in secret_scope
-  mode: stub                # stub = demo web_index table (nothing leaves the workspace); vendor = live search
+  mode: stub                # (dev: no You.com spend) stub = demo web_index table (nothing leaves the workspace); vendor = live search
   vendor: youdotcom
   endpoint: https://ydc-index.io/v1/search
   secret_key: youdotcom-api-key   # secret in secret_scope; set from env EQDS_YOUDOTCOM_API_KEY by `make infra`
@@ -56,14 +59,18 @@ flags:
   use_managed_memory: false
   use_uc_skills: false
   use_prompt_registry: false
-  use_uc_trace_storage: false
-  use_managed_mcp: false        # false = SDK adapters. GIC workspace (shared by dev, staging and prod; C-04): managed MCP not enabled there yet. When enabled: set true and scale_to_zero false in all three together, then run preflight
+  use_uc_trace_storage: true    # traces of every experiment of this environment are stored in UC tables in `traces_schema` (bootstrap step trace_storage)
+  use_managed_mcp: true         # same workspace as demo, where managed MCP is enabled
 ui: {app_name: "EQDS Research", subtitle: "Multi-agent research platform", demo_player: true}
 schedules:
   enabled: false                # true = wiki refresh and news ingest run on their cron (costs model tokens)
   wiki_refresh_cron: "0 30 7 * * ?"
   wiki_refresh_tz: Asia/Singapore
   ingest_news_cron: "0 */15 * * * ?"
-experiment_path: /Shared/eqds/dev
+experiment_path: /Shared/eqds-dev/eqds   # experiments: eqds, eqds-moderator, eqds-<key> (agent bundles), all in the dev folder
+traces_schema: traces                    # UC schema (in `catalog`) that stores the traces when flags.use_uc_trace_storage is true
+# Things this environment uses but does not own, because there is one workspace and one external database. Bootstrap teardown and
+# seeding leave them alone: seed_azure refuses to run (it writes), federation_teardown keeps the connection and foreign catalog.
+shared_external: true
 specialists_deploy: [efm, ours, emquant, broker, experts, news, research, earnings, georev]
 github_repo_url: ""

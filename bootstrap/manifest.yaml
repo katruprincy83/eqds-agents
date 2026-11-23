@@ -16,6 +16,7 @@ bootstrap_steps:
   - {id: genie,         apply: genie_apply,         teardown: genie_teardown}
   - {id: app_grants,    apply: app_grants_apply,    teardown: app_grants_teardown}
   - {id: model_services, apply: model_services_apply, teardown: model_services_teardown}
+  - {id: trace_storage, apply: trace_storage_apply, teardown: trace_storage_teardown, when: {flags.use_uc_trace_storage: [true]}}
   - {id: registry,      apply: registry_apply,      teardown: registry_teardown}
   - {id: grants,        apply: grants_apply,        teardown: grants_teardown}
   - {id: outputs,       apply: outputs_apply,       teardown: outputs_teardown}
@@ -70,6 +71,8 @@ assets:
   - {id: genie_space,       defined_in: bootstrap/genie/eqds_research_data.json, created_by: "bootstrap:genie",          recreate: re-run bootstrap, teardown: bootstrap:genie}
   - {id: mlflow_experiment, defined_in: resources/experiments/experiment.yml,   created_by: "dab",                        recreate: bundle deploy, state: "traces are environment-local; eval datasets and feedback are exported"}
   - {id: moderator_experiment, defined_in: resources/experiments/experiment.yml, created_by: "dab",                        recreate: bundle deploy, state: "the moderator's own traces; each specialist's traces live in the experiment its own bundle creates (<experiment_path>-<key>)"}
+  - {id: trace_tables,      defined_in: packages/eqds_agentkit/eqds_agentkit/trace_storage.py, created_by: "infra (schema) + bootstrap:trace_storage (binding, grants)", recreate: make infra + re-run bootstrap, teardown: manual (the binding is permanent), state: "only when flags.use_uc_trace_storage (dev): <catalog>.<traces_schema>.<prefix>_otel_{spans,logs,metrics,annotations}"}
+  - {id: lakebase_branch,   defined_in: scripts/infra.py,                       created_by: "infra",                      recreate: make infra, teardown: manual, state: "non-production environments only: branch of the production project, runtime data reset at creation"}
   - {id: eval_assets,       defined_in: eval/thresholds.yaml,                   created_by: "seed:build_eval",            recreate: job_demo_reset}
   - {id: dashboard,         defined_in: resources/dashboards,                   created_by: "dab",                        recreate: bundle deploy}
   - {id: synthetic_uc,      defined_in: seed/gen_uc,                            created_by: "seed:seed_uc",               recreate: job_demo_reset, state: "deterministic (seed 42, DEMO_AS_OF)"}

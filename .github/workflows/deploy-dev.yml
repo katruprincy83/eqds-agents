@@ -1,0 +1,11 @@
+# Push to `dev` deploys the dev environment (target dev: apps -dev, catalog eqds_dev, Lakebase branch dev, /Shared/eqds-dev, traces in eqds_dev).
+# The smoke step at the end of the reusable workflow is the gate: a dev -> main pull request is only worth merging when this run is green.
+name: deploy-dev
+on:
+  push: {branches: [dev]}
+  workflow_dispatch:
+jobs:
+  deploy:
+    uses: ./.github/workflows/_deploy.yml
+    with: {target: dev, environment: dev, smoke_args: "--jobs"}
+    secrets: inherit

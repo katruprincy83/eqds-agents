@@ -19,6 +19,9 @@ env, args = setup([("--minutes", {"default": "30"})])
 if env.data_profile != "synthetic":
     print("data_profile != synthetic: refusing to write to the external database")
     sys.exit(0)
+if env.get("shared_external"):
+    print(f"shared_external is set for target {env.target}: refusing to insert into the shared external wire")
+    sys.exit(0)
 spark = get_spark()
 from seed.common import load_planted  # noqa: E402
 from seed.gen_azure.load import load_batches  # noqa: E402

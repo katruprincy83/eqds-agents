@@ -1,22 +1,13 @@
+# Merge to `main` promotes to production (target demo). The `production` GitHub environment must have required reviewers:
+# the run waits for approval before anything touches production. workflow_dispatch redeploys a tag or commit (rollback).
 name: deploy-prod
 on:
+  push: {branches: [main]}
   workflow_dispatch:
     inputs:
-      ref: {description: "tag or commit to release", required: true}
+      ref: {description: "tag or commit to release (default: the branch head)", required: false, default: ""}
 jobs:
   deploy:
-    runs-on: ubuntu-latest
-    environment: production        # configure required reviewers on this environment
-    env:
-      DATABRICKS_HOST: ${{ vars.PROD_HOST }}
-      DATABRICKS_CLIENT_ID: ${{ secrets.PROD_SP_CLIENT_ID }}
-      DATABRICKS_CLIENT_SECRET: ${{ secrets.PROD_SP_CLIENT_SECRET }}
-      TARGET: prod
-    steps:
-      - uses: actions/checkout@v4
-        with: {ref: "${{ inputs.ref }}"}
-      - uses: actions/setup-python@v5
-        with: {python-version: "3.12"}
-      - uses: databricks/setup-cli@main
-      - run: pip install -e packages/eqds_llm -e packages/eqds_agentkit pyyaml databricks-sdk psycopg[binary,pool]
-      - run: make preflight deploy bootstrap apps outputs
+    uses: ./.github/workflows/_deploy.yml
+    with: {target: demo, environment: production, ref: "${{ inputs.ref }}"}
+    secrets: inherit

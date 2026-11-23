@@ -61,3 +61,24 @@ workspace needs nothing extra beyond the platform deploy, which creates the expe
   trace in the moderator's experiment. The Traces tab groups a conversation as one *session*.
 - Find a run: filter `tags.run_id = '<run id>'`. The moderator's span for this agent carries `child_trace_id`, so you can follow the link in either direction.
 - The UI's run trace view reads this experiment through the `CAN_READ` grant for the UI service principal in `databricks.yml`.
+
+## 6. Environments and CI/CD
+
+One workspace hosts two environments. This repo has two long-lived branches and one bundle target for each:
+
+| Branch | Target | Environment | App | Experiment | Traces |
+|---|---|---|---|---|---|
+| `main` | `demo` | production | `{{APP_NAME}}` | `{{EXPERIMENT_PATH}}` | MLflow storage |
+| `dev` | `dev` | pre-production | the same name with `-dev` | `/Shared/eqds-dev/eqds-{{KEY}}` | Unity Catalog, `eqds_dev.traces` |
+
+Work on a feature branch, open a PR into `dev` (checks build the app for both targets), merge: the `deploy-dev` workflow deploys
+to the dev environment and runs the smoke check. When dev is good, open a PR `dev` to `main`; merging it runs `deploy-prod`, which
+waits for approval on the `production` GitHub environment. Manual equivalents: `make deploy TARGET=dev`, `make deploy TARGET=demo`.
+
+The dev agent registers on the **dev** UI (`eqds-ui-dev`), never on production's, and talks to the dev platform: the dev registry, the
+dev Lakebase branch, the `eqds_dev` catalog. To refresh the platform values of a target (new service principals after a platform
+redeploy) run, in the platform repo, `python scripts/new_agent.py {{KEY}} --scaffold-update`.
+
+CI needs, in this repo's settings: repository variables `DATABRICKS_HOST` and `PLATFORM_REPO` (owner/eqds-agents); secret
+`PLATFORM_REPO_TOKEN` (read access to the platform repo); secrets `DATABRICKS_CLIENT_ID` and `DATABRICKS_CLIENT_SECRET` in each of the GitHub
+environments `dev` and `production` (the CI service principal; it needs permission to create tables in the dev traces schema).

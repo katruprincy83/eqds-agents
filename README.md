@@ -6,7 +6,7 @@ Design: `../EQDS_Target_State_Design.md` · Requirements: `../EQDS_Target_State_
 
 ## Deploy into a new workspace
 
-1. `cp config/env/staging.yaml config/env/<name>.yaml` and `config/models.staging.yaml config/models.<name>.yaml`; fill every `REPLACE-ME` and add a `targets:` block in `databricks.yml` (host only).
+1. `cp config/env/dev.yaml config/env/<name>.yaml` and `config/models.dev.yaml config/models.<name>.yaml`; fill every `REPLACE-ME` and add a `targets:` block in `databricks.yml` (host only).
 2. `databricks auth login --host <workspace-url> --profile <name>` and `export DATABRICKS_CONFIG_PROFILE=<name>`.
 3. Export the external database credentials (they are written to the secret scope only, never to the repo):
    `export EQDS_AZURE_SQL_USER=... EQDS_AZURE_SQL_PASSWORD=...`
@@ -16,6 +16,13 @@ Design: `../EQDS_Target_State_Design.md` · Requirements: `../EQDS_Target_State_
 
 `make all` = `vars` (render bundle variables from the profile) → `infra` (catalog, secret scope, Lakebase project, Vector Search endpoint, service principals) → `build` (apps are vendored into `build/apps/*`) → `deploy` (`bundle deploy`) → `bootstrap` (federation, UC functions, Lakebase schemas, skills, indexes, Genie space, app grants, registry, outputs) → `apps` (deploy source and start) → `outputs`.
 Everything is idempotent. `make teardown` removes bootstrap assets; `make destroy` also runs `bundle destroy`.
+
+## Environments and CI/CD
+
+One workspace, two environments, two branches in every repo: `main` is production (target `demo`), `dev` is pre-production (target `dev`:
+apps and jobs `-dev`, catalog `eqds_dev`, Lakebase branch `dev`, experiments in `/Shared/eqds-dev`, traces stored in `eqds_dev.traces`).
+Push to `dev` deploys dev and smoke-tests it; a PR `dev` to `main` promotes to production behind an approval. Details, one-time setup and the
+list of what dev borrows from production: `docs/cicd.md`. Commands: `make all TARGET=dev`, `make smoke TARGET=dev`.
 
 ## Portability rules (NFR-20..22, design §4.1)
 

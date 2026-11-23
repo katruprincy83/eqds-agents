@@ -1,0 +1,10 @@
+# Merge to `main` promotes this agent to production (target demo). The `production` GitHub environment must have required reviewers.
+name: deploy-prod
+on:
+  push: {branches: [main]}
+  workflow_dispatch:
+jobs:
+  deploy:
+    uses: ./.github/workflows/_deploy.yml
+    with: {target: demo, environment: production, platform_ref: main}
+    secrets: inherit

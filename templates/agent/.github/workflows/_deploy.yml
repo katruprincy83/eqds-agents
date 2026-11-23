@@ -1,0 +1,36 @@
+# Reusable deploy of this agent to ONE environment. The platform repo is checked out next to the agent (the build vendors the
+# runtime from it): its `dev` branch for dev, `main` for production, so an agent is always built against the runtime of its environment.
+# One workspace hosts both environments: DATABRICKS_HOST is a repository variable; the credentials are secrets of the GitHub
+# environment (`dev` / `production`) and belong to the CI service principal that environment is allowed to use.
+# Also needed: repository variable PLATFORM_REPO (owner/eqds-agents) and secret PLATFORM_REPO_TOKEN (read access to it).
+name: _deploy
+on:
+  workflow_call:
+    inputs:
+      target: {type: string, required: true}        # bundle target: dev | demo
+      environment: {type: string, required: true}   # GitHub environment: dev | production
+      platform_ref: {type: string, required: true}  # branch of the platform repo: dev | main
+    secrets:
+      DATABRICKS_CLIENT_ID: {required: true}
+      DATABRICKS_CLIENT_SECRET: {required: true}
+      PLATFORM_REPO_TOKEN: {required: true}
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    concurrency: deploy-${{ inputs.target }}
+    env:
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+      TARGET: ${{ inputs.target }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with: {repository: "${{ vars.PLATFORM_REPO }}", ref: "${{ inputs.platform_ref }}", token: "${{ secrets.PLATFORM_REPO_TOKEN }}", path: platform}
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - uses: databricks/setup-cli@main
+      - run: pip install pyyaml httpx "databricks-sdk>=0.50" "mlflow>=3.18" pydantic
+      - run: make deploy PLATFORM=platform
+      - run: make smoke PLATFORM=platform

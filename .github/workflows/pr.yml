@@ -1,5 +1,6 @@
 name: pr
-on: [pull_request]
+on:
+  pull_request: {branches: [dev, main]}
 jobs:
   checks:
     runs-on: ubuntu-latest
@@ -7,12 +8,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
-      - run: pip install -e packages/eqds_llm -e packages/eqds_agentkit pyyaml pytest ruff pandas numpy pydantic fastapi httpx langgraph langchain-core
+      - run: pip install -e packages/eqds_llm -e packages/eqds_agentkit pyyaml pytest ruff pandas numpy pydantic fastapi httpx langgraph langchain-core "mlflow>=3.18"
       - run: ruff check .
       - name: manifest and E1 (no environment-specific values in code)
         run: python scripts/manifest_check.py
       - run: python -m pytest -q tests
-      - name: bundle validate for every target
+      - name: every deployed environment renders its bundle variables
         run: |
-          pip install databricks-cli || true
-          for t in dev staging prod; do python scripts/bundle_vars.py --target $t; done
+          for t in dev demo; do python scripts/bundle_vars.py --target $t; done
+      - name: promotion guard (PRs into main come from dev)
+        if: github.base_ref == 'main'
+        run: |
+          test "${{ github.head_ref }}" = "dev" || { echo "PRs into main must come from the dev branch"; exit 1; }

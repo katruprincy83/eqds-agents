@@ -50,6 +50,7 @@ def test_agent_template_creates_its_own_experiment_and_binds_the_app_to_it():
 
     vals = {k: "x" for k in ("KEY", "DISPLAY", "TARGET", "APP_NAME", "WAREHOUSE_ID", "REGISTRAR_SP", "UI_SP", "MODERATOR_SP", "VERSION", "HOST")}
     vals["EXPERIMENT_PATH"] = "/Shared/eqds/demo-news"
+    vals["TARGETS"] = "targets:\n  x:\n    default: true\n"
     doc = yaml.safe_load(new_agent.fill((new_agent.TPL / "databricks.yml").read_text(), vals))  # fill() fails on any unfilled placeholder
     exp = doc["resources"]["experiments"]["traces"]
     assert exp["name"] == "${var.experiment_path}" and doc["variables"]["experiment_path"]["default"] == "/Shared/eqds/demo-news"

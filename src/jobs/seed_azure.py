@@ -23,6 +23,10 @@ env, args = setup()
 if env.data_profile != "synthetic":
     print("data_profile != synthetic: refusing to write to the external database")
     sys.exit(0)
+if env.get("shared_external"):
+    # the external database is shared with another environment (dev uses the production one read-only): DDL here drops tables
+    print(f"shared_external is set for target {env.target}: refusing to write to the shared external database")
+    sys.exit(0)
 spark = get_spark()
 
 import os  # noqa: E402

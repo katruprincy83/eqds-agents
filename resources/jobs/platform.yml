@@ -71,7 +71,7 @@ resources:
           - numpy
           - langchain-core
           - openai
-          - mlflow>=3.1
+          - mlflow>=3.14
       tasks:
       - task_key: env_bootstrap
         spark_python_task:
