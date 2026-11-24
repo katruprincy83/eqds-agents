@@ -176,7 +176,7 @@ function renderRun() {
   const msgs = S.messages.length ? `<div class="section-t">The debate</div>${S.messages.map(renderMsg).join('')}` : '';
   const pts = S.points.length ? `<div class="section-t">Where they agree and disagree</div>${S.points.map(renderPoint).join('')}` : '';
   const ans = S.answer ? `<div class="answer" data-spec="§5.2.5 citation validator (NFR-12)"><div class="kicker">Answer</div><p class="stance">${tagify(S.answer.stance || '')}</p>${S.answer.paragraphs.map((p) => `<p>${tagify(p)}</p>`).join('')}
-      <div class="row small" style="margin-top:8px"><a href="#" id="srcOpen">View sources (${Object.keys(S.sources).length || '…'})</a>${S.traceId ? `<a href="#" id="traceOpen">View trace</a>` : ''}</div>
+      <div class="row small" style="margin-top:8px"><a href="#" id="srcOpen">View sources (${Object.keys(S.sources).length || '…'})</a></div>
       ${S.status === 'DONE' ? `<div class="feedback">Was this useful? <button data-fb="up" class="${S.fb === 'up' ? 'sel' : ''}">👍</button><button data-fb="down" class="${S.fb === 'down' ? 'sel' : ''}">👎</button></div>` : ''}</div>` : '';
   const next = S.next.length ? `<div class="section-t">Ask next</div><div class="asknext">${S.next.map((q) => `<button data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>` : '';
   const dev = ME.developer && S.status === 'RUNNING' ? `<div class="row" style="margin-top:12px"><button class="btn ghost sm" id="crashBtn">Simulate replica crash</button><button class="btn ghost sm" id="resumeBtn">Resume now</button></div>` : '';
@@ -201,7 +201,6 @@ function wireRun() {
   $('runArea').querySelectorAll('[data-q]').forEach((b) => (b.onclick = () => { $('q').value = b.dataset.q; ask(b.dataset.q); }));
   $('runArea').querySelectorAll('[data-fb]').forEach((b) => (b.onclick = () => sendFeedback(b.dataset.fb)));
   const so = $('srcOpen'); if (so) so.onclick = (e) => { e.preventDefault(); openDrawer(); };
-  const to = $('traceOpen'); if (to) to.onclick = (e) => { e.preventDefault(); showView('hood'); showSub('trace'); };
   const cb = $('crashBtn'); if (cb) cb.onclick = () => api(`/api/runs/${S.runId}/crash`, { method: 'POST' }).then(() => toast('Crash requested. The reaper resumes the run within about a minute, or press Resume now.')).catch((e) => toast(e.message));
   const rb = $('resumeBtn'); if (rb) rb.onclick = () => api(`/api/runs/${S.runId}/resume`, { method: 'POST' }).then(() => { toast('Resuming'); if (!ES || ES.readyState === 2) stream(S.runId); }).catch((e) => toast(e.message));
 }
