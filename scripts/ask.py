@@ -28,7 +28,7 @@ while not finished:
                     elif ev == "usage": print(t, "USAGE", d)
                     elif ev == "activity" and a.verbose: print(t, "  act", d["component"], d["label"], d["detail"][:80])
                     elif ev in ("status", "done", "error", "deep_dive"): print(t, ev.upper(), json.dumps(d)[:200])
-        finished = True if finished else (httpx.get(f"{a.url}/runs/{run['run_id']}", headers=h).json().get("status") in ("DONE", "FAILED", "CANCELLED"))
+        finished = True if finished else (httpx.get(f"{a.url}/runs/{run['run_id']}", headers=h).json().get("status") in ("DONE", "ERROR", "FAILED", "CANCELLED"))
     except (httpx.RemoteProtocolError, httpx.ReadError, httpx.ReadTimeout):
         print("  (stream dropped; reconnecting)")
 res = httpx.get(f"{a.url}/runs/{run['run_id']}", headers=h).json()
