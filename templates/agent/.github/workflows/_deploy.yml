@@ -13,7 +13,7 @@ on:
       DATABRICKS_CLIENT_SECRET: {required: true}
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, eqds-mac]
     environment: ${{ inputs.environment }}
     concurrency: deploy-${{ inputs.target }}
     env:
@@ -22,6 +22,12 @@ jobs:
       DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
       TARGET: ${{ inputs.target }}
     steps:
+      # The runner is this Mac: without this, a missing CI secret would let the CLI fall back to a personal profile in ~/.databrickscfg.
+      # The CI service principal's secrets are the only credentials the deploy may use.
+      - name: use only the CI credentials
+        run: |
+          : > "$RUNNER_TEMP/databrickscfg"
+          echo "DATABRICKS_CONFIG_FILE=$RUNNER_TEMP/databrickscfg" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}

@@ -16,7 +16,7 @@ on:
       EQDS_AZURE_SQL_PASSWORD: {required: false}
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, eqds-mac]
     environment: ${{ inputs.environment }}
     concurrency: deploy-${{ inputs.target }}
     env:
@@ -27,6 +27,12 @@ jobs:
       EQDS_AZURE_SQL_PASSWORD: ${{ secrets.EQDS_AZURE_SQL_PASSWORD }}
       TARGET: ${{ inputs.target }}
     steps:
+      # The runner is this Mac: without this, a missing CI secret would let the CLI fall back to a personal profile in ~/.databrickscfg.
+      # The CI service principal's secrets are the only credentials the deploy may use.
+      - name: use only the CI credentials
+        run: |
+          : > "$RUNNER_TEMP/databrickscfg"
+          echo "DATABRICKS_CONFIG_FILE=$RUNNER_TEMP/databrickscfg" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
         with: {ref: "${{ inputs.ref }}"}
       - uses: actions/setup-python@v5
