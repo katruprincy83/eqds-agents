@@ -59,11 +59,11 @@ async def info():
 @app.post("/invocations")
 async def invocations(req: Request):
     body = await req.json()
-    # any orchestrator can make a call idempotent: the Idempotency-Key header, or custom_inputs.idempotency_key
+    # any orchestrator can make a call idempotent: an Idempotency-Key header wins over custom_inputs.idempotency_key
     idem = req.headers.get("idempotency-key")
     if idem:
         ci = body.get("custom_inputs") or {}
-        ci.setdefault("idempotency_key", idem)
+        ci["idempotency_key"] = idem
         body["custom_inputs"] = ci
     user = auth.user_from_headers(req.headers)
     out = await agent.invoke(body, user, parent_trace=req.headers.get("x-eqds-parent-trace"))
