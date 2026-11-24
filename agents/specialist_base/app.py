@@ -34,7 +34,8 @@ async def startup():
     try:  # the agent's own schema agent_<key>: created and owned by this app's service principal
         key = yaml.safe_load(pathlib.Path(cfg_path).read_text())["key"]
         store = AgentMemory(pool(), key)
-        applied = store.migrate([pathlib.Path(root) / "migrations"])
+        readers = [r for r in os.environ.get("EQDS_MEMORY_READERS", "").split(",") if r]  # the UI reads the memory of every agent
+        applied = store.migrate([pathlib.Path(root) / "migrations"], readers=readers)
         log.info("agent memory %s ready (migrations applied: %s)", store.schema, applied or "none")
     except Exception as e:  # noqa: BLE001
         log.warning("lakebase unavailable, running without memory: %s", e)

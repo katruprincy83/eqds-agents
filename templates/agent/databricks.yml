@@ -43,6 +43,7 @@ resources:
           - {name: DATABRICKS_WAREHOUSE_ID, value_from: warehouse}
           - {name: MLFLOW_DISABLE_AGENT_HINT, value: "1"}
           - {name: SPECIALIST_CONFIG, value: agents/specialists/{{KEY}}/specialist.yaml}
+          - {name: EQDS_MEMORY_READERS, value: "${var.ui_sp}"}   # the agent grants the UI read access to its own memory schema
       resources:
         - name: experiment
           experiment: {experiment_id: "${resources.experiments.traces.id}", permission: CAN_MANAGE}

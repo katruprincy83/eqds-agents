@@ -72,3 +72,11 @@ def test_migrate_applies_baseline_then_agent_files_once(tmp_path: pathlib.Path):
     again = _Pool(applied=set(first))
     assert AgentMemory(again, "news").migrate([tmp_path]) == []
     assert not any(t.startswith("CREATE TABLE IF NOT EXISTS memory") for t, _ in again.conn.stmts)
+
+
+def test_readers_get_usage_and_select_on_every_start():
+    pool = _Pool(applied={"specialist_migrations/001_memory.sql"})
+    AgentMemory(pool, "news").migrate([], readers=["ui-sp"])
+    texts = [t for t, _ in pool.conn.stmts]
+    assert 'GRANT USAGE ON SCHEMA "agent_news" TO "ui-sp"' in texts
+    assert 'GRANT SELECT ON TABLE "agent_news"."memory" TO "ui-sp"' in texts

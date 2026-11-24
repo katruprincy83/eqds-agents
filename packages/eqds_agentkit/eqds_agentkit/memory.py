@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import pathlib
 import re
 from typing import Any
@@ -9,6 +10,7 @@ from typing import Any
 from psycopg import sql
 from psycopg.types.json import Jsonb
 
+log = logging.getLogger("eqds_agentkit.memory")
 BASELINE_MIGRATIONS = pathlib.Path(__file__).parent / "specialist_migrations"
 _KEY = re.compile(r"[a-z][a-z0-9_]{0,40}")
 
@@ -122,8 +124,10 @@ class AgentMemory:
         self.schema = f"agent_{key}"
         self._t = sql.Identifier(self.schema, "memory")
 
-    def migrate(self, agent_dirs: list[str | pathlib.Path] | tuple = ()) -> list[str]:
-        """Create the schema and apply the baseline migrations, then the agent's own `*.sql` files, each once, in name order."""
+    def migrate(self, agent_dirs: list[str | pathlib.Path] | tuple = (), readers: list[str] | tuple = ()) -> list[str]:
+        """Create the schema and apply the baseline migrations, then the agent's own `*.sql` files, each once, in name order.
+        `readers` (service principal client ids, e.g. the UI's) get USAGE on the schema and SELECT on the memory table; the agent,
+        as owner, grants them, on every start (idempotent)."""
         applied: list[str] = []
         with self.pool.connection() as c:
             c.execute(sql.SQL("CREATE SCHEMA IF NOT EXISTS {}").format(sql.Identifier(self.schema)))
@@ -139,6 +143,12 @@ class AgentMemory:
                         c.execute(f.read_text())
                         c.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (version,))
                         applied.append(version)
+                for r in readers:  # autocommit: a reader without a Postgres role must not stop the others or the memory
+                    try:
+                        c.execute(sql.SQL("GRANT USAGE ON SCHEMA {} TO {}").format(sql.Identifier(self.schema), sql.Identifier(r)))
+                        c.execute(sql.SQL("GRANT SELECT ON TABLE {} TO {}").format(self._t, sql.Identifier(r)))
+                    except Exception as e:  # noqa: BLE001
+                        log.warning("memory read grant to %s not applied: %s", r, str(e)[:120])
             finally:
                 c.execute("RESET search_path")
         return applied
