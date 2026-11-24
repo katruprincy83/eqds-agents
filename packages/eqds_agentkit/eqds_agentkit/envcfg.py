@@ -93,7 +93,7 @@ class Env:
     @property
     def data_profile(self) -> str: return self.raw.get("data_profile", "synthetic")
     @property
-    def external_db_mode(self) -> str: return self.raw.get("external_db_mode", "bridge")
+    def external_db_mode(self) -> str: return self.raw.get("external_db_mode", "direct")
     @property
     def lakebase_project(self) -> str: return self.get("lakebase.project", f"{self.prefix}-lakebase")
     @property

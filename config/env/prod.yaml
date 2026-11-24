@@ -6,16 +6,13 @@ target: prod
 name_prefix: eqds
 workspace_host: https://REPLACE-ME.cloud.databricks.com
 cloud: aws                    # aws | azure | gcp
-bridge_compute: serverless    # the only bridge compute: jobs that reach the external DB run serverless
-bridge: {tool_timeout_s: 45, wait_s: 60}   # per-query timeout in the worker / wait in the MCP app (cross-cloud federation to Azure SQL takes 5-10 s)
 serverless_env_version: "3"
 region: ap-southeast-1
 catalog: eqds
 schema: prod
 suffix: ""
 data_profile: customer
-external_db_mode: bridge      # bridge | direct
-live_tools_mode: bridge       # bridge | direct
+external_db_mode: direct      # the external database is read through the foreign catalog (Lakehouse Federation)
 foreign_catalog: azure_oms
 connection: azure_oms_conn
 azure_sql:
@@ -30,11 +27,11 @@ lakebase:
   app_db_schema_prefix: ""
 vector_search_endpoint: eqds-vs
 genie_space_id: ""            # written by job_env_bootstrap (bootstrap output); override if you own one
-policies: {bridge: "", ingest: ""}      # cluster policy IDs/names; "" = no policy (demo)
+policies: {ingest: ""}      # cluster policy IDs/names; "" = no policy (demo)
 node_types: {ingest: md-fleet.xlarge}
 spark_version: 17.3.x-scala2.13
 secret_scope: eqds-bridge
-service_principals: {ci: "", bridge: "", ingest: "", wiki: "", seed: "", registrar: ""}   # "" = run as deployer; registrar: `make registrar`
+service_principals: {ci: "", ingest: "", wiki: "", seed: "", registrar: ""}   # "" = run as deployer; registrar: `make registrar`
 models_config: config/models.prod.yaml
 model_serving:                  # embedding endpoint for Vector Search (the only serving endpoint) + AI Gateway model-service limits
   scale_to_zero: true
@@ -43,13 +40,12 @@ model_serving:                  # embedding endpoint for Vector Search (the only
   pt_min: 0                     # provisioned throughput (tokens/s), multiples of the model's chunk size (19000 for gte-large)
   pt_max: 19000
   rate_limits: {user_per_min: 300, endpoint_per_min: 1200}   # per calling principal / per model service, requests per minute
-web_search:                  # live web search from the bridge worker: one fixed vendor endpoint, key in secret_scope
+web_search:                  # live web search from the specialist agents: one fixed vendor endpoint, key in secret_scope
   mode: stub                # stub = demo web_index table (nothing leaves the workspace); vendor = live search
   vendor: youdotcom
   endpoint: https://ydc-index.io/v1/search
   secret_key: youdotcom-api-key   # secret in secret_scope; set from env EQDS_YOUDOTCOM_API_KEY by `make infra`
   timeout_s: 15
-bridge_worker: {enabled: true}   # continuous job that serves bridge.requests (needs to run for the `ours`/`research`/`news` specialists)
 network:
   serverless_blocked: false        # true where the external DB firewall blocks serverless egress; validate_seed asserts this matches reality
 flags:

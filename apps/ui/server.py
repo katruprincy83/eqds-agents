@@ -114,7 +114,7 @@ async def links():
     e = get_env()
     jid = lambda k: os.environ.get(f"JOB_ID_{k}", "")  # noqa: E731
     return {"ws": e.host, "catalog": e.catalog, "schema": e.schema, "appSuffix": e.suffix, "namePrefix": e.prefix, "exp": os.environ.get("MLFLOW_EXPERIMENT_ID", ""), "modExp": os.environ.get("MODERATOR_EXPERIMENT_ID", ""),
-            "genie": ("" if os.environ.get("GENIE_SPACE_ID", "") == "unset" else os.environ.get("GENIE_SPACE_ID", "")), "lakebase": e.lakebase_project, "bridgeJobId": jid("BRIDGE_WORKER"), "ingestJobId": jid("INGEST_NEWS"),
+            "genie": ("" if os.environ.get("GENIE_SPACE_ID", "") == "unset" else os.environ.get("GENIE_SPACE_ID", "")), "lakebase": e.lakebase_project, "ingestJobId": jid("INGEST_NEWS"),
             "wikiJobId": jid("WIKI_REFRESH"), "seedJobId": jid("VALIDATE_SEED"), "evalJobId": jid("EVAL"), "foreignCatalog": e.foreign_catalog, "connection": e.connection,
             "github": e.get("github_repo_url", ""), "vsEndpoint": e.vs_endpoint, "demo": e.target}
 
@@ -413,30 +413,6 @@ async def serverless_probe(request: Request):
             return {"ok": False, "blocked": True, "error": str(ex)[:600], "ms": int((time.time() - t0) * 1000)}
 
     return await asyncio.to_thread(go)
-
-
-@app.post("/api/dev/net/bridge-probe")
-async def bridge_probe(request: Request):
-    await dev(request)
-
-    async def go():
-        from langchain_mcp_adapters.client import MultiServerMCPClient
-
-        url = get_env().app_url(W(), "bridge-mcp", "BRIDGE_MCP_URL")
-        url = url if url.endswith("/mcp") else url + "/mcp"
-        t0 = time.time()
-        c = MultiServerMCPClient({"bridge": {"transport": "streamable_http", "url": url, "headers": {**auth.bearer(W()), "x-eqds-user": auth.user_from_headers(request.headers), "x-eqds-caller": "ui-probe"}}})
-        tools = {t.name: t for t in await c.get_tools()}
-        res = await tools["oms_confirm_conflict"].ainvoke({"basket": "efm_top50", "start": "2026-10-22", "end": "2026-11-20", "strong_musd": 20})
-        txt = res[0]["text"] if isinstance(res, list) else str(res)
-        d = json.loads(txt)
-        return {"ok": d.get("status") == "ok", "ms": int((time.time() - t0) * 1000), "status": d.get("status"), "source": d.get("source"), "summary": d.get("summary"),
-                "rows": (d.get("rows") or [])[:10], "error": d.get("error")}
-
-    try:
-        return await go()
-    except Exception as ex:  # noqa: BLE001
-        return {"ok": False, "error": str(ex)[:500]}
 
 
 @app.get("/api/dev/models")

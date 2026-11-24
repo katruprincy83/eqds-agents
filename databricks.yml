@@ -40,13 +40,12 @@ variables:
   connection:         {default: azure_oms_conn}
   secret_scope:       {default: eqds-bridge}
   data_profile:       {default: synthetic}
-  external_db_mode:   {default: bridge}
-  live_tools_mode:    {default: bridge}
+  external_db_mode:   {default: direct}
   wiki_refresh_cron:  {default: "0 30 7 * * ?"}
   wiki_refresh_tz:    {default: Asia/Singapore}
   ingest_news_cron:   {default: "0 */15 * * * ?"}
   serverless_env_version: {default: "3"}
-  # serverless is the only compute for the jobs that reach the external database (bridge worker, Azure seed, news ingest, validate).
+  # serverless is the only compute for the jobs that reach the external database (Azure seed, news ingest, validate).
   # `serverless_environments` and `serverless_env_key` are rendered by scripts/bundle_vars.py.
   serverless_env_key: {default: "external"}
   serverless_environments:
@@ -71,7 +70,6 @@ variables:
   github_repo_url:    {default: ""}
   app_version:        {default: dev}
   schedule_status:    {default: PAUSED, description: "UNPAUSED enables the wiki/ingest schedules (profile schedules.enabled)"}
-  bridge_worker_status: {default: UNPAUSED}
   ui_permissions:
     type: complex
     default: []

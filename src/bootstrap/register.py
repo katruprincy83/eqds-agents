@@ -75,8 +75,6 @@ def register(ctx, key: str, *, contract_checked: bool = False, spec: dict | None
         steps.apply_component_grants(ctx, conn, comp, app.service_principal_client_id, steps.access_of(sp))
         say("3/5 access granted to the agent's service principal")
         steps._grant_app_use(ctx, comp, ["moderator"])  # the moderator may call it
-        if any(t.get("type") == "bridge_mcp" for t in sp.get("tools", [])):
-            steps._grant_app_use(ctx, "bridge-mcp", [comp])
         say("4/5 moderator may call the agent")
         upsert_specialist(conn, sp, url, ctx.env.target, name)
         if contract_checked:

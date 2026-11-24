@@ -131,7 +131,7 @@ def ensure_lakebase(w: WorkspaceClient, env: Env) -> None:
             say("ok", f"lakebase database {dbname} exists")
 
 
-LB_DATA_SCHEMAS = ["registry", "mem", "ops", "bridge", "lg"]    # schemas holding runtime data (the migrations seed no rows)
+LB_DATA_SCHEMAS = ["registry", "mem", "ops", "lg"]    # schemas holding runtime data (the migrations seed no rows)
 
 
 def ensure_lakebase_branch(w: WorkspaceClient, env: Env) -> None:
@@ -172,7 +172,7 @@ def reset_lakebase_data(w: WorkspaceClient, env: Env) -> None:
     if rows:
         conn.execute("TRUNCATE " + ", ".join(f'"{r["schemaname"]}"."{r["tablename"]}"' for r in rows) + " RESTART IDENTITY CASCADE")
     conn.close()
-    say("reset", f"lakebase branch {t.branch}: runtime data cleared in {len(rows)} tables (registry, mem, ops, bridge, lg)")
+    say("reset", f"lakebase branch {t.branch}: runtime data cleared in {len(rows)} tables (registry, mem, ops, lg)")
 
 
 def ensure_vector_search(w: WorkspaceClient, env: Env) -> None:

@@ -4,7 +4,7 @@
 TARGET ?= demo
 PY ?= python
 # platform apps only: specialist agents have their own repos (python scripts/new_agent.py <key>) and are registered on the UI
-APPS := bridge_mcp moderator ui
+APPS := moderator ui
 # seed_azure writes to the external database: skipped for an environment that only shares it (profile `shared_external`, i.e. dev)
 JOBS_SEED = $(shell $(PY) -c "import sys;sys.path[:0]=['packages/eqds_agentkit'];from eqds_agentkit.envcfg import Env;e=Env.from_target('$(TARGET)');print(' '.join(j for j in 'seed_uc seed_docs seed_azure validate_seed'.split() if not (j=='seed_azure' and e.get('shared_external'))))" 2>/dev/null || echo seed_uc seed_docs seed_azure validate_seed)
 

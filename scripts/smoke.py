@@ -45,7 +45,7 @@ def main() -> int:
     print(f"smoke target={env.target} host={env.host}", flush=True)
 
     urls: dict[str, str] = {}
-    for comp in ("ui", "moderator", "bridge-mcp"):
+    for comp in ("ui", "moderator"):
         name = env.app_name(comp)
         try:
             app = w.apps.get(name)

@@ -8,7 +8,7 @@ version: 1
 
 # Ordered. `when` is evaluated against the environment profile. `apply`/`teardown` are functions in src/bootstrap/steps.py.
 bootstrap_steps:
-  - {id: federation,    apply: federation_apply,    teardown: federation_teardown,    when: {external_db_mode: [bridge, direct]}}
+  - {id: federation,    apply: federation_apply,    teardown: federation_teardown,    when: {external_db_mode: [direct]}}
   - {id: uc_functions,  apply: uc_functions_apply,  teardown: uc_functions_teardown}
   - {id: lakebase,      apply: lakebase_apply,      teardown: lakebase_teardown}
   - {id: skills,        apply: skills_apply,        teardown: skills_teardown}
@@ -36,7 +36,6 @@ jobs:        # keys of resources.jobs.* (all must be listed)
   state_import:    {compute: serverless}
   ingest_news:     {compute: serverless}
   docs_index:      {compute: serverless}
-  bridge_worker:   {compute: serverless}
   wiki_refresh:    {compute: serverless}
   eval:            {compute: serverless}
   register_specialist: {compute: serverless}   # UI-triggered; runs as the registrar service principal (make registrar)
@@ -44,7 +43,6 @@ jobs:        # keys of resources.jobs.* (all must be listed)
 apps:        # keys of resources.apps.*
   - ui
   - moderator
-  - bridge_mcp
 
 assets:
   - {id: uc_catalog,        defined_in: scripts/infra.py,                       created_by: "infra",                      recreate: make infra, teardown: manual (catalog may hold customer data)}
@@ -56,7 +54,7 @@ assets:
   - {id: uc_connection,     defined_in: bootstrap/sql/10_federation.sql,        created_by: "bootstrap:federation",       recreate: re-run bootstrap, teardown: bootstrap:federation}
   - {id: grants,            defined_in: bootstrap/sql/20_grants.sql,            created_by: "bootstrap:grants,app_grants", recreate: re-run bootstrap, teardown: bootstrap:grants}
   - {id: uc_functions,      defined_in: src/uc_functions,                       created_by: "bootstrap:uc_functions",     recreate: re-run bootstrap, teardown: bootstrap:uc_functions}
-  - {id: bridge_templates,  defined_in: src/bridge_worker/templates,            created_by: "dab (synced with the worker job)", recreate: bundle deploy, state: versioned in Git}
+  - {id: query_templates,   defined_in: packages/eqds_agentkit/eqds_agentkit/query_templates, created_by: "packaged with the agent runtime", recreate: make build, state: versioned in Git}
   - {id: jobs,              defined_in: resources/jobs,                         created_by: "dab",                        recreate: bundle deploy, teardown: bundle destroy, state: run history is not migrated}
   - {id: apps,              defined_in: resources/apps,                         created_by: "dab",                        recreate: bundle deploy, teardown: bundle destroy, state: stateless}
   - {id: packages,          defined_in: packages,                               created_by: "scripts/build_apps.py (vendored) / CI wheels", recreate: make build}

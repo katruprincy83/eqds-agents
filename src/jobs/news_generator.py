@@ -1,5 +1,5 @@
 """job_news_generator (optional, demo only): inserts synthetic headlines into the external wire every minute so the live tail
-(bridge tool `news_latest`) shows fresh items. Includes the scripted Kioxia item after `at_minutes` (planted_facts live_tail_scripted).
+(external tool `news_latest`) shows fresh items. Includes the scripted Kioxia item after `at_minutes` (planted_facts live_tail_scripted).
 Stop the job after the demo. SYNTHETIC DEMO DATA."""
 from __future__ import annotations
 

@@ -219,7 +219,7 @@ function openDrawer(tag) {
 function closeDrawer() { $('drawer').classList.remove('open'); }
 
 /* ---------------- live activity ---------------- */
-const COMP_MAP = { 'eqds-moderator': 'moderator', 'eqds-bridge-mcp': 'mcp-bridge', 'vector-search': 'mcp-vs', 'unity-catalog': 'mcp-uc', 'genie': 'mcp-genie' };
+const COMP_MAP = { 'eqds-moderator': 'moderator', 'vector-search': 'mcp-vs', 'unity-catalog': 'mcp-uc', 'genie': 'mcp-genie' };
 function compFor(c, zone) {
   if (c.startsWith('eqds-sp-')) return 'sp-' + c.slice(8);
   if (COMP_MAP[c]) return COMP_MAP[c];
@@ -313,15 +313,8 @@ async function netServerless() {
   $('netSOut').innerHTML = '<p><span class="spinner"></span> Running on a serverless SQL warehouse…</p>';
   try {
     const r = await api('/api/dev/net/serverless-probe', { method: 'POST' });
-    $('netSOut').innerHTML = r.ok ? `<div class="banner ok">Query succeeded in ${(r.ms / 1000).toFixed(1)} s on ${esc(r.warehouse)}${r.serverless ? ' (serverless)' : ''}. In this workspace the Azure SQL firewall does not block federation from serverless, so the bridge is a design choice rather than a necessity here. In the GIC workspace (classic egress only) this is expected to fail; see docs/validation-demo.md.</div>${tbl(r.rows)}` : `<div class="banner err">Blocked as expected after ${(r.ms / 1000).toFixed(1)} s.<br>${esc(r.error)}</div>`;
+    $('netSOut').innerHTML = r.ok ? `<div class="banner ok">Query succeeded in ${(r.ms / 1000).toFixed(1)} s on ${esc(r.warehouse)}${r.serverless ? ' (serverless)' : ''}. Specialists query the external database directly from serverless: the firewall admits serverless here, and in GIC once the whitelist is in place (see docs/validation-demo.md).</div>${tbl(r.rows)}` : `<div class="banner err">Blocked as expected after ${(r.ms / 1000).toFixed(1)} s.<br>${esc(r.error)}</div>`;
   } catch (e) { $('netSOut').innerHTML = `<div class="banner err">${esc(e.message)}</div>`; }
-}
-async function netBridge() {
-  $('netBOut').innerHTML = '<p><span class="spinner"></span> Calling the bridge tool…</p>';
-  try {
-    const r = await api('/api/dev/net/bridge-probe', { method: 'POST' });
-    $('netBOut').innerHTML = r.ok ? `<div class="banner ok">Answered in ${(r.ms / 1000).toFixed(1)} s · ${esc(r.source || '')}<br>${esc(r.summary || '')}</div>${tbl(r.rows)}` : `<div class="banner err">${esc(r.error || r.status)}</div>`;
-  } catch (e) { $('netBOut').innerHTML = `<div class="banner err">${esc(e.message)}</div>`; }
 }
 function tbl(rows) {
   if (!rows || !rows.length) return '';
@@ -403,9 +396,9 @@ async function loadCI() {
   } catch (e) { $('pipe').innerHTML = esc(e.message); }
 }
 function renderCaps() {
-  const cols = [['Available and used', '#1E7B4F', ['Databricks Apps (UI, moderator, specialists, bridge MCP)', 'Lakebase Autoscaling (state, checkpoints, queue)', 'Managed MCP: Vector Search + Unity Catalog functions', 'MLflow 3 tracing, feedback and evaluation', 'Lakehouse Federation to Azure SQL (classic compute)', 'Unity AI Gateway model services + inference tables']],
+  const cols = [['Available and used', '#1E7B4F', ['Databricks Apps (UI, moderator, specialists)', 'Lakebase Autoscaling (state, checkpoints, queue)', 'Managed MCP: Vector Search + Unity Catalog functions', 'MLflow 3 tracing, feedback and evaluation', 'Lakehouse Federation to Azure SQL (classic compute)', 'Unity AI Gateway model services + inference tables']],
     ['To confirm in the target workspace', '#8A5D24', ['Provisioned throughput quota for the embedding endpoint', 'Genie space provisioning permissions', 'Serverless access to the foreign catalog (firewall)']],
-    ['Not available or deferred', '#B3261E', ['Private connectivity to Azure SQL', 'Apollo integration (later phase)', 'Bridge p95 under 6 s cross-cloud (measured 6 to 10 s)']]];
+    ['Not available or deferred', '#B3261E', ['Private connectivity to Azure SQL', 'Apollo integration (later phase)', 'Cross-cloud p95 under 6 s (measured 6 to 10 s)']]];
   $('caps').innerHTML = cols.map(([t, c, items]) => `<div class="capcol"><h4 style="background:${c}">${t}</h4><ul>${items.map((i) => `<li>${i}</li>`).join('')}</ul></div>`).join('');
 }
 
@@ -423,5 +416,5 @@ async function boot() {
   const rid = new URLSearchParams(location.search).get('run'); if (rid) openRun(rid);
   $('q').addEventListener('keydown', (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') ask(); });
 }
-Object.assign(window, { ask, renderChips, closeDrawer, openSettings, closeSettings, saveSettings, toggleSpecMode, renderWiki, requestWikiPrompt, renderInv, netServerless, netBridge, inject429, runValidate, submitRegister, runEval, loadCI });
+Object.assign(window, { ask, renderChips, closeDrawer, openSettings, closeSettings, saveSettings, toggleSpecMode, renderWiki, requestWikiPrompt, renderInv, netServerless, inject429, runValidate, submitRegister, runEval, loadCI });
 boot();

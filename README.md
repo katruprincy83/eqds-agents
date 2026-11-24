@@ -1,6 +1,6 @@
 # EQDS agents: deployable to any workspace
 
-Multi-agent research platform (LangGraph moderator, MCP bridge to the external OMS database, wiki, evaluation). Specialist agents are
+Multi-agent research platform (LangGraph moderator, external OMS database read directly through the foreign catalog, wiki, evaluation). Specialist agents are
 not in this repo: each has its own codebase and deploy, and is registered with the orchestrator on the UI's Specialist registry page.
 Design: `../EQDS_Target_State_Design.md` · Requirements: `../EQDS_Target_State_Requirements.md` · Validation results: `docs/validation-demo.md`.
 
@@ -35,13 +35,13 @@ list of what dev borrows from production: `docs/cicd.md`. Commands: `make all TA
 | Path | Contents |
 |---|---|
 | `config/env/<target>.yaml`, `config/models.<target>.yaml` | environment profile and model tiers (the only per-environment inputs) |
-| `databricks.yml`, `resources/` | bundle: schemas, volumes, warehouse, embed endpoint, experiments (platform and moderator), jobs, 3 platform apps (ui, moderator, bridge-mcp), dashboard |
+| `databricks.yml`, `resources/` | bundle: schemas, volumes, warehouse, embed endpoint, experiments (platform and moderator), jobs, 2 platform apps (ui, moderator), dashboard |
 | `agents/` | moderator graph and the specialist runtime (`specialist_base`) that every agent repo vendors at build time |
 | `templates/agent/`, `scripts/new_agent.py` | scaffolding for a specialist agent repo (`make agent KEY=<key>`) |
-| `apps/` | UI and bridge MCP app |
+| `apps/` | UI and moderator app |
 | `packages/` | `eqds_llm` (tiered LLM client), `eqds_agentkit` (config, auth, Lakebase, registry) |
 | `src/bootstrap`, `bootstrap/` | bootstrap steps and their SQL/JSON |
-| `src/jobs`, `src/bridge_worker`, `src/wiki`, `src/uc_functions` | job entry points, allowlisted bridge SQL templates, wiki triggers, UC functions |
+| `src/jobs`, `src/wiki`, `src/uc_functions` | job entry points, wiki triggers, UC functions |
 | `seed/` | deterministic synthetic data (seed 42, as-of 2026-11-20), planted facts, validation checks |
 | `eval/` | scorers, thresholds, runner |
 | `scripts/` | build, vars, infra, preflight, outputs, local stack, ask |

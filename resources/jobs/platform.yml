@@ -1,4 +1,4 @@
-# Platform jobs (design §4.2, §5.6, §7.2, §10, §11.2, §14.7). Seed jobs are in seed.yml. Compute: serverless (the only bridge compute, E8).
+# Platform jobs (design §4.2, §5.6, §7.2, §10, §11.2, §14.7). Seed jobs are in seed.yml. Compute: serverless (E8).
 resources:
   jobs:
     validate_seed:
@@ -303,25 +303,6 @@ resources:
           - '{{job.parameters.minutes}}'
         environment_key: ${var.serverless_env_key}
       timeout_seconds: 7200
-    bridge_worker:
-      name: ${var.name_prefix}-bridge-worker-${var.target_name}
-      max_concurrent_runs: 1
-      parameters:
-      - name: target
-        default: ${var.target_name}
-      environments: ${var.serverless_environments}
-      tasks:
-      - task_key: bridge_worker
-        spark_python_task:
-          python_file: ../../src/jobs/bridge_worker.py
-          parameters:
-          - --target
-          - '{{job.parameters.target}}'
-          - --root
-          - ${workspace.file_path}
-        environment_key: ${var.serverless_env_key}
-      continuous:
-        pause_status: ${var.bridge_worker_status}
     wiki_refresh:
       name: ${var.name_prefix}-wiki-refresh-${var.target_name}
       max_concurrent_runs: 1

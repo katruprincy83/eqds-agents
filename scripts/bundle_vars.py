@@ -22,9 +22,9 @@ JOB_DEPS = ["pandas", "numpy", "pyyaml", "pydantic>=2.6", "psycopg[binary,pool]>
 
 
 def compute_vars(env: Env) -> dict:
-    """Serverless environment for the jobs that reach the external database (bridge worker, Azure seed, news ingest, validate).
+    """Serverless environment for the jobs that reach the external database (Azure seed, news ingest, validate).
 
-    Serverless is the only bridge compute: it reaches the internet and the whitelisted internal sources (network.serverless_blocked in the profile)."""
+    Serverless reaches the internet and the whitelisted internal sources (network.serverless_blocked in the profile)."""
     return {
         "serverless_env_key": "external",
         "serverless_environments": [{"environment_key": "external",
@@ -75,7 +75,6 @@ def render(env: Env) -> dict:
         "genie_space_id": env.get("genie_space_id") or gen.get("genie_space_id") or "unset",  # app env values must be non-empty
         "experiment_path": env.experiment_path, "foreign_catalog": env.foreign_catalog, "connection": env.connection,
         "secret_scope": env.secret_scope, "data_profile": env.data_profile, "external_db_mode": env.external_db_mode,
-        "live_tools_mode": env.get("live_tools_mode", "bridge"),
         "wiki_refresh_cron": sched.get("wiki_refresh_cron", "0 30 7 * * ?"), "wiki_refresh_tz": sched.get("wiki_refresh_tz", "Asia/Singapore"),
         "ingest_news_cron": sched.get("ingest_news_cron", "0 */15 * * * ?"),
         "serverless_env_version": str(env.get("serverless_env_version", "3")),
@@ -85,7 +84,6 @@ def render(env: Env) -> dict:
             "max_provisioned_throughput": int(ms.get("pt_max", 19000)), "scale_to_zero_enabled": bool(ms.get("scale_to_zero", True))}],
         "github_repo_url": env.get("github_repo_url", ""),
         "schedule_status": "UNPAUSED" if sched.get("enabled", False) else "PAUSED",
-        "bridge_worker_status": "UNPAUSED" if (env.get("bridge_worker") or {}).get("enabled", True) else "PAUSED",
         "app_version": os.environ.get("EQDS_APP_VERSION", "dev"),
         "ui_permissions": [{"level": "CAN_USE", "group_name": g} for g in (env.get("ui.access_groups") or [])],
         "sp_ci": (env.get("service_principals") or {}).get("ci", ""),

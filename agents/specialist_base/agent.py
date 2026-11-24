@@ -21,7 +21,7 @@ from eqds_agentkit.skills import PromptStore, VolumeSkillStore
 from eqds_llm import LLM, load_model_config
 from eqds_llm.chat_model import EqdsChatModel
 
-from .tools import ToolContext, build_bridge_tools, build_static_tools, tagged
+from .tools import ToolContext, build_external_tools, build_static_tools, tagged
 
 log = logging.getLogger("specialist")
 
@@ -36,17 +36,8 @@ class SpecialistAgent:
         self.skills = VolumeSkillStore(env.volume_path("skills"), root / "skills", w)
         self.prompts = PromptStore(env.volume_path("prompts"), root / "prompts", w)
         self.warehouse_id = os.environ.get("DATABRICKS_WAREHOUSE_ID")
-        self.bridge_url = os.environ.get("BRIDGE_MCP_URL")  # local override; deployed apps resolve by name (see _bridge_url)
         self._static: list | None = None
         self._lock = asyncio.Lock()
-
-    def _bridge_url(self) -> str | None:
-        if self.bridge_url:
-            return self.bridge_url
-        try:
-            return self.env.app_url(self.w, "bridge-mcp") + "/mcp"
-        except Exception:  # noqa: BLE001
-            return None
 
     # ── lifecycle ──────────────────────────────────────────────────────────────────────────
     async def warm(self) -> None:
@@ -139,9 +130,9 @@ class SpecialistAgent:
 
         tools = [tagged(t, ctx, m["kind"], m["ref"], m["server"], f"{self.env.uc}", self.env.foreign_catalog) for t, m in (self._static or [])]
         for spec in cfg.get("tools", []):
-            if spec["type"] == "bridge_mcp" and self._bridge_url():
-                hdrs = {"x-eqds-run-id": ci.get("run_id", ""), "x-eqds-user": user, "x-eqds-caller": f"sp-{key}"}
-                tools += [tagged(t, ctx, m["kind"], m["ref"], m["server"], self.env.uc, self.env.foreign_catalog) for t, m in await build_bridge_tools(spec, self.w, self._bridge_url(), hdrs)]
+            if spec["type"] == "external":
+                tools += [tagged(t, ctx, m["kind"], m["ref"], m["server"], self.env.uc, self.env.foreign_catalog)
+                          for t, m in await build_external_tools(spec, self.env, self.w, self.warehouse_id)]
         if not tools:
             raise RuntimeError("no tools available")
 

@@ -36,7 +36,7 @@ def run(env, w, root: str, spark=None) -> list[Check]:
 
     def secrets():
         keys = {s.key for s in w.secrets.list_secrets(env.secret_scope)}
-        need = {"azure-sql-user", "azure-sql-password"} if env.external_db_mode in ("bridge", "direct") else set()
+        need = {"azure-sql-user", "azure-sql-password"} if env.external_db_mode == "direct" else set()
         miss = need - keys
         return ("fail", f"missing in scope {env.secret_scope}: {sorted(miss)}; run `make infra` with EQDS_AZURE_SQL_USER/PASSWORD") if miss else ("ok", f"scope {env.secret_scope}: {sorted(keys)}")
 

@@ -33,11 +33,10 @@ def _res(app, name):
 
 
 def test_each_platform_app_writes_to_the_right_experiment():
-    mod, ui, bridge = _app("moderator.yml", "moderator"), _app("ui.yml", "ui"), _app("bridge_mcp.yml", "bridge_mcp")
+    mod, ui = _app("moderator.yml", "moderator"), _app("ui.yml", "ui")
     assert _res(mod, "experiment")["experiment"]["experiment_id"] == "${resources.experiments.exp_moderator.id}"
     assert _res(mod, "experiment")["experiment"]["permission"] == "CAN_MANAGE"
     assert _res(ui, "experiment")["experiment"]["experiment_id"] == "${resources.experiments.exp_main.id}"
-    assert _res(bridge, "experiment")["experiment"]["experiment_id"] == "${resources.experiments.exp_main.id}"
     # the UI also reads the moderator's traces (run trace view), read only
     assert _res(ui, "experiment-moderator")["experiment"] == {"experiment_id": "${resources.experiments.exp_moderator.id}", "permission": "CAN_READ"}
     assert {"name": "MODERATOR_EXPERIMENT_ID", "value_from": "experiment-moderator"} in ui["config"]["env"]
@@ -95,7 +94,7 @@ def test_specialist_invocation_is_one_tagged_trace_with_nested_spans(monkeypatch
 
     mlflow, eid = mlflow_store
     out = InvocationOutputs(specialist="news", text="Nvidia headlines.", claims=[Claim(id="c1", text="x", stance="support", confidence=0.7, citations=[])],
-                            tool_calls=[ToolCall(tool="web_search", server="bridge-mcp", zone="external", latency_ms=5)])
+                            tool_calls=[ToolCall(tool="web_search", server="external-data", zone="external", latency_ms=5)])
     body = {"input": [{"role": "user", "content": "latest news for NVIDIA"}],
             "custom_inputs": {"run_id": "r-1", "round": 1, "conversation_id": "conv-9", "caller": "moderator"}}
     res = asyncio.run(_agent(monkeypatch, out).invoke(body, "alice@x.com", parent_trace="tr-moderator-1"))

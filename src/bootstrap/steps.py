@@ -13,7 +13,7 @@ import time
 
 import yaml
 
-SCHEMAS_LB = ["ops", "mem", "registry", "bridge", "lg"]
+SCHEMAS_LB = ["ops", "mem", "registry", "lg"]
 
 
 def _read(ctx, rel: str) -> str:
@@ -327,13 +327,15 @@ def apply_component_grants(ctx, conn, comp: str, sp: str, spec: dict) -> None:
     stmts += [f"GRANT EXECUTE ON FUNCTION {uc}.{f} TO `{sp}`" for f in spec.get("functions", [])]
     stmts += [f"GRANT READ VOLUME ON VOLUME {uc}.{v} TO `{sp}`" for v in spec.get("volumes", [])]
     stmts += [f"GRANT SELECT ON TABLE {uc}.{ix} TO `{sp}`" for ix in spec.get("vector_indexes", [])]
+    if spec.get("foreign"):  # external data: the allowlisted templates read the federated catalog under this app's own grants
+        fc = ctx.env.foreign_catalog
+        stmts += [f"GRANT USE CATALOG ON CATALOG {fc} TO `{sp}`", f"GRANT USE SCHEMA, SELECT ON CATALOG {fc} TO `{sp}`"]
     for s in stmts:
         try:
             ctx.sql(s)
         except Exception as e:  # noqa: BLE001
             ctx.say(f"grant failed ({s[:70]}...): {str(e)[:100]}")
-    if comp != "bridge-mcp":  # the bridge makes no LLM calls
-        _grant_model_services(ctx, sp)
+    _grant_model_services(ctx, sp)
     if spec.get("vector_indexes"):  # managed Vector Search embeds the query on the embedding endpoint as the caller
         _grant_embedding_endpoint(ctx, sp)
     if conn is not None:
@@ -451,7 +453,7 @@ def registrar_grants(ctx) -> None:
     """Grants for the registrar service principal (`make registrar`), which runs the registration job (resources/jobs/registry.yml).
 
     The job can only do what registration needs: read the catalog and grant on its objects (MANAGE on the catalog), use the
-    warehouse, manage the specialist apps and the bridge it wires (CAN_MANAGE), manage the embedding endpoint and the model
+    warehouse, manage the specialist apps it wires (CAN_MANAGE), manage the embedding endpoint and the model
     services (so it can grant them), and write `registry.specialists`. The deployer sets this up; the job never escalates itself.
     """
     from databricks.sdk.service.apps import AppAccessControlRequest, AppPermissionLevel
@@ -477,7 +479,7 @@ def registrar_grants(ctx) -> None:
     except Exception as e:  # noqa: BLE001
         ctx.say(f"registrar warehouse CAN_USE not granted: {str(e)[:100]}")
     for comp in _components(ctx):
-        if not (comp.startswith("sp-") or comp == "bridge-mcp"):  # only the apps registration wires
+        if not comp.startswith("sp-"):  # only the apps registration wires
             continue
         name = ctx.env.app_name(comp)
         for attempt in range(4):
@@ -552,7 +554,7 @@ def trace_storage_apply(ctx) -> None:
         if res.startswith("conflict"):
             ctx.say("  already bound elsewhere: a binding is permanent, create a new experiment to move it")
     platform = [e.experiment_path, e.moderator_experiment_path]
-    for comp in ("moderator", "bridge-mcp", "ui"):
+    for comp in ("moderator", "ui"):
         try:
             sp = ctx.w.apps.get(e.app_name(comp)).service_principal_client_id
         except Exception as ex:  # noqa: BLE001
@@ -618,7 +620,7 @@ def outputs_apply(ctx) -> None:
         out["experiment_id"] = ctx.w.experiments.get_by_name(ctx.env.experiment_path).experiment.experiment_id
     except Exception:  # noqa: BLE001
         pass
-    out["apps"] = {c: ctx.app_url(c) for c in ["ui", "moderator", "bridge-mcp"]}
+    out["apps"] = {c: ctx.app_url(c) for c in ["ui", "moderator"]}
     path = f"{ctx.env.volume_path('artifacts')}/bootstrap-output-{ctx.env.target}.json"
     prev = {}
     try:

@@ -28,7 +28,6 @@ def _bundle_vars():
 def test_every_profile_is_serverless():
     for t in TARGETS:
         env = _env(t)
-        assert env.get("bridge_compute") == "serverless", t
         assert (env.get("network.serverless_blocked") is not None), t
         assert "bridge" not in (env.get("node_types") or {}), f"{t}: node_types.bridge is classic-only"
 
@@ -68,6 +67,6 @@ def test_databricks_yml_and_jobs_have_no_classic_wiring():
 def test_manifest_bridge_jobs_run_on_serverless():
     with open(os.path.join(ROOT, "bootstrap", "manifest.yaml")) as f:
         jobs = yaml.safe_load(f)["jobs"]
-    for name in ("seed_azure", "validate_seed", "news_generator", "ingest_news", "bridge_worker"):
+    for name in ("seed_azure", "validate_seed", "news_generator", "ingest_news"):
         assert jobs[name]["compute"] == "serverless", name
     assert not [n for n, j in jobs.items() if j["compute"] == "bridge_compute"]

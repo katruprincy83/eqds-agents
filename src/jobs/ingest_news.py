@@ -1,4 +1,4 @@
-"""job_ingest_news (bridge compute; every 15 min): land news history from `azure_oms.feeds.news_wire` into UC `news_items`
+"""job_ingest_news (serverless; every 15 min): land news history from `azure_oms.feeds.news_wire` into UC `news_items`
 with an incremental MERGE and sync the news index (design §7.2, pattern A). The only external data that is copied into UC."""
 from __future__ import annotations
 

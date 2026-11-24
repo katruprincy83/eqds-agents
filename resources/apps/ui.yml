@@ -38,8 +38,6 @@ resources:
           value: ${resources.jobs.validate_seed.id}
         - name: JOB_ID_EVAL
           value: ${resources.jobs.eval.id}
-        - name: JOB_ID_BRIDGE_WORKER
-          value: ${resources.jobs.bridge_worker.id}
         - name: JOB_ID_INGEST_NEWS
           value: ${resources.jobs.ingest_news.id}
         - name: JOB_ID_REGISTER_SPECIALIST
@@ -61,10 +59,6 @@ resources:
         app:
           name: ${resources.apps.moderator.name}
           permission: CAN_USE
-      - name: bridge-mcp
-        app:
-          name: ${resources.apps.bridge_mcp.name}
-          permission: CAN_USE
       - name: job-wiki-refresh
         job:
           id: ${resources.jobs.wiki_refresh.id}
@@ -76,10 +70,6 @@ resources:
       - name: job-eval
         job:
           id: ${resources.jobs.eval.id}
-          permission: CAN_MANAGE_RUN
-      - name: job-bridge-worker
-        job:
-          id: ${resources.jobs.bridge_worker.id}
           permission: CAN_MANAGE_RUN
       - name: job-ingest-news
         job:

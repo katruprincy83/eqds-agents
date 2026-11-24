@@ -333,7 +333,6 @@ footer{text-align:center;color:var(--txt3);font-size:12px;padding:24px 0 120px}
             <a class="comp" data-comp="mcp-uc" data-link="schema"><b>UC Functions MCP</b>efm_buy_basket, quant_rank, price_move</a>
             <a class="comp" data-comp="mcp-vs" data-link="table:broker_chunks_index"><b>Vector Search MCP</b>broker, expert, earnings chunks</a>
             <a class="comp" data-comp="mcp-genie" data-link="genie"><b>Genie MCP</b>UC tables only</a>
-            <a class="comp" data-comp="mcp-bridge" data-link="app:eqds-bridge-mcp"><b>eqds-bridge-mcp</b>custom MCP on Apps</a>
           </div>
         </div>
         <div class="platband">
@@ -343,15 +342,13 @@ footer{text-align:center;color:var(--txt3);font-size:12px;padding:24px 0 120px}
           <a class="comp" data-comp="uc" data-link="catalog"><b>Unity Catalog</b>data · indexes · functions · skills</a>
         </div>
       </div>
-      <div class="lane cl"><h5>GIC network · classic bridge</h5>
-        <a class="comp" data-comp="worker" data-link="job:bridgeJobId:eqds-bridge-worker"><b>Bridge worker</b>single-node classic job · Spark · allowlisted templates</a>
+      <div class="lane cl"><h5>Foreign data · Lakehouse Federation</h5>
         <a class="comp" data-comp="foreign" data-link="foreign:oms/trades"><b>Foreign catalog azure_oms</b>Lakehouse Federation · UC grants & audit</a>
         <a class="comp" data-comp="ingest" data-link="job:ingestJobId:eqds-ingest-news"><b>Ingestion jobs</b>news history → UC news_items</a>
       </div>
       <div class="lane ex"><h5>External · stays outside Databricks</h5>
         <a class="comp" data-comp="azure"><b>Azure SQL Database</b>eqds_oms<br>oms: trades, positions, accounts<br>research: views, notes<br>feeds: news_wire, web_index</a>
         <a class="comp" data-comp="apollo"><b>Apollo</b>later</a>
-        <div class="blocked">✕ No route from serverless. The firewall allows only the classic egress IP (private connectivity not established).</div>
       </div>
     </div>
     <p class="small muted" style="margin-top:12px">Components light up during a run. Click any box to open it in the Databricks workspace (set the workspace in ⚙).</p>
@@ -385,25 +382,15 @@ WHERE trade_date >= '2026-10-22'
 LIMIT 10;</pre>
         <button class="btn" onclick="netServerless()">Run on serverless</button>
         <div id="netSOut"></div></div>
-      <div class="card" id="netBridge" data-spec="§5.6.1 bridge template oms_confirm_conflict@1"><div class="kicker">Specialist tool → bridge (classic)</div><h3>Same data, queried in place</h3>
-        <pre class="code">tools/call  oms_confirm_conflict
-  { "basket": "efm_top50",
-    "start": "2026-10-22", "end": "2026-11-20",
-    "strong_musd": 20 }
-→ bridge.requests (Lakebase) → classic worker
-→ spark.sql(template oms_confirm_conflict@1)
-→ azure_oms.oms.trades ⋈ efm_buy_basket</pre>
-        <button class="btn" onclick="netBridge()">Run via bridge</button>
-        <div id="netBOut"></div></div>
     </div>
-    <p class="small" style="margin-top:12px"><a class="ext" data-link="foreign:oms/trades">azure_oms.oms.trades (foreign table)</a> · <a class="ext" data-link="connection">UC connection azure_oms_conn</a> · <a class="ext" data-link="job:bridgeJobId:eqds-bridge-worker">Bridge worker job</a> · <a class="ext" data-link="app:eqds-bridge-mcp">eqds-bridge-mcp app</a></p>
+    <p class="small" style="margin-top:12px"><a class="ext" data-link="foreign:oms/trades">azure_oms.oms.trades (foreign table)</a> · <a class="ext" data-link="connection">UC connection azure_oms_conn</a> · <a class="ext" data-link="app:eqds-bridge-mcp">eqds-bridge-mcp app</a></p>
     <div class="card" style="margin-top:16px" data-spec="§7.2 job_ingest_news (classic) · pattern A landed copy"><div class="kicker">Landed copy (pattern A)</div><h3>News history lineage</h3>
       <div class="row small" style="margin-top:10px;gap:8px">
         <a class="comp" style="margin:0" data-link="foreign:feeds/news_wire"><b>azure_oms.feeds.news_wire</b>Azure SQL (foreign)</a><span>→</span>
         <a class="comp" style="margin:0" data-link="job:ingestJobId:eqds-ingest-news"><b>job_ingest_news</b>classic job cluster · every 15 min · MERGE</a><span>→</span>
         <a class="comp" style="margin:0" data-link="lineage:news_items"><b>news_items</b>UC Delta · lineage</a><span>→</span>
         <a class="comp" style="margin:0" data-link="table:news_chunks_index"><b>news_chunks_index</b>Vector Search</a></div>
-      <p class="small muted" style="margin:10px 0 0">The live tail (&lt; 15 min) is served by the bridge tool <code>news_latest</code>. Trades and research are never landed: they are queried in place.</p></div>
+      <p class="small muted" style="margin:10px 0 0">The live tail (&lt; 15 min) is served by the <code>news_latest</code> tool. Trades and research are never landed: they are queried in place.</p></div>
   </div>
 
   <div class="sub" id="sub-reg" style="display:none">
@@ -470,7 +457,7 @@ LIMIT 10;</pre>
 <!-- sources drawer -->
 <div class="drawer" id="drawer">
   <div class="row"><h3>Sources</h3><span class="muted small" id="srcCount"></span><button class="btn ghost sm" style="margin-left:auto" onclick="closeDrawer()">Close</button></div>
-  <p class="small muted">The tables and documents the agents read. External-database sources are queried in place in Azure SQL via the bridge.</p>
+  <p class="small muted">The tables and documents the agents read. External-database sources are queried in place in Azure SQL through the foreign catalog.</p>
   <div id="srcList"></div>
 </div>
 
