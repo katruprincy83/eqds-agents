@@ -107,7 +107,7 @@ TOOLS: dict[str, dict] = {
     "news_latest": {"model": NewsLatest, "version": 1, "object": "azure_oms.feeds.news_wire", "zone": "external",
                     "doc": "Latest news headlines for a company or ticker from the live wire."},
     "web_search": {"model": WebSearch, "version": 1, "object": "azure_oms.feeds.web_index", "zone": "external",
-                   "doc": "Live web search (vendor REST from the classic bridge worker; `web_search.mode: stub` reads the demo web_index table instead)."},
+                   "doc": "Live web search (vendor REST from the bridge worker; `web_search.mode: stub` reads the demo web_index table instead)."},
     "apollo_lookup": {"model": ApolloLookup, "version": 1, "object": "apollo", "zone": "external",
                       "doc": "Apollo entity lookup (stub until onboarded)."},
 }

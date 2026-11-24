@@ -3,7 +3,7 @@ resources:
   apps:
     bridge_mcp:
       name: ${var.name_prefix}-bridge-mcp${var.suffix}
-      description: MCP server that queues allowlisted bridge requests for the classic worker
+      description: MCP server that queues allowlisted bridge requests for the bridge worker
       source_code_path: ../../build/apps/bridge_mcp
       config:
         command:

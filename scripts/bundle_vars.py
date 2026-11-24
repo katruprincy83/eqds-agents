@@ -22,29 +22,13 @@ JOB_DEPS = ["pandas", "numpy", "pyyaml", "pydantic>=2.6", "psycopg[binary,pool]>
 
 
 def compute_vars(env: Env) -> dict:
-    mode = env.get("bridge_compute", "classic")
-    if mode == "serverless":
-        return {
-            "bridge_compute": "serverless", "azure_cluster_key": "", "azure_env_key": "azure_env",
-            "azure_job_clusters": [], "azure_libraries": [],
-            "azure_environments": [{"environment_key": "azure_env",
-                                    "spec": {"environment_version": str(env.get("serverless_env_version", "3")), "dependencies": JOB_DEPS}}],
-        }
-    cluster = {
-        "spark_version": env["spark_version"], "node_type_id": env["node_types"]["bridge"],
-        "num_workers": 0, "data_security_mode": "SINGLE_USER",
-        "spark_conf": {"spark.databricks.cluster.profile": "singleNode", "spark.master": "local[*, 4]"},
-        "custom_tags": {"ResourceClass": "SingleNode", "project": env.prefix},
-    }
-    pol = (env.get("policies") or {}).get("bridge")
-    if pol:
-        cluster["policy_id"] = pol
-        cluster["apply_policy_default_values"] = True
+    """Serverless environment for the jobs that reach the external database (bridge worker, Azure seed, news ingest, validate).
+
+    Serverless is the only bridge compute: it reaches the internet and the whitelisted internal sources (network.serverless_blocked in the profile)."""
     return {
-        "bridge_compute": "classic", "azure_cluster_key": "azure_cluster", "azure_env_key": "",
-        "azure_job_clusters": [{"job_cluster_key": "azure_cluster", "new_cluster": cluster}],
-        "azure_environments": [],
-        "azure_libraries": [{"pypi": {"package": p}} for p in JOB_DEPS],
+        "serverless_env_key": "external",
+        "serverless_environments": [{"environment_key": "external",
+                                     "spec": {"environment_version": str(env.get("serverless_env_version", "3")), "dependencies": JOB_DEPS}}],
     }
 
 

@@ -46,18 +46,10 @@ variables:
   wiki_refresh_tz:    {default: Asia/Singapore}
   ingest_news_cron:   {default: "0 */15 * * * ?"}
   serverless_env_version: {default: "3"}
-  # compute for the jobs that must reach the external database (bridge worker, Azure seed, news ingest, validate).
-  # `bridge_compute` = classic | serverless, rendered into these complex variables by scripts/bundle_vars.py (E8).
-  bridge_compute:     {default: classic}
-  azure_cluster_key:  {default: "azure_cluster"}
-  azure_env_key:      {default: ""}
-  azure_job_clusters:
-    type: complex
-    default: []
-  azure_environments:
-    type: complex
-    default: []
-  azure_libraries:
+  # serverless is the only compute for the jobs that reach the external database (bridge worker, Azure seed, news ingest, validate).
+  # `serverless_environments` and `serverless_env_key` are rendered by scripts/bundle_vars.py.
+  serverless_env_key: {default: "external"}
+  serverless_environments:
     type: complex
     default: []
   # embedding endpoint for Vector Search (the only serving endpoint) and Unity AI Gateway model services (§8.0)

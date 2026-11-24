@@ -24,19 +24,19 @@ bootstrap_steps:
 jobs:        # keys of resources.jobs.* (all must be listed)
   seed_uc:         {compute: serverless, profile: synthetic}
   seed_docs:       {compute: serverless, profile: synthetic}
-  seed_azure:      {compute: bridge_compute, profile: synthetic}
-  validate_seed:   {compute: bridge_compute, profile: synthetic}
+  seed_azure:      {compute: serverless, profile: synthetic}
+  validate_seed:   {compute: serverless, profile: synthetic}
   build_eval:      {compute: serverless, profile: synthetic}
   demo_reset:      {compute: orchestrator, profile: synthetic}
-  news_generator:  {compute: bridge_compute, profile: synthetic, optional: true}
+  news_generator:  {compute: serverless, profile: synthetic, optional: true}
   env_bootstrap:   {compute: serverless}
   env_preflight:   {compute: serverless}
   env_teardown:    {compute: serverless}
   state_export:    {compute: serverless}
   state_import:    {compute: serverless}
-  ingest_news:     {compute: bridge_compute}
+  ingest_news:     {compute: serverless}
   docs_index:      {compute: serverless}
-  bridge_worker:   {compute: bridge_compute}
+  bridge_worker:   {compute: serverless}
   wiki_refresh:    {compute: serverless}
   eval:            {compute: serverless}
   register_specialist: {compute: serverless}   # UI-triggered; runs as the registrar service principal (make registrar)

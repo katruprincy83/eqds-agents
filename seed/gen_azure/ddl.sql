@@ -1,5 +1,5 @@
 -- SYNTHETIC DEMO DATA. Azure SQL Database schema for the external OMS / research / feeds (design §7.4).
--- Idempotent: objects are created only if absent. Executed by job_seed_azure (classic) over JDBC, batch-split on GO.
+-- Idempotent: objects are created only if absent. Executed by job_seed_azure (serverless) over JDBC, batch-split on GO.
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'oms') EXEC('CREATE SCHEMA oms');
 GO
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'research') EXEC('CREATE SCHEMA research');

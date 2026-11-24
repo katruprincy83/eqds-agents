@@ -9,7 +9,7 @@ target: dev
 name_prefix: eqds
 workspace_host: https://dbc-6ab9fd5d-c871.cloud.databricks.com
 cloud: aws                    # aws | azure | gcp
-bridge_compute: serverless    # classic | serverless : same workspace as demo, which cannot provision classic nodes
+bridge_compute: serverless    # the only bridge compute: jobs that reach the external DB run serverless
 bridge: {tool_timeout_s: 45, wait_s: 60}   # per-query timeout in the worker / wait in the MCP app (cross-cloud federation to Azure SQL takes 5-10 s)
 serverless_env_version: "3"
 region: ap-southeast-1
@@ -34,7 +34,7 @@ lakebase:
 vector_search_endpoint: eqds-vs
 genie_space_id: ""            # written by job_env_bootstrap (bootstrap output); override if you own one
 policies: {bridge: "", ingest: ""}      # cluster policy IDs/names; "" = no policy (demo)
-node_types: {bridge: md-fleet.xlarge, ingest: md-fleet.xlarge}
+node_types: {ingest: md-fleet.xlarge}
 spark_version: 17.3.x-scala2.13
 secret_scope: eqds-bridge
 service_principals: {ci: "", bridge: "", ingest: "", wiki: "", seed: "", registrar: "a22a69d2-3acb-4cb7-ad65-4bacfcefae1c"}   # "" = run as deployer; registrar: `make registrar`
@@ -47,7 +47,7 @@ model_serving:                  # embedding endpoint for Vector Search (the only
   pt_min: 0                     # provisioned throughput (tokens/s), multiples of the model's chunk size (19000 for gte-large)
   pt_max: 19000
   rate_limits: {user_per_min: 300, endpoint_per_min: 1200}   # per calling principal / per model service, requests per minute
-web_search:                  # live web search from the classic bridge worker: one fixed vendor endpoint, key in secret_scope
+web_search:                  # live web search from the bridge worker: one fixed vendor endpoint, key in secret_scope
   mode: stub                # (dev: no You.com spend) stub = demo web_index table (nothing leaves the workspace); vendor = live search
   vendor: youdotcom
   endpoint: https://ydc-index.io/v1/search
@@ -55,7 +55,7 @@ web_search:                  # live web search from the classic bridge worker: o
   timeout_s: 15
 bridge_worker: {enabled: true}   # continuous job that serves bridge.requests (needs to run for the `ours`/`research`/`news` specialists)
 network:
-  serverless_blocked: false       # true where the external DB firewall only admits classic egress (GIC); validate_seed asserts this matches reality
+  serverless_blocked: false       # true where the external DB firewall blocks serverless egress; validate_seed asserts this matches reality
 flags:
   use_managed_memory: false
   use_uc_skills: false

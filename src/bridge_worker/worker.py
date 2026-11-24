@@ -1,6 +1,6 @@
 """Bridge worker (design §5.6): claims `bridge.requests` rows from Lakebase and runs allowlisted templates against the
-UC foreign catalog with spark.sql. Runs as a continuous Lakeflow job (classic single node in the target state, serverless
-where classic nodes are unavailable, see `bridge_compute` in the environment profile). I/O-only: no LLM calls.
+UC foreign catalog with spark.sql. Runs as a continuous Lakeflow job on serverless compute (the only bridge compute, which
+reaches the internet and the whitelisted internal sources). I/O-only: no LLM calls.
 """
 from __future__ import annotations
 
@@ -72,7 +72,7 @@ class Executor:
 
 
     def _web_search_vendor(self, args: dict) -> dict:
-        """Live web search from classic compute. The host is fixed by the profile; only validated arguments are sent."""
+        """Live web search from the bridge worker. The host is fixed by the profile; only validated arguments are sent."""
         from bridge_worker import web_search as ws
         from eqds_agentkit.bridge_tools import validate
 

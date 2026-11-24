@@ -20,7 +20,7 @@ Workspace: the demo AWS workspace (`config/env/demo.yaml`). External database: A
 ## Deviations from the design and requirements
 
 1. **Managed MCP in the demo only** (`flags.use_managed_mcp: true` in `demo.yaml`): UC functions and Vector Search go through Databricks managed MCP. Managed Vector Search takes only a query, so company-filtered searches use the SDK adapter, which filters on the server. dev, staging and prod all point at the one GIC workspace (design C-04), so they share one value: `false` until managed MCP is enabled there, then `true` and `scale_to_zero: false` for all three together.
-2. **Bridge compute is serverless**: the workspace cannot provision classic nodes. Federation to Azure SQL is reachable from serverless here (`network.serverless_blocked: false`); the GIC profiles keep `true`.
+2. **Bridge compute is serverless**: it is the only bridge compute, in every environment. Serverless reaches the internet and the whitelisted internal sources, including Azure SQL federation (`network.serverless_blocked: false`).
 3. **Bridge latency**: each bridge query takes 11-28 s cross-cloud, so the p95 target of 6 s is not met in this topology.
 4. **Seed checks reworded**: `positions_sum` compares day-over-day position changes with that day's net trades (positions are daily snapshots); `skew` uses rebalance-day share of NCREP trades (> 15 %, observed 21.5 %) because month-end calendar days fall on weekends.
 5. **Gateway limits**: the Apps gateway drops requests after about 3 minutes and streams after about 5 minutes. Specialists stop gathering at `timeout_s - 45` and finalise on partial evidence; the moderator closes each SSE stream after 240 s and clients resume with `Last-Event-ID`.

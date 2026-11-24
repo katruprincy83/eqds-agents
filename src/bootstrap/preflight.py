@@ -80,13 +80,6 @@ def run(env, w, root: str, spark=None) -> list[Check]:
         sw = [x for x in w.warehouses.list() if x.enable_serverless_compute]
         return ("ok", f"serverless SQL warehouse available ({sw[0].name})") if sw else ("warn", "no serverless warehouse yet (bundle deploy creates one)")
 
-    def classic():
-        if env.get("bridge_compute", "classic") != "classic":
-            return "ok", f"bridge_compute={env.get('bridge_compute')} (classic not needed)"
-        nt = {n.node_type_id for n in w.clusters.list_node_types().node_types}
-        want = env["node_types"]["bridge"]
-        return ("ok", f"node type {want} available") if want in nt else ("fail", f"node type {want} not available in this workspace")
-
     def mcp():
         if not env.get("flags.use_managed_mcp", False):
             return "ok", "flags.use_managed_mcp=false (SDK adapters used)"
@@ -108,7 +101,7 @@ def run(env, w, root: str, spark=None) -> list[Check]:
             return "warn", f"UC connection {env.connection} will be created by bootstrap (needs secrets)"
 
     for n, f in [("auth", auth), ("catalog", catalog), ("secret scope", secrets), ("lakebase project", lakebase), ("vector search endpoint", vs), ("apps", apps),
-                 ("model services (AI Gateway)", models), ("serverless warehouse", serverless), ("classic compute", classic), ("managed MCP", mcp), ("external DB connection", azure)]:
+                 ("model services (AI Gateway)", models), ("serverless warehouse", serverless), ("managed MCP", mcp), ("external DB connection", azure)]:
         t0 = time.time()
         add(n, f)
         out[-1].detail += f" ({time.time() - t0:.1f}s)"
