@@ -85,7 +85,7 @@ def fill(text: str, values: dict[str, str]) -> str:
 
 # the platform's specialist runtime, vendored into each agent repo (runtime/) so it builds without a platform checkout
 RUNTIME_PATHS = ["packages/eqds_agentkit/eqds_agentkit", "packages/eqds_llm/eqds_llm", "apps/__init__.py", "apps/common.py",
-                 "agents/__init__.py", "agents/specialist_base", "prompts", "scripts/build_apps.py", "config/env", "config/models.*.yaml"]
+                 "agents/__init__.py", "agents/specialist_base", "prompts", "scripts/build_apps.py", "requirements", "config/env", "config/models.*.yaml"]
 
 
 def snapshot_runtime(out: pathlib.Path) -> str:

@@ -53,6 +53,6 @@ shutil.copy2(P / f"config/env/{a.target}.yaml", out / f"config/env/{a.target}.ya
 models = yaml.safe_load((P / f"config/env/{a.target}.yaml").read_text()).get("models_config", f"config/models.{a.target}.yaml")
 (out / models).parent.mkdir(parents=True, exist_ok=True)
 shutil.copy2(P / models, out / models)
-(out / "requirements.txt").write_text("\n".join(f"{p}=={pb.PINS[p]}" for p in pb.REQ["specialist"]) + "\n")
+(out / "requirements.txt").write_text(pb.requirements_text("specialist"))  # fully pinned lock from the runtime snapshot
 (out / "app.yaml").write_text(yaml.safe_dump({"command": ["python", "-m", "uvicorn", "agents.specialist_base.app:app", "--host", "0.0.0.0", "--port", "8000"]}, sort_keys=False))
 print(f"built {out} for agent '{key}' (runtime from {P})")

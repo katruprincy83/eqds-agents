@@ -41,6 +41,16 @@ CMD = {  # uvicorn on the platform port (Apps default 8000)
 IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc", ".pytest_cache", "tests")
 
 
+def requirements_text(kind: str) -> str:
+    """The app's requirements.txt: the fully pinned lock (requirements/<kind>.lock, made by scripts/lock_requirements.py) when it
+    exists, so the Apps builder does one plain install instead of solving transitive versions (which can backtrack for minutes and
+    time the deploy out). Falls back to the top-level pins only."""
+    lock = ROOT / "requirements" / f"{kind}.lock"
+    if lock.exists():
+        return lock.read_text()
+    return "\n".join(f"{p}=={PINS[p]}" for p in REQ[kind]) + "\n"
+
+
 def copy(src: str, dst: pathlib.Path) -> None:
     s = ROOT / src
     if s.is_dir():
@@ -77,7 +87,7 @@ def build(app: str, kind: str, out: pathlib.Path, env: Env, models_cfg: str) -> 
         (out / "eval").mkdir()
         if (ROOT / "eval/thresholds.yaml").exists():
             shutil.copy2(ROOT / "eval/thresholds.yaml", out / "eval/thresholds.yaml")
-    (out / "requirements.txt").write_text("\n".join(f"{p}=={PINS[p]}" for p in REQ[kind]) + "\n")
+    (out / "requirements.txt").write_text(requirements_text(kind))
     (out / "app.yaml").write_text(yaml.safe_dump({"command": ["python", "-m", "uvicorn", CMD[kind], "--host", "0.0.0.0", "--port", "8000"]}, sort_keys=False))
 
 
