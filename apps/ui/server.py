@@ -15,12 +15,13 @@ import yaml
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from psycopg import sql as pgsql
 from pydantic import BaseModel, Field
 
 from apps.common import env as get_env
 from apps.common import pool
 from eqds_agentkit import auth, tracing
-from eqds_agentkit.memory import Store
+from eqds_agentkit.memory import Store, specialist_memory_union
 from eqds_agentkit.sql import lit, run_statement
 
 log = logging.getLogger("ui")
@@ -113,7 +114,7 @@ async def links():
     e = get_env()
     jid = lambda k: os.environ.get(f"JOB_ID_{k}", "")  # noqa: E731
     return {"ws": e.host, "catalog": e.catalog, "schema": e.schema, "appSuffix": e.suffix, "namePrefix": e.prefix, "exp": os.environ.get("MLFLOW_EXPERIMENT_ID", ""), "modExp": os.environ.get("MODERATOR_EXPERIMENT_ID", ""),
-            "genie": ("" if os.environ.get("GENIE_SPACE_ID", "") == "unset" else os.environ.get("GENIE_SPACE_ID", "")), "lakebase": e.lakebase_project, "bridgeJobId": jid("BRIDGE_WORKER"), "ingestJobId": jid("INGEST_NEWS"),
+            "genie": ("" if os.environ.get("GENIE_SPACE_ID", "") == "unset" else os.environ.get("GENIE_SPACE_ID", "")), "lakebase": e.lakebase_project, "ingestJobId": jid("INGEST_NEWS"),
             "wikiJobId": jid("WIKI_REFRESH"), "seedJobId": jid("VALIDATE_SEED"), "evalJobId": jid("EVAL"), "foreignCatalog": e.foreign_catalog, "connection": e.connection,
             "github": e.get("github_repo_url", ""), "vsEndpoint": e.vs_endpoint, "demo": e.target}
 
@@ -296,6 +297,42 @@ def _trace_experiments() -> dict[str, str]:
     return out
 
 
+def _trace_paths() -> dict[str, str]:
+    """experiment path -> label, the path-based twin of `_trace_experiments` (UC trace locations are addressed by path, not by id)."""
+    e = get_env()
+    out = {e.moderator_experiment_path: "moderator"}
+    try:
+        with pool().connection() as c:
+            keys = [r["key"] for r in c.execute("SELECT key FROM registry.specialists ORDER BY key").fetchall()]
+    except Exception:  # noqa: BLE001
+        keys = []
+    out.update({e.agent_experiment_path(k): k for k in keys})
+    return out
+
+
+def _search_run_traces(mlflow, exps: dict[str, str], run_id: str) -> list:
+    """The traces of one run. Environments that keep traces in MLflow's storage search by experiment id. When the profile stores them
+    in Unity Catalog (`flags.use_uc_trace_storage`) each experiment has its own table prefix, so every location (the moderator's and each
+    registered agent's) is searched on its own through the SQL warehouse, within the last two weeks; the UI service principal has SELECT on
+    the schema. Falls back to the experiment ids when the UC search fails."""
+    import time
+
+    flt = f"tags.run_id = '{run_id}'"
+    e = get_env()
+    if e.use_uc_trace_storage:
+        try:
+            from eqds_agentkit import trace_storage
+
+            uc_filter = f"{flt} AND trace.timestamp_ms > {int(time.time() * 1000) - 14 * 86400000}"
+            out: list = []
+            for path in _trace_paths():
+                out += mlflow.search_traces(locations=[trace_storage.search_location(e.catalog, e.traces_schema, path)], filter_string=uc_filter, return_type="list", max_results=30)
+            return out
+        except Exception as ex:  # noqa: BLE001
+            log.warning("UC trace search failed, falling back to experiment ids: %s", str(ex)[:160])
+    return mlflow.search_traces(locations=list(exps) or None, filter_string=flt, return_type="list", max_results=60)
+
+
 @app.get("/api/dev/runs/{run_id}/trace")
 async def dev_trace(run_id: str, request: Request):
     await dev(request)
@@ -304,7 +341,7 @@ async def dev_trace(run_id: str, request: Request):
         import mlflow
 
         exps = _trace_experiments() or ({os.environ["MLFLOW_EXPERIMENT_ID"]: "platform"} if os.environ.get("MLFLOW_EXPERIMENT_ID") else {})
-        traces = mlflow.search_traces(locations=list(exps) or None, filter_string=f"tags.run_id = '{run_id}'", return_type="list", max_results=60)
+        traces = _search_run_traces(mlflow, exps, run_id)
         out = []
         for t in traces:
             spans = sorted(t.data.spans, key=lambda s: s.start_time_ns)
@@ -312,7 +349,9 @@ async def dev_trace(run_id: str, request: Request):
             for s in spans:
                 depth[s.span_id] = (depth.get(s.parent_id, -1) + 1) if s.parent_id else 0
             eid = str(getattr(t.info, "experiment_id", "") or "")
-            out.append({"trace_id": t.info.trace_id, "experiment_id": eid, "experiment": exps.get(eid, ""), "tags": dict(t.info.tags or {}), "duration_ms": t.info.execution_duration,
+            tags = dict(t.info.tags or {})
+            label = exps.get(eid) or tags.get("specialist") or ("moderator" if get_env().use_uc_trace_storage else "")   # UC-stored traces may not carry the experiment id
+            out.append({"trace_id": t.info.trace_id, "experiment_id": eid, "experiment": label, "tags": tags, "duration_ms": t.info.execution_duration,
                         "spans": [{"name": s.name, "type": str(s.span_type), "level": depth.get(s.span_id, 0), "ms": int((s.end_time_ns - s.start_time_ns) / 1e6)} for s in spans][:200]})
         return out
 
@@ -325,8 +364,9 @@ async def dev_invocations(run_id: str, request: Request):
 
     def go():
         with pool().connection() as c:
-            return c.execute("SELECT specialist, idempotency_key, brief, response, created_at FROM mem.specialist WHERE idempotency_key LIKE %s ORDER BY created_at",
-                             (run_id + ":%",)).fetchall()
+            q = pgsql.SQL("SELECT specialist, idempotency_key, brief, response, created_at FROM ({}) m WHERE idempotency_key LIKE %s ORDER BY created_at").format(
+                specialist_memory_union(c))
+            return c.execute(q, (run_id + ":%",)).fetchall()
 
     rows = await asyncio.to_thread(go)
     out = []
@@ -348,7 +388,8 @@ async def dev_memory(run_id: str, request: Request):
         run = s.get_run(run_id)
         with pool().connection() as c:
             turns = c.execute("SELECT turn, question, answer_summary, run_id FROM mem.conversation WHERE conversation_id = %s ORDER BY turn", (run["conversation_id"],)).fetchall() if run else []
-            spec = c.execute("SELECT specialist, caller, idempotency_key, left(brief, 160) AS brief, created_at FROM mem.specialist WHERE conversation_id = %s ORDER BY created_at DESC LIMIT 20", (run["conversation_id"],)).fetchall() if run else []
+            spec = c.execute(pgsql.SQL("SELECT specialist, caller, idempotency_key, left(brief, 160) AS brief, created_at FROM ({}) m WHERE conversation_id = %s ORDER BY created_at DESC LIMIT 20")
+                             .format(specialist_memory_union(c)), (run["conversation_id"],)).fetchall() if run else []
             reg = c.execute("SELECT key, version FROM registry.specialists ORDER BY key").fetchall()
         return {"conversation_id": run and run["conversation_id"], "turns": turns, "specialist": [{**r, "created_at": r["created_at"].isoformat()} for r in spec],
                 "skills": [{"agent": r["key"], "version": r["version"], "path": f"{e.volume_path('skills')}/{r['key']}/{r['version']}/SKILL.md"} for r in reg]}
@@ -372,30 +413,6 @@ async def serverless_probe(request: Request):
             return {"ok": False, "blocked": True, "error": str(ex)[:600], "ms": int((time.time() - t0) * 1000)}
 
     return await asyncio.to_thread(go)
-
-
-@app.post("/api/dev/net/bridge-probe")
-async def bridge_probe(request: Request):
-    await dev(request)
-
-    async def go():
-        from langchain_mcp_adapters.client import MultiServerMCPClient
-
-        url = get_env().app_url(W(), "bridge-mcp", "BRIDGE_MCP_URL")
-        url = url if url.endswith("/mcp") else url + "/mcp"
-        t0 = time.time()
-        c = MultiServerMCPClient({"bridge": {"transport": "streamable_http", "url": url, "headers": {**auth.bearer(W()), "x-eqds-user": auth.user_from_headers(request.headers), "x-eqds-caller": "ui-probe"}}})
-        tools = {t.name: t for t in await c.get_tools()}
-        res = await tools["oms_confirm_conflict"].ainvoke({"basket": "efm_top50", "start": "2026-10-22", "end": "2026-11-20", "strong_musd": 20})
-        txt = res[0]["text"] if isinstance(res, list) else str(res)
-        d = json.loads(txt)
-        return {"ok": d.get("status") == "ok", "ms": int((time.time() - t0) * 1000), "status": d.get("status"), "source": d.get("source"), "summary": d.get("summary"),
-                "rows": (d.get("rows") or [])[:10], "error": d.get("error")}
-
-    try:
-        return await go()
-    except Exception as ex:  # noqa: BLE001
-        return {"ok": False, "error": str(ex)[:500]}
 
 
 @app.get("/api/dev/models")

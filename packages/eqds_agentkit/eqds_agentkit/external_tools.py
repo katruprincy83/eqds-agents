@@ -1,7 +1,7 @@
-"""Bridge tool catalogue (design §5.6, §5.6.1): typed arguments for every allowlisted query template.
+"""External-data tool catalogue (design §5.6): typed arguments for every allowlisted query template.
 
-The LLM never writes SQL. The MCP app validates arguments with these models before queueing, the worker validates
-again before rendering the pinned template (`src/bridge_worker/templates/<name>.sql`).
+The LLM never writes SQL. The agent validates arguments with these models, then renders the pinned template
+(`query_templates/<name>.sql`) and runs it on the SQL warehouse with bound parameters (see external_query.py).
 """
 from __future__ import annotations
 
@@ -107,7 +107,7 @@ TOOLS: dict[str, dict] = {
     "news_latest": {"model": NewsLatest, "version": 1, "object": "azure_oms.feeds.news_wire", "zone": "external",
                     "doc": "Latest news headlines for a company or ticker from the live wire."},
     "web_search": {"model": WebSearch, "version": 1, "object": "azure_oms.feeds.web_index", "zone": "external",
-                   "doc": "Live web search (vendor REST from the classic bridge worker; `web_search.mode: stub` reads the demo web_index table instead)."},
+                   "doc": "Live web search (vendor REST from the agent; `web_search.mode: stub` reads the demo web_index table instead)."},
     "apollo_lookup": {"model": ApolloLookup, "version": 1, "object": "apollo", "zone": "external",
                       "doc": "Apollo entity lookup (stub until onboarded)."},
 }
@@ -115,5 +115,5 @@ TOOLS: dict[str, dict] = {
 
 def validate(tool: str, args: dict) -> BaseModel:
     if tool not in TOOLS:
-        raise ValueError(f"unknown bridge tool {tool!r}")
+        raise ValueError(f"unknown external tool {tool!r}")
     return TOOLS[tool]["model"].model_validate(args)

@@ -1,5 +1,5 @@
 """Azure SQL synthetic datasets: strategies, accounts, trades, positions, research, feeds (design §14.5).
-SYNTHETIC DEMO DATA. Pure pandas/numpy; the classic seed job only adds the JDBC write layer.
+SYNTHETIC DEMO DATA. Pure pandas/numpy; the seed job only adds the JDBC write layer.
 
 Planted facts are built exactly (flows spec), then PF-13 is calibrated by adding adjustment trades so the book-wide
 strong conflict / confirm counts and totals hit the targets exactly.

@@ -93,7 +93,7 @@ class Env:
     @property
     def data_profile(self) -> str: return self.raw.get("data_profile", "synthetic")
     @property
-    def external_db_mode(self) -> str: return self.raw.get("external_db_mode", "bridge")
+    def external_db_mode(self) -> str: return self.raw.get("external_db_mode", "direct")
     @property
     def lakebase_project(self) -> str: return self.get("lakebase.project", f"{self.prefix}-lakebase")
     @property
@@ -102,6 +102,26 @@ class Env:
     def vs_endpoint(self) -> str: return self.raw.get("vector_search_endpoint", f"{self.prefix}-vs")
     @property
     def experiment_path(self) -> str: return self.raw.get("experiment_path", f"/Shared/{self.prefix}/{self.target}")
+    @property
+    def job_caller_secret_keys(self) -> tuple[str, str]:
+        """(client id, client secret) of the environment's job-caller service principal. Suffixed, because environments can share the
+        secret scope (dev and production do) and each must find its own principal."""
+        return (f"job-caller-client-id{self.suffix}", f"job-caller-client-secret{self.suffix}")
+
+    @property
+    def traces_schema(self) -> str:
+        """UC schema that stores the traces when `flags.use_uc_trace_storage` is on (it lives in `catalog`, apart from the data schema)."""
+        return self.raw.get("traces_schema", "traces")
+
+    @property
+    def use_uc_trace_storage(self) -> bool:
+        return bool(self.get("flags.use_uc_trace_storage", False))
+
+    @property
+    def shared_external(self) -> bool:
+        """True when the external database (and its UC connection / foreign catalog) is only borrowed from another environment."""
+        return bool(self.raw.get("shared_external", False))
+
     @property
     def moderator_experiment_path(self) -> str:
         """Traces of the moderator. A sibling of `experiment_path` (an experiment cannot contain another), so the parent folder that the platform deploy creates is enough."""

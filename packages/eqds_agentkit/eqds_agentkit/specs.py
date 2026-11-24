@@ -12,7 +12,7 @@ class RegistrationError(Exception):
 
 
 NAME = re.compile(r"[A-Za-z0-9_]{1,64}")  # every access name ends up inside a GRANT statement: letters, digits, underscore only
-TOOL_TYPES = {"uc_functions", "vector_search", "bridge_mcp"}
+TOOL_TYPES = {"uc_functions", "vector_search", "external"}
 
 
 def validate_spec(sp: dict, key: str) -> dict:

@@ -1,0 +1,44 @@
+# Reusable deploy of ONE environment (called by deploy-dev.yml and deploy-prod.yml). One workspace hosts both environments,
+# so the host is a repository variable and the credentials are secrets of the GitHub environment (`dev` / `production`), each
+# holding the CI service principal that environment is allowed to use.
+name: _deploy
+on:
+  workflow_call:
+    inputs:
+      target: {type: string, required: true}        # bundle target / config/env/<target>.yaml: dev | demo
+      environment: {type: string, required: true}   # GitHub environment (approvals + secrets): dev | production
+      ref: {type: string, default: ""}
+      smoke_args: {type: string, default: ""}
+    secrets:
+      DATABRICKS_CLIENT_ID: {required: true}
+      DATABRICKS_CLIENT_SECRET: {required: true}
+      EQDS_AZURE_SQL_USER: {required: false}
+      EQDS_AZURE_SQL_PASSWORD: {required: false}
+jobs:
+  deploy:
+    runs-on: [self-hosted, eqds-mac]
+    environment: ${{ inputs.environment }}
+    concurrency: deploy-${{ inputs.target }}
+    env:
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+      EQDS_AZURE_SQL_USER: ${{ secrets.EQDS_AZURE_SQL_USER }}
+      EQDS_AZURE_SQL_PASSWORD: ${{ secrets.EQDS_AZURE_SQL_PASSWORD }}
+      TARGET: ${{ inputs.target }}
+    steps:
+      # The runner is this Mac: without this, a missing CI secret would let the CLI fall back to a personal profile in ~/.databrickscfg.
+      # The CI service principal's secrets are the only credentials the deploy may use.
+      - name: use only the CI credentials
+        run: |
+          : > "$RUNNER_TEMP/databrickscfg"
+          echo "DATABRICKS_CONFIG_FILE=$RUNNER_TEMP/databrickscfg" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+        with: {ref: "${{ inputs.ref }}"}
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - uses: databricks/setup-cli@main
+      - run: pip install -e packages/eqds_llm -e packages/eqds_agentkit pyyaml "databricks-sdk>=0.50" "psycopg[binary,pool]" langgraph langgraph-checkpoint-postgres "mlflow>=3.18" httpx
+      # infra is idempotent: catalog, schemas, experiment folder, secret scope, Lakebase project and branch, vector endpoint
+      - run: make infra preflight deploy bootstrap apps outputs
+      - run: make smoke SMOKE_ARGS="${{ inputs.smoke_args }}"

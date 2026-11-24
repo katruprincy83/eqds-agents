@@ -4,14 +4,9 @@ moderator:
   tables: [ref_companies, ref_holdings]
   functions: []
   volumes: [skills, prompts]
-  lakebase: [ops, mem, registry, lg, bridge]
+  lakebase: [ops, mem, registry, lg]
 ui:
   tables: [ref_companies, wiki_pages, wiki_state, seed_validation_results, eval_questions, demo_planted_facts, earnings_calendar]
   functions: []
   volumes: []
   lakebase: [ops, mem, registry]
-bridge-mcp:
-  tables: []
-  functions: []
-  volumes: []
-  lakebase: [bridge]

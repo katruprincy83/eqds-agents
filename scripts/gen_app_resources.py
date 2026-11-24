@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Generate resources/apps/*.yml for the platform apps (ui, moderator, bridge-mcp) so they cannot drift from each other. Commit the output.
-Specialist agents are not part of this bundle: each has its own repo and bundle (scripts/new_agent.py), and registration grants the
-moderator CAN_USE on it and it CAN_USE on bridge-mcp.
+"""Generate resources/apps/*.yml for the platform apps (ui, moderator) so they cannot drift from each other. Commit the output.
+Specialist agents are not part of this bundle: each has its own repo and bundle (scripts/new_agent.py); registration grants the
+moderator CAN_USE on it.
     python scripts/gen_app_resources.py"""
 import pathlib
 
@@ -32,7 +32,7 @@ def experiment_res(exp: str, name: str = "experiment", permission: str = "CAN_MA
 
 def app(key, desc, kind, env_extra, res_extra, perms=None, exp="exp_main"):
     """`exp`: the experiment this app writes its traces to (MLFLOW_EXPERIMENT_ID). The moderator has its own."""
-    mod = {"ui": "apps.ui.server:app", "moderator": "agents.moderator.app:app", "bridge_mcp": "apps.bridge_mcp.server:app", "specialist": "agents.specialist_base.app:app"}[kind]
+    mod = {"ui": "apps.ui.server:app", "moderator": "agents.moderator.app:app", "specialist": "agents.specialist_base.app:app"}[kind]
     d = {"name": f"${{var.name_prefix}}-{key.replace('_', '-') if not key.startswith('sp_') else 'sp-' + key[3:]}${{var.suffix}}", "description": desc,
          "source_code_path": SRC(key),
          "config": {"command": ["python", "-m", "uvicorn", mod, "--host", "0.0.0.0", "--port", "8000"], "env": COMMON_ENV + env_extra},
@@ -47,16 +47,14 @@ def write(fname, apps):
     (ROOT / "resources/apps" / fname).write_text(H + yaml.safe_dump({"resources": {"apps": apps}}, sort_keys=False, width=200))
 
 
-bridge_ref = {"name": "bridge-mcp", "app": {"name": "${resources.apps.bridge_mcp.name}", "permission": "CAN_USE"}}
-jobs = [("wiki_refresh", "WIKI_REFRESH"), ("validate_seed", "VALIDATE_SEED"), ("eval", "EVAL"), ("bridge_worker", "BRIDGE_WORKER"), ("ingest_news", "INGEST_NEWS"), ("register_specialist", "REGISTER_SPECIALIST")]
+jobs = [("wiki_refresh", "WIKI_REFRESH"), ("validate_seed", "VALIDATE_SEED"), ("eval", "EVAL"), ("ingest_news", "INGEST_NEWS"), ("register_specialist", "REGISTER_SPECIALIST")]
 
-write("bridge_mcp.yml", {"bridge_mcp": app("bridge_mcp", "MCP server that queues allowlisted bridge requests for the classic worker", "bridge_mcp", [], [])})
 write("moderator.yml", {"moderator": app("moderator", "LangGraph moderator: async run API, SSE, durable resume", "moderator", [], [], exp="exp_moderator")})
 write("ui.yml", {"ui": app("ui", "EQDS research UI", "ui",
                            [e("GENIE_SPACE_ID", "${var.genie_space_id}"), e("MODERATOR_EXPERIMENT_ID", value_from="experiment-moderator")]
                            + [e(f"JOB_ID_{u}", f"${{resources.jobs.{k}.id}}") for k, u in jobs],
                            [experiment_res("exp_moderator", "experiment-moderator", "CAN_READ"),  # the UI reads the moderator's traces (run trace view)
-                            {"name": "moderator", "app": {"name": "${resources.apps.moderator.name}", "permission": "CAN_USE"}}, bridge_ref]
+                            {"name": "moderator", "app": {"name": "${resources.apps.moderator.name}", "permission": "CAN_USE"}}]
                            + [{"name": f"job-{k.replace('_', '-')}", "job": {"id": f"${{resources.jobs.{k}.id}}", "permission": "CAN_MANAGE_RUN"}} for k, _ in jobs],
                            perms="${var.ui_permissions}")})
-print("wrote resources/apps/*.yml for", ["ui", "moderator", "bridge_mcp"])
+print("wrote resources/apps/*.yml for", ["ui", "moderator"])

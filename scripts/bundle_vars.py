@@ -22,29 +22,13 @@ JOB_DEPS = ["pandas", "numpy", "pyyaml", "pydantic>=2.6", "psycopg[binary,pool]>
 
 
 def compute_vars(env: Env) -> dict:
-    mode = env.get("bridge_compute", "classic")
-    if mode == "serverless":
-        return {
-            "bridge_compute": "serverless", "azure_cluster_key": "", "azure_env_key": "azure_env",
-            "azure_job_clusters": [], "azure_libraries": [],
-            "azure_environments": [{"environment_key": "azure_env",
-                                    "spec": {"environment_version": str(env.get("serverless_env_version", "3")), "dependencies": JOB_DEPS}}],
-        }
-    cluster = {
-        "spark_version": env["spark_version"], "node_type_id": env["node_types"]["bridge"],
-        "num_workers": 0, "data_security_mode": "SINGLE_USER",
-        "spark_conf": {"spark.databricks.cluster.profile": "singleNode", "spark.master": "local[*, 4]"},
-        "custom_tags": {"ResourceClass": "SingleNode", "project": env.prefix},
-    }
-    pol = (env.get("policies") or {}).get("bridge")
-    if pol:
-        cluster["policy_id"] = pol
-        cluster["apply_policy_default_values"] = True
+    """Serverless environment for the jobs that reach the external database (Azure seed, news ingest, validate).
+
+    Serverless reaches the internet and the whitelisted internal sources (network.serverless_blocked in the profile)."""
     return {
-        "bridge_compute": "classic", "azure_cluster_key": "azure_cluster", "azure_env_key": "",
-        "azure_job_clusters": [{"job_cluster_key": "azure_cluster", "new_cluster": cluster}],
-        "azure_environments": [],
-        "azure_libraries": [{"pypi": {"package": p}} for p in JOB_DEPS],
+        "serverless_env_key": "external",
+        "serverless_environments": [{"environment_key": "external",
+                                     "spec": {"environment_version": str(env.get("serverless_env_version", "3")), "dependencies": JOB_DEPS}}],
     }
 
 
@@ -91,7 +75,6 @@ def render(env: Env) -> dict:
         "genie_space_id": env.get("genie_space_id") or gen.get("genie_space_id") or "unset",  # app env values must be non-empty
         "experiment_path": env.experiment_path, "foreign_catalog": env.foreign_catalog, "connection": env.connection,
         "secret_scope": env.secret_scope, "data_profile": env.data_profile, "external_db_mode": env.external_db_mode,
-        "live_tools_mode": env.get("live_tools_mode", "bridge"),
         "wiki_refresh_cron": sched.get("wiki_refresh_cron", "0 30 7 * * ?"), "wiki_refresh_tz": sched.get("wiki_refresh_tz", "Asia/Singapore"),
         "ingest_news_cron": sched.get("ingest_news_cron", "0 */15 * * * ?"),
         "serverless_env_version": str(env.get("serverless_env_version", "3")),
@@ -101,13 +84,15 @@ def render(env: Env) -> dict:
             "max_provisioned_throughput": int(ms.get("pt_max", 19000)), "scale_to_zero_enabled": bool(ms.get("scale_to_zero", True))}],
         "github_repo_url": env.get("github_repo_url", ""),
         "schedule_status": "UNPAUSED" if sched.get("enabled", False) else "PAUSED",
-        "bridge_worker_status": "UNPAUSED" if (env.get("bridge_worker") or {}).get("enabled", True) else "PAUSED",
         "app_version": os.environ.get("EQDS_APP_VERSION", "dev"),
         "ui_permissions": [{"level": "CAN_USE", "group_name": g} for g in (env.get("ui.access_groups") or [])],
         "sp_ci": (env.get("service_principals") or {}).get("ci", ""),
     }
     reg = (env.get("service_principals") or {}).get("registrar", "")
-    if reg:  # registration runs as the registrar service principal (make registrar); otherwise as the deployer (databricks.yml default)
+    # registration runs as the registrar service principal (make registrar); otherwise as the deployer (databricks.yml default).
+    # `registrar_job_identity: deployer` keeps the job on the deployer while the registrar principal exists for app permissions: needed
+    # until a workspace admin grants the deployer 'Service Principal User' on it (no API for that grant in every workspace).
+    if reg and env.get("registrar_job_identity", "registrar") != "deployer":
         v["registrar_run_as"] = {"service_principal_name": reg}
     v.update(compute_vars(env))
     v.update(llm_vars(env))

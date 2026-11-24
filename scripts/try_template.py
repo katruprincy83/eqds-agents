@@ -1,11 +1,11 @@
-"""Developer helper: render a bridge template and run it on the SQL warehouse (params inlined as literals).
+"""Developer helper: render an allowlisted query template and run it on the SQL warehouse (params inlined as literals).
 usage: python scripts/try_template.py --target demo oms_trade_flows '{"company_ids":["C0101"],"start":"2026-10-22","end":"2026-11-20"}'"""
 import argparse, json, os, sys
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 for p in (root, os.path.join(root, "src"), os.path.join(root, "packages", "eqds_agentkit")):
     sys.path.insert(0, p)
 from bootstrap.ctx import make_ctx
-from bridge_worker.render import render
+from eqds_agentkit.external_query import render
 ap = argparse.ArgumentParser(); ap.add_argument("--target", default="demo"); ap.add_argument("tool"); ap.add_argument("args")
 a = ap.parse_args()
 ctx = make_ctx(a.target, root)

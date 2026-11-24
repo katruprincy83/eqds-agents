@@ -24,6 +24,8 @@ def setup(app_version: str = "dev", experiment_id: str | None = None, autolog: b
             except Exception:  # noqa: BLE001
                 pass
         os.environ.setdefault("EQDS_APP_VERSION", app_version)
+        if os.environ.get("DATABRICKS_WAREHOUSE_ID"):   # traces stored in Unity Catalog are read through a SQL warehouse (harmless otherwise)
+            os.environ.setdefault("MLFLOW_TRACING_SQL_WAREHOUSE_ID", os.environ["DATABRICKS_WAREHOUSE_ID"])
         _enabled = bool(eid)
     except Exception:  # noqa: BLE001
         _enabled = False

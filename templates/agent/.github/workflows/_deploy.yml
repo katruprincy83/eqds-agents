@@ -1,0 +1,37 @@
+# Reusable deploy of this agent to ONE environment. Everything it needs is in this repo: the runtime snapshot in ./runtime (its
+# platform commit is in platform_lock.yaml), so there is no platform checkout and no platform token.
+# One workspace hosts both environments: DATABRICKS_HOST is a repository variable; the credentials are secrets of the GitHub
+# environment (`dev` / `production`) and belong to the CI service principal that environment is allowed to use.
+name: _deploy
+on:
+  workflow_call:
+    inputs:
+      target: {type: string, required: true}        # bundle target: dev | demo
+      environment: {type: string, required: true}   # GitHub environment: dev | production
+    secrets:
+      DATABRICKS_CLIENT_ID: {required: true}
+      DATABRICKS_CLIENT_SECRET: {required: true}
+jobs:
+  deploy:
+    runs-on: [self-hosted, eqds-mac]
+    environment: ${{ inputs.environment }}
+    concurrency: deploy-${{ inputs.target }}
+    env:
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+      TARGET: ${{ inputs.target }}
+    steps:
+      # The runner is this Mac: without this, a missing CI secret would let the CLI fall back to a personal profile in ~/.databrickscfg.
+      # The CI service principal's secrets are the only credentials the deploy may use.
+      - name: use only the CI credentials
+        run: |
+          : > "$RUNNER_TEMP/databrickscfg"
+          echo "DATABRICKS_CONFIG_FILE=$RUNNER_TEMP/databrickscfg" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - uses: databricks/setup-cli@main
+      - run: pip install pyyaml httpx "databricks-sdk>=0.50" "mlflow>=3.18" pydantic
+      - run: make deploy
+      - run: make smoke

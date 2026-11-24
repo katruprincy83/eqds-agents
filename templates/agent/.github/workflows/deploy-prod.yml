@@ -1,0 +1,10 @@
+# Merge to `main` promotes this agent to production (target demo). `main` is protected (pull request + `checks`), so the merge is the approval; add required reviewers to the `production` environment where the plan allows it.
+name: deploy-prod
+on:
+  push: {branches: [main]}
+  workflow_dispatch:
+jobs:
+  deploy:
+    uses: ./.github/workflows/_deploy.yml
+    with: {target: demo, environment: production}
+    secrets: inherit

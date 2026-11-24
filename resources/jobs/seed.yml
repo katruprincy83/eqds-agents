@@ -1,5 +1,5 @@
-# Synthetic data jobs (design §14.7). Serverless unless the job must reach the external database
-# (those use the `azure_*` complex variables rendered from `bridge_compute`, design §4.1 E8).
+# Synthetic data jobs (design §14.7). All serverless; the jobs that reach the external database use the
+# `serverless_*` environment variables rendered by scripts/bundle_vars.py (design §4.1 E8).
 resources:
   jobs:
     seed_uc:
@@ -41,13 +41,10 @@ resources:
       max_concurrent_runs: 1
       parameters:
         - {name: target, default: "${var.target_name}"}
-      job_clusters: ${var.azure_job_clusters}
-      environments: ${var.azure_environments}
+      environments: ${var.serverless_environments}
       tasks:
         - task_key: seed_azure
-          job_cluster_key: ${var.azure_cluster_key}
-          environment_key: ${var.azure_env_key}
-          libraries: ${var.azure_libraries}
+          environment_key: ${var.serverless_env_key}
           spark_python_task:
             python_file: ../../src/jobs/seed_azure.py
             parameters: ["--target", "{{job.parameters.target}}", "--root", "${workspace.file_path}"]

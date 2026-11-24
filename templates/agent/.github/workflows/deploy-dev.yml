@@ -1,0 +1,10 @@
+# Push to `dev` deploys this agent to the dev environment (app -dev, experiment in /Shared/eqds-dev, traces in eqds_dev).
+name: deploy-dev
+on:
+  push: {branches: [dev]}
+  workflow_dispatch:
+jobs:
+  deploy:
+    uses: ./.github/workflows/_deploy.yml
+    with: {target: dev, environment: dev}
+    secrets: inherit

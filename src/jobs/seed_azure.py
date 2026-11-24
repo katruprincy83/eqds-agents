@@ -1,7 +1,7 @@
 """job_seed_azure: schema + synthetic rows in the external Azure SQL database (design §14.7).
 
-Runs on compute that can reach the database (classic in the reference design; serverless when the
-firewall allows it: `bridge_compute`). DDL and bulk writes both via Spark JDBC (no Python SQL driver).
+Runs on serverless compute, which reaches the database through the whitelisted network. DDL and bulk writes go via Spark JDBC
+where serverless accepts them, otherwise via T-SQL batches over the JDBC read path (seed/gen_azure/load.py). No Python SQL driver.
 Only the EQDS schemas (oms, research, feeds) are touched. The `customer` data profile never writes. SYNTHETIC DEMO DATA.
 """
 from __future__ import annotations
@@ -22,6 +22,10 @@ from _common import get_spark, secret, setup  # noqa: E402
 env, args = setup()
 if env.data_profile != "synthetic":
     print("data_profile != synthetic: refusing to write to the external database")
+    sys.exit(0)
+if env.get("shared_external"):
+    # the external database is shared with another environment (dev uses the production one read-only): DDL here drops tables
+    print(f"shared_external is set for target {env.target}: refusing to write to the shared external database")
     sys.exit(0)
 spark = get_spark()
 

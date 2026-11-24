@@ -1,7 +1,7 @@
 """Tool construction for specialists (design §5.3, §5.5).
 
 Tool sources, all returning LangChain tools whose results are wrapped so every result carries citation tags:
-* bridge MCP (custom app)                      → `DatabricksMultiServerMCPClient`-style streamable HTTP, always MCP
+* external data (allowlisted templates)        → run directly on the SQL warehouse, web search direct to the vendor (no MCP hop)
 * UC functions / Vector Search                 → managed MCP when `flags.use_managed_mcp` is true, otherwise the SDK adapters below
   (same functions, same indexes, same arguments; selectable per environment because managed MCP is a preview feature).
   Managed Vector Search takes only `query`; company-filtered searches use the adapter so the filter runs on the server.
@@ -182,12 +182,12 @@ def tagged(base: StructuredTool, ctx: ToolContext, kind: str, ref: str, server: 
         try:
             raw = await base.ainvoke(kw)
         except Exception as e:  # noqa: BLE001
-            ctx.tool_calls.append(ToolCall(tool=name, server=server, zone="external" if kind == "bridge" else "serverless", latency_ms=int((time.time() - t0) * 1000)))
+            ctx.tool_calls.append(ToolCall(tool=name, server=server, zone="external" if kind == "external" else "serverless", latency_ms=int((time.time() - t0) * 1000)))
             return json.dumps({"status": "error", "error": str(e)[:400]})
         data = _unwrap(raw)
         lat = int((time.time() - t0) * 1000)
         now = dt.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
-        if kind == "bridge":
+        if kind == "external":
             if not isinstance(data, dict) or data.get("status") != "ok":
                 ctx.tool_calls.append(ToolCall(tool=name, server=server, zone="external", latency_ms=lat))
                 return json.dumps(data if isinstance(data, dict) else {"status": "error", "error": str(data)[:300]}, default=str)
@@ -195,8 +195,8 @@ def tagged(base: StructuredTool, ctx: ToolContext, kind: str, ref: str, server: 
             rows = (data.get("rows") or [])
             tmpl = src.get("template")
             ctx.tool_calls.append(ToolCall(tool=name, server=server, template=tmpl, zone="external", latency_ms=lat))
-            ctx.activity.append({"component": "eqds-bridge-mcp", "zone": "external", "label": f"{name} → {src.get('object', '')}",
-                                 "detail": f"{tmpl} · {data.get('bridge_latency_ms', lat) / 1000:.1f} s · {len(rows)} rows", "link": {"kind": "foreign", "ref": src.get("object", "")}})
+            ctx.activity.append({"component": "external-data", "zone": "external", "label": f"{name} → {src.get('object', '')}",
+                                 "detail": f"{tmpl} · {data.get('latency_ms', lat) / 1000:.1f} s · {len(rows)} rows", "link": {"kind": "foreign", "ref": src.get("object", "")}})
             if name in ROW_TAG_TOOLS:
                 out = []
                 for r in rows[:10]:
@@ -237,16 +237,26 @@ def tagged(base: StructuredTool, ctx: ToolContext, kind: str, ref: str, server: 
     return w
 
 
-async def build_bridge_tools(spec: dict, w, bridge_url: str, headers: dict[str, str]) -> list[tuple[StructuredTool, dict]]:
-    """Per request: the MCP client carries the run/user headers so the bridge queue rows are attributable."""
-    from langchain_mcp_adapters.client import MultiServerMCPClient
-
-    from eqds_agentkit.auth import bearer
+async def build_external_tools(spec: dict, env, w, warehouse_id: str | None) -> list[tuple[StructuredTool, dict]]:
+    """Allowlisted external-data tools (OMS, research, news wire, web search), run by this app under its own grants."""
+    from eqds_agentkit import external_tools as xt
 
     allow = spec.get("allow", [])
-    client = MultiServerMCPClient({"bridge": {"transport": "streamable_http", "url": bridge_url, "headers": {**bearer(w), **headers},
-                                              "timeout": 120, "sse_read_timeout": 120}})
-    return [(t, {"kind": "bridge", "ref": t.name, "server": "bridge-mcp"}) for t in await client.get_tools() if not allow or t.name in allow]
+    out: list[tuple[StructuredTool, dict]] = []
+    for name, t in xt.TOOLS.items():
+        if (allow and name not in allow) or name == "apollo_lookup":  # apollo is a stub until onboarded
+            continue
+        out.append((external_tool(name, t["model"], t["doc"], env, w, warehouse_id), {"kind": "external", "ref": name, "server": "external-data"}))
+    return out
+
+
+def external_tool(name: str, args_schema, doc: str, env, w, warehouse_id: str | None) -> StructuredTool:
+    from eqds_agentkit import external_query as xq
+
+    async def run(**kw):
+        return await asyncio.to_thread(xq.run, w, warehouse_id, env, name, kw)
+
+    return StructuredTool.from_function(coroutine=run, name=name, description=doc, args_schema=args_schema)
 
 
 def managed_vector_search_tool(inner: StructuredTool, adapter: StructuredTool, short: str, description: str) -> StructuredTool:

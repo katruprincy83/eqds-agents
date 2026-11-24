@@ -1,7 +1,8 @@
 # Standalone bundle for the {{DISPLAY}} agent: its own repo, its own deploy, no dependency on the orchestrator's bundle.
 # It creates ONE Databricks App. The app name follows the platform convention `<prefix>-sp-<key><suffix>`, which is how the
-# orchestrator's registration finds it. Platform values below were filled in by the platform's scripts/new_agent.py for
-# the {{TARGET}} environment; ask the platform team for the values of other environments.
+# orchestrator's registration finds it. The variable defaults and the `targets:` block were filled in by the platform's
+# scripts/new_agent.py from the environments it knows: `demo` is production (git branch main), `dev` is the pre-production
+# environment (git branch dev; app `-dev`, experiment in /Shared/eqds-dev, traces in eqds_dev). Both are in one workspace.
 bundle:
   name: eqds-agent-{{KEY}}
 
@@ -13,7 +14,7 @@ variables:
   platform_target: {default: {{TARGET}}}                     # which platform environment the agent plugs into (config/env/<target>.yaml)
   app_name:        {default: {{APP_NAME}}}          # <name_prefix>-sp-<key><suffix>
   warehouse_id:    {default: {{WAREHOUSE_ID}}}             # platform SQL warehouse (tool calls run on it)
-  experiment_path: {default: "{{EXPERIMENT_PATH}}"}   # this agent's own MLflow experiment (traces); sibling of the platform experiment
+  experiment_path: {default: "{{EXPERIMENT_PATH}}"}   # this agent's own MLflow experiment (traces); sibling of the platform experiment, per target
   registrar_sp:    {default: {{REGISTRAR_SP}}}   # registrar service principal: manages the app during registration
   ui_sp:           {default: {{UI_SP}}}   # UI service principal: runs the registration contract check
   moderator_sp:    {default: {{MODERATOR_SP}}}   # moderator service principal: calls the agent at run time
@@ -42,6 +43,7 @@ resources:
           - {name: DATABRICKS_WAREHOUSE_ID, value_from: warehouse}
           - {name: MLFLOW_DISABLE_AGENT_HINT, value: "1"}
           - {name: SPECIALIST_CONFIG, value: agents/specialists/{{KEY}}/specialist.yaml}
+          - {name: EQDS_MEMORY_READERS, value: "${var.ui_sp}"}   # the agent grants the UI read access to its own memory schema
       resources:
         - name: experiment
           experiment: {experiment_id: "${resources.experiments.traces.id}", permission: CAN_MANAGE}
@@ -54,8 +56,4 @@ resources:
         - {level: CAN_USE, service_principal_name: "${var.ui_sp}"}
         - {level: CAN_USE, service_principal_name: "${var.moderator_sp}"}
 
-targets:
-  {{TARGET}}:
-    default: true
-    workspace:
-      host: {{HOST}}
+{{TARGETS}}

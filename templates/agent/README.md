@@ -6,15 +6,16 @@ orchestrator's **Specialist registry** page; until then the orchestrator does no
 ```
 agent/specialist.yaml        identity, description, tools and data access (the running app serves it at /info)
 agent/skills/{{KEY}}/<ver>/  the agent's instructions (SKILL.md); the version is pinned in specialist.yaml
-scripts/build.py             assembles ./app = platform runtime + this agent's files
+runtime/                     snapshot of the platform runtime (ReAct loop, tools, contract, tracing, memory) and platform_lock.yaml
+scripts/build.py             assembles ./app = runtime/ + this agent's files
 scripts/smoke.py             checks the deployed app on its own
 databricks.yml               own bundle: one Databricks App, {{APP_NAME}}
 ```
 
 ## 1. Deploy
 
-Needs a checkout of the platform repo (`eqds-agents`) next to this one: the runtime (ReAct loop, tools, contract, tracing) is
-vendored from it at build time.
+Everything the app needs is in this repo: the runtime is the `runtime/` snapshot (its commit is in `platform_lock.yaml`), so a
+checkout of the platform repo is not needed to build or deploy.
 
 ```bash
 export DATABRICKS_CONFIG_PROFILE=<your profile for the workspace>
@@ -61,3 +62,27 @@ workspace needs nothing extra beyond the platform deploy, which creates the expe
   trace in the moderator's experiment. The Traces tab groups a conversation as one *session*.
 - Find a run: filter `tags.run_id = '<run id>'`. The moderator's span for this agent carries `child_trace_id`, so you can follow the link in either direction.
 - The UI's run trace view reads this experiment through the `CAN_READ` grant for the UI service principal in `databricks.yml`.
+
+## 6. Environments and CI/CD
+
+One workspace hosts two environments. This repo has two long-lived branches and one bundle target for each:
+
+| Branch | Target | Environment | App | Experiment | Traces |
+|---|---|---|---|---|---|
+| `main` | `demo` | production | `{{APP_NAME}}` | `{{EXPERIMENT_PATH}}` | MLflow storage |
+| `dev` | `dev` | pre-production | the same name with `-dev` | `/Shared/eqds-dev/eqds-{{KEY}}` | Unity Catalog, `eqds_dev.traces` |
+
+Work on a feature branch, open a PR into `dev` (checks build the app for both targets), merge: the `deploy-dev` workflow deploys
+to the dev environment and runs the smoke check. When dev is good, open a PR `dev` to `main`; merging it (`main` is protected) runs `deploy-prod`. Manual equivalents: `make deploy TARGET=dev`, `make deploy TARGET=demo`.
+
+The dev agent registers on the **dev** UI (`eqds-ui-dev`), never on production's, and talks to the dev platform: the dev registry, the
+dev Lakebase branch, the `eqds_dev` catalog. To refresh the runtime snapshot and the platform values of a target (after a platform change
+or new service principals) run, in the platform repo, `python scripts/new_agent.py {{KEY}} --scaffold-update`; it rewrites `runtime/`,
+`platform_lock.yaml` and `databricks.yml`, commit the result.
+
+Memory: the app creates its own Lakebase schema `agent_{{KEY}}` on startup (table `memory`, plus any `migrations/*.sql` of this repo,
+applied once each). The platform grants it only CREATE on the database, so the agent owns its data and can migrate it on its own.
+The caller may pass an `Idempotency-Key` header; a repeated key returns the cached answer.
+
+CI needs, in this repo's settings: repository variable `DATABRICKS_HOST`; secrets `DATABRICKS_CLIENT_ID` and `DATABRICKS_CLIENT_SECRET`
+in each of the GitHub environments `dev` and `production` (the CI service principal; it needs permission to create tables in the dev traces schema).

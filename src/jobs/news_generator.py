@@ -1,5 +1,5 @@
 """job_news_generator (optional, demo only): inserts synthetic headlines into the external wire every minute so the live tail
-(bridge tool `news_latest`) shows fresh items. Includes the scripted Kioxia item after `at_minutes` (planted_facts live_tail_scripted).
+(external tool `news_latest`) shows fresh items. Includes the scripted Kioxia item after `at_minutes` (planted_facts live_tail_scripted).
 Stop the job after the demo. SYNTHETIC DEMO DATA."""
 from __future__ import annotations
 
@@ -18,6 +18,9 @@ from _common import get_spark, secret, setup
 env, args = setup([("--minutes", {"default": "30"})])
 if env.data_profile != "synthetic":
     print("data_profile != synthetic: refusing to write to the external database")
+    sys.exit(0)
+if env.get("shared_external"):
+    print(f"shared_external is set for target {env.target}: refusing to insert into the shared external wire")
     sys.exit(0)
 spark = get_spark()
 from seed.common import load_planted  # noqa: E402

@@ -3,8 +3,8 @@ import json
 import httpx
 import pytest
 
-from bridge_worker import web_search as ws
-from bridge_worker.worker import Executor
+from eqds_agentkit import external_query as xq
+from eqds_agentkit import web_search as ws
 from eqds_agentkit.envcfg import Env
 
 PAYLOAD = {"results": {"web": [
@@ -62,9 +62,10 @@ def test_plain_http_endpoint_refused():
         ws.search("q", 3, 7, "http://ydc-index.io/v1/search", "k")
 
 
-def test_executor_vendor_mode_reads_secret_and_calls_fixed_endpoint(monkeypatch):
+def test_vendor_mode_runs_directly_with_the_app_secret_and_fixed_endpoint(monkeypatch):
     env = Env.from_target("demo")
     env.raw.setdefault("web_search", {})["mode"] = "vendor"
+    monkeypatch.setenv("YOUDOTCOM_API_KEY", "SECRET")
     calls = {}
 
     def fake_search(query, max_results, recency_days, endpoint, api_key, timeout_s=15.0, transport=None):
@@ -72,18 +73,24 @@ def test_executor_vendor_mode_reads_secret_and_calls_fixed_endpoint(monkeypatch)
         return ws.normalize(PAYLOAD, max_results)
 
     monkeypatch.setattr(ws, "search", fake_search)
-    ex = Executor(spark=None, env=env, secret_fn=lambda scope, key: (calls.setdefault("scope_key", (scope, key)), "SECRET")[1])
-    out = ex.run("web_search", {"query": "GIC SK Hynix", "max_results": 2, "recency_days": 7})
-    assert calls["scope_key"] == (env.secret_scope, "youdotcom-api-key")
+    out = xq.run(None, "wh", env, "web_search", {"query": "GIC SK Hynix", "max_results": 2, "recency_days": 7})
     assert calls["endpoint"] == "https://ydc-index.io/v1/search" and calls["key"] == "SECRET"
-    assert out["row_count"] == 2 and out["columns"] == ["doc_id", "title", "url", "snippet", "published_at"]
+    assert out["status"] == "ok" and out["row_count"] == 2 and out["columns"] == ["doc_id", "title", "url", "snippet", "published_at"]
     assert out["source"]["system"] == "web_search_vendor" and out["source"]["object"] == "ydc-index.io"
 
 
-def test_executor_rejects_bad_arguments_before_any_call(monkeypatch):
+def test_vendor_mode_rejects_bad_arguments_before_any_call(monkeypatch):
     env = Env.from_target("demo")
     env.raw.setdefault("web_search", {})["mode"] = "vendor"
+    monkeypatch.setenv("YOUDOTCOM_API_KEY", "SECRET")
     monkeypatch.setattr(ws, "search", lambda *a, **k: pytest.fail("vendor must not be called"))
-    ex = Executor(spark=None, env=env, secret_fn=lambda *a: "k")
     with pytest.raises(Exception):
-        ex.run("web_search", {"query": "x" * 300, "max_results": 3, "recency_days": 7})
+        xq.run(None, "wh", env, "web_search", {"query": "x" * 300, "max_results": 3, "recency_days": 7})
+
+
+def test_vendor_mode_without_the_app_secret_fails_clearly(monkeypatch):
+    env = Env.from_target("demo")
+    env.raw.setdefault("web_search", {})["mode"] = "vendor"
+    monkeypatch.delenv("YOUDOTCOM_API_KEY", raising=False)
+    with pytest.raises(RuntimeError, match="YOUDOTCOM_API_KEY"):
+        xq.run(None, "wh", env, "web_search", {"query": "gic", "max_results": 2, "recency_days": 7})

@@ -387,12 +387,17 @@ class Moderator:
 
     def n_deep_dive(self, st: DebateState) -> dict:
         rnd = st["round"] + 1
+        # the debate roster is the set the moderator opened (who_opens): follow-up probes go only to those specialists,
+        # never to other registered agents (a manual selection stays a manual selection for the whole run)
+        roster = list(st.get("selected") or [])
         self.stage(st, "deep_dive", "active")
+        if not roster:
+            self.ev(st, "deep_dive", {"round": rnd, "probes": []})
+            return {"round": rnd, "probes": [], "usage": {}}
         open_pts = [p for p in st["points"] if p["status"] == "OPEN" or p.get("needs_followup")]
         txt = "\n".join(f"- {p['id']} ({p['topic']}): {p['claim']} | stances: {p['stances']} | gaps: {p['gaps']}" for p in open_pts)
-        r, u = self.ask(st, "reasoning", "deepdive", Probes, max_probes=3, registry=self.registry_text(), open_points=txt)
-        active = {s.key for s in self.reg.all()}
-        probes = [{"point_id": p.point_id, "to": [k for k in p.to if k in active][:3], "text": p.text} for p in r.probes if any(k in active for k in p.to)][:3]
+        r, u = self.ask(st, "reasoning", "deepdive", Probes, max_probes=3, registry=self.registry_text(roster), open_points=txt)
+        probes = [{"point_id": p.point_id, "to": [k for k in p.to if k in roster][:3], "text": p.text} for p in r.probes if any(k in roster for k in p.to)][:3]
         prior = [{"from": m["from"], "claim": (m["claims"][0]["text"] if m["claims"] else m["text"][:200]), "tags": (m["claims"][0].get("citations", []) if m["claims"] else [])}
                  for m in st["messages"] if m["from"] != "moderator" and m["round"] == st["round"]][:8]
         self.ev(st, "deep_dive", {"round": rnd, "probes": probes})

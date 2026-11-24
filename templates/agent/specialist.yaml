@@ -12,7 +12,7 @@ skill:
   name: {{KEY}}
   version: 0.1.0
 tools:
-- type: uc_functions           # uc_functions | vector_search | bridge_mcp
+- type: uc_functions           # uc_functions | vector_search | external
   allow:
   - company_lookup
 tools_summary: UC Functions MCP · company_lookup

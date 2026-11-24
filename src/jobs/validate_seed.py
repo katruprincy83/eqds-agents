@@ -18,7 +18,7 @@ from _common import get_spark, setup, write_table
 
 env, args = setup()
 spark = get_spark()
-from bridge_worker.render import render  # noqa: E402
+from eqds_agentkit.external_query import render  # noqa: E402
 
 UC, FC = env.uc, env.foreign_catalog
 CK = yaml.safe_load(open(os.path.join(os.environ["EQDS_ROOT"], "seed", "validate", "checks.yaml")))

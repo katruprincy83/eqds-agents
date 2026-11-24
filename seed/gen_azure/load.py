@@ -1,7 +1,7 @@
 """Write layer for the external Azure SQL database (design §14.7). SYNTHETIC DEMO DATA.
 
 Two paths, chosen automatically, same data:
-  * `jdbc`    Spark JDBC bulk write (classic compute, the reference design).
+  * `jdbc`    Spark JDBC bulk write (where the compute accepts JDBC DML).
   * `batches` T-SQL `INSERT ... VALUES` batches sent through the JDBC *read* path (`prepareQuery`), for serverless
               compute where Spark refuses DML on JDBC sinks (UNSUPPORTED_DATA_SOURCE_WRITE). Each batch is guarded
               by an idempotency token because Spark may execute the prefix more than once (schema inference + read).

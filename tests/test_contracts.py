@@ -19,8 +19,8 @@ def test_citation_validator():
     assert not bad["ok"] and bad["bad_tags"] == ["US9"] and len(bad["uncited"]) == 2
 
 
-def test_bridge_render_allowlist_and_parameterisation():
-    from bridge_worker.render import render
+def test_external_render_allowlist_and_parameterisation():
+    from eqds_agentkit.external_query import render
 
     sql, params = render("oms_trade_flows", {"company_ids": ["C0101"], "start": "2026-10-22", "end": "2026-11-20", "group_by": "strategy"}, "c.s", "fc")
     assert "C0101" not in sql.replace("'C0101'", "") or "'C0101'" in sql

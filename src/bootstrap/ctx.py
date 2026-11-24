@@ -61,7 +61,7 @@ class Ctx:
         m = {"catalog": e.catalog, "schema": e.schema, "uc": e.uc, "connection": e.connection, "foreign_catalog": e.foreign_catalog,
              "azure_host": a.get("host", ""), "azure_port": a.get("port", 1433), "azure_db": a.get("database", ""),
              "secret_scope": e.secret_scope, "name_prefix": e.prefix, "suffix": e.suffix, "vector_search_endpoint": e.vs_endpoint,
-             "sp_ci": sps.get("ci", ""), "sp_bridge": sps.get("bridge", ""), "sp_ingest": sps.get("ingest", ""),
+             "sp_ci": sps.get("ci", ""), "sp_ingest": sps.get("ingest", ""),
              "sp_wiki": sps.get("wiki", ""), "sp_seed": sps.get("seed", ""), "target": e.target}
         m.update(extra or {})
         return Template(text).safe_substitute(m)

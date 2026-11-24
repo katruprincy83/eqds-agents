@@ -32,13 +32,22 @@ BASE = ["fastapi", "uvicorn", "httpx", "pydantic", "pyyaml", "psycopg[binary,poo
 REQ = {
     "ui": BASE + ["openai", "langchain-core", "langchain-mcp-adapters"],
     "moderator": BASE + ["sse-starlette", "openai", "langchain-core", "langgraph", "langgraph-checkpoint-postgres"],
-    "bridge_mcp": BASE + ["mcp"],
     "specialist": BASE + ["openai", "langchain-core", "langchain-mcp-adapters", "langgraph", "databricks-langchain"],  # used by templates/agent/scripts/build.py
 }
 CMD = {  # uvicorn on the platform port (Apps default 8000)
-    "ui": "apps.ui.server:app", "moderator": "agents.moderator.app:app", "bridge_mcp": "apps.bridge_mcp.server:app", "specialist": "agents.specialist_base.app:app",
+    "ui": "apps.ui.server:app", "moderator": "agents.moderator.app:app", "specialist": "agents.specialist_base.app:app",
 }
 IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc", ".pytest_cache", "tests")
+
+
+def requirements_text(kind: str) -> str:
+    """The app's requirements.txt: the fully pinned lock (requirements/<kind>.lock, made by scripts/lock_requirements.py) when it
+    exists, so the Apps builder does one plain install instead of solving transitive versions (which can backtrack for minutes and
+    time the deploy out). Falls back to the top-level pins only."""
+    lock = ROOT / "requirements" / f"{kind}.lock"
+    if lock.exists():
+        return lock.read_text()
+    return "\n".join(f"{p}=={PINS[p]}" for p in REQ[kind]) + "\n"
 
 
 def copy(src: str, dst: pathlib.Path) -> None:
@@ -62,8 +71,6 @@ def build(app: str, kind: str, out: pathlib.Path, env: Env, models_cfg: str) -> 
     shutil.copy2(ROOT / "apps/common.py", out / "apps/common.py")
     if kind == "ui":
         shutil.copytree(ROOT / "apps/ui", out / "apps/ui", ignore=IGNORE)
-    elif kind == "bridge_mcp":
-        shutil.copytree(ROOT / "apps/bridge_mcp", out / "apps/bridge_mcp", ignore=IGNORE)
     else:
         (out / "agents").mkdir()
         shutil.copy2(ROOT / "agents/__init__.py", out / "agents/__init__.py")
@@ -77,7 +84,7 @@ def build(app: str, kind: str, out: pathlib.Path, env: Env, models_cfg: str) -> 
         (out / "eval").mkdir()
         if (ROOT / "eval/thresholds.yaml").exists():
             shutil.copy2(ROOT / "eval/thresholds.yaml", out / "eval/thresholds.yaml")
-    (out / "requirements.txt").write_text("\n".join(f"{p}=={PINS[p]}" for p in REQ[kind]) + "\n")
+    (out / "requirements.txt").write_text(requirements_text(kind))
     (out / "app.yaml").write_text(yaml.safe_dump({"command": ["python", "-m", "uvicorn", CMD[kind], "--host", "0.0.0.0", "--port", "8000"]}, sort_keys=False))
 
 
@@ -88,7 +95,7 @@ def main() -> int:
     a = ap.parse_args()
     env = Env.from_target(a.target)
     models_cfg = env.get("models_config", f"config/models.{env.target}.yaml")
-    apps = {"ui": "ui", "moderator": "moderator", "bridge_mcp": "bridge_mcp"}  # specialist agents build in their own repos (templates/agent)
+    apps = {"ui": "ui", "moderator": "moderator"}  # specialist agents build in their own repos (templates/agent)
     only = set(filter(None, a.only.split(",")))
     for name, kind in apps.items():
         if only and name not in only:

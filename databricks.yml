@@ -40,24 +40,15 @@ variables:
   connection:         {default: azure_oms_conn}
   secret_scope:       {default: eqds-bridge}
   data_profile:       {default: synthetic}
-  external_db_mode:   {default: bridge}
-  live_tools_mode:    {default: bridge}
+  external_db_mode:   {default: direct}
   wiki_refresh_cron:  {default: "0 30 7 * * ?"}
   wiki_refresh_tz:    {default: Asia/Singapore}
   ingest_news_cron:   {default: "0 */15 * * * ?"}
   serverless_env_version: {default: "3"}
-  # compute for the jobs that must reach the external database (bridge worker, Azure seed, news ingest, validate).
-  # `bridge_compute` = classic | serverless, rendered into these complex variables by scripts/bundle_vars.py (E8).
-  bridge_compute:     {default: classic}
-  azure_cluster_key:  {default: "azure_cluster"}
-  azure_env_key:      {default: ""}
-  azure_job_clusters:
-    type: complex
-    default: []
-  azure_environments:
-    type: complex
-    default: []
-  azure_libraries:
+  # serverless is the only compute for the jobs that reach the external database (Azure seed, news ingest, validate).
+  # `serverless_environments` and `serverless_env_key` are rendered by scripts/bundle_vars.py.
+  serverless_env_key: {default: "external"}
+  serverless_environments:
     type: complex
     default: []
   # embedding endpoint for Vector Search (the only serving endpoint) and Unity AI Gateway model services (§8.0)
@@ -79,7 +70,6 @@ variables:
   github_repo_url:    {default: ""}
   app_version:        {default: dev}
   schedule_status:    {default: PAUSED, description: "UNPAUSED enables the wiki/ingest schedules (profile schedules.enabled)"}
-  bridge_worker_status: {default: UNPAUSED}
   ui_permissions:
     type: complex
     default: []
@@ -89,6 +79,10 @@ variables:
 artifacts: {}
 
 targets:
+  # Environments (CI/CD, docs/cicd.md): `demo` is PRODUCTION (git branch main), `dev` is the pre-production environment (git branch dev).
+  # Both live in this one workspace; they differ only by the profile values (suffix, catalog, Lakebase branch, experiment folder).
+  # Not `mode: development`: that prefixes resource names with "[dev user]", which breaks app names and the `-dev` suffix convention.
+  # Job schedules are paused by the profile (`schedules.enabled: false`) instead.
   demo:
     default: true
     workspace:
@@ -96,13 +90,15 @@ targets:
     variables:
       target_name: demo
 
-  # The GIC workspace (single workspace, schema-separated, §4). Hosts are placeholders until the platform team provides them.
   dev:
-    mode: development
     workspace:
-      host: https://REPLACE-ME.cloud.databricks.com
+      host: https://dbc-6ab9fd5d-c871.cloud.databricks.com
+    presets:
+      tags: {environment: dev}
     variables:
       target_name: dev
+
+  # Dormant: kept as templates for a second workspace (hosts are placeholders). CI does not deploy them.
   staging:
     workspace:
       host: https://REPLACE-ME.cloud.databricks.com

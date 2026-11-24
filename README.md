@@ -1,12 +1,12 @@
 # EQDS agents: deployable to any workspace
 
-Multi-agent research platform (LangGraph moderator, MCP bridge to the external OMS database, wiki, evaluation). Specialist agents are
+Multi-agent research platform (LangGraph moderator, external OMS database read directly through the foreign catalog, wiki, evaluation). Specialist agents are
 not in this repo: each has its own codebase and deploy, and is registered with the orchestrator on the UI's Specialist registry page.
 Design: `../EQDS_Target_State_Design.md` · Requirements: `../EQDS_Target_State_Requirements.md` · Validation results: `docs/validation-demo.md`.
 
 ## Deploy into a new workspace
 
-1. `cp config/env/staging.yaml config/env/<name>.yaml` and `config/models.staging.yaml config/models.<name>.yaml`; fill every `REPLACE-ME` and add a `targets:` block in `databricks.yml` (host only).
+1. `cp config/env/dev.yaml config/env/<name>.yaml` and `config/models.dev.yaml config/models.<name>.yaml`; fill every `REPLACE-ME` and add a `targets:` block in `databricks.yml` (host only).
 2. `databricks auth login --host <workspace-url> --profile <name>` and `export DATABRICKS_CONFIG_PROFILE=<name>`.
 3. Export the external database credentials (they are written to the secret scope only, never to the repo):
    `export EQDS_AZURE_SQL_USER=... EQDS_AZURE_SQL_PASSWORD=...`
@@ -16,6 +16,13 @@ Design: `../EQDS_Target_State_Design.md` · Requirements: `../EQDS_Target_State_
 
 `make all` = `vars` (render bundle variables from the profile) → `infra` (catalog, secret scope, Lakebase project, Vector Search endpoint, service principals) → `build` (apps are vendored into `build/apps/*`) → `deploy` (`bundle deploy`) → `bootstrap` (federation, UC functions, Lakebase schemas, skills, indexes, Genie space, app grants, registry, outputs) → `apps` (deploy source and start) → `outputs`.
 Everything is idempotent. `make teardown` removes bootstrap assets; `make destroy` also runs `bundle destroy`.
+
+## Environments and CI/CD
+
+One workspace, two environments, two branches in every repo: `main` is production (target `demo`), `dev` is pre-production (target `dev`:
+apps and jobs `-dev`, catalog `eqds_dev`, Lakebase branch `dev`, experiments in `/Shared/eqds-dev`, traces stored in `eqds_dev.traces`).
+Push to `dev` deploys dev and smoke-tests it; a PR `dev` to `main` promotes to production behind an approval. Details, one-time setup and the
+list of what dev borrows from production: `docs/cicd.md`. Commands: `make all TARGET=dev`, `make smoke TARGET=dev`.
 
 ## Portability rules (NFR-20..22, design §4.1)
 
@@ -28,13 +35,13 @@ Everything is idempotent. `make teardown` removes bootstrap assets; `make destro
 | Path | Contents |
 |---|---|
 | `config/env/<target>.yaml`, `config/models.<target>.yaml` | environment profile and model tiers (the only per-environment inputs) |
-| `databricks.yml`, `resources/` | bundle: schemas, volumes, warehouse, embed endpoint, experiments (platform and moderator), jobs, 3 platform apps (ui, moderator, bridge-mcp), dashboard |
+| `databricks.yml`, `resources/` | bundle: schemas, volumes, warehouse, embed endpoint, experiments (platform and moderator), jobs, 2 platform apps (ui, moderator), dashboard |
 | `agents/` | moderator graph and the specialist runtime (`specialist_base`) that every agent repo vendors at build time |
 | `templates/agent/`, `scripts/new_agent.py` | scaffolding for a specialist agent repo (`make agent KEY=<key>`) |
-| `apps/` | UI and bridge MCP app |
+| `apps/` | UI and moderator app |
 | `packages/` | `eqds_llm` (tiered LLM client), `eqds_agentkit` (config, auth, Lakebase, registry) |
 | `src/bootstrap`, `bootstrap/` | bootstrap steps and their SQL/JSON |
-| `src/jobs`, `src/bridge_worker`, `src/wiki`, `src/uc_functions` | job entry points, allowlisted bridge SQL templates, wiki triggers, UC functions |
+| `src/jobs`, `src/wiki`, `src/uc_functions` | job entry points, wiki triggers, UC functions |
 | `seed/` | deterministic synthetic data (seed 42, as-of 2026-11-20), planted facts, validation checks |
 | `eval/` | scorers, thresholds, runner |
 | `scripts/` | build, vars, infra, preflight, outputs, local stack, ask |

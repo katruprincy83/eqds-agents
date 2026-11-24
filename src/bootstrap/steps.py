@@ -13,7 +13,7 @@ import time
 
 import yaml
 
-SCHEMAS_LB = ["ops", "mem", "registry", "bridge", "lg"]
+SCHEMAS_LB = ["ops", "mem", "registry", "lg"]
 
 
 def _read(ctx, rel: str) -> str:
@@ -44,6 +44,9 @@ def federation_apply(ctx) -> None:
 
 
 def federation_teardown(ctx) -> None:
+    if ctx.env.shared_external:   # the connection and foreign catalog are shared with the environment that owns them
+        ctx.say(f"shared_external: keeping connection {ctx.env.connection} and foreign catalog {ctx.env.foreign_catalog}")
+        return
     ctx.sql(f"DROP CATALOG IF EXISTS {ctx.env.foreign_catalog} CASCADE")
     ctx.sql(f"DROP CONNECTION IF EXISTS {ctx.env.connection}")
 
@@ -294,7 +297,8 @@ def model_services_teardown(ctx) -> None:
 def access_of(sp: dict) -> dict:
     """Access spec for one specialist: its declared grants plus its Lakebase schema and Vector Search indexes."""
     indexes = [i["name"] for t in sp.get("tools", []) if t.get("type") == "vector_search" for i in t.get("indexes", [])]
-    return {**(sp.get("access") or {}), "lakebase": ["mem"], "vector_indexes": indexes}
+    # no Lakebase schema here: an agent creates and owns its own schema agent_<key> (AgentMemory), which needs only CREATE on the database
+    return {**(sp.get("access") or {}), "vector_indexes": indexes}
 
 
 def _components(ctx) -> dict[str, dict]:
@@ -323,17 +327,25 @@ def apply_component_grants(ctx, conn, comp: str, sp: str, spec: dict) -> None:
     stmts += [f"GRANT EXECUTE ON FUNCTION {uc}.{f} TO `{sp}`" for f in spec.get("functions", [])]
     stmts += [f"GRANT READ VOLUME ON VOLUME {uc}.{v} TO `{sp}`" for v in spec.get("volumes", [])]
     stmts += [f"GRANT SELECT ON TABLE {uc}.{ix} TO `{sp}`" for ix in spec.get("vector_indexes", [])]
+    if spec.get("foreign"):  # external data: the allowlisted templates read the federated catalog under this app's own grants
+        fc = ctx.env.foreign_catalog
+        stmts += [f"GRANT USE CATALOG ON CATALOG {fc} TO `{sp}`", f"GRANT USE SCHEMA, SELECT ON CATALOG {fc} TO `{sp}`"]
     for s in stmts:
         try:
             ctx.sql(s)
         except Exception as e:  # noqa: BLE001
             ctx.say(f"grant failed ({s[:70]}...): {str(e)[:100]}")
-    if comp != "bridge-mcp":  # the bridge makes no LLM calls
-        _grant_model_services(ctx, sp)
+    _grant_model_services(ctx, sp)
     if spec.get("vector_indexes"):  # managed Vector Search embeds the query on the embedding endpoint as the caller
         _grant_embedding_endpoint(ctx, sp)
     if conn is not None:
         _lakebase_role(ctx, conn, comp, sp)
+        if comp.startswith("sp-"):  # a specialist creates its own schema agent_<key> on startup, so it may create objects in the database
+            try:
+                conn.execute(f'GRANT CREATE ON DATABASE "{ctx.env.lakebase_database}" TO "{sp}"')
+                ctx.say(f"lakebase CREATE on the database granted to {comp} (its own schema)")
+            except Exception as e:  # noqa: BLE001
+                ctx.say(f"lakebase CREATE for {comp} not granted: {str(e)[:100]}")
         for s in spec.get("lakebase", []):
             for q in (f'GRANT USAGE ON SCHEMA {s} TO "{sp}"', f'GRANT ALL ON ALL TABLES IN SCHEMA {s} TO "{sp}"',
                       f'GRANT ALL ON ALL SEQUENCES IN SCHEMA {s} TO "{sp}"', f'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA {s} TO "{sp}"'):
@@ -441,7 +453,7 @@ def registrar_grants(ctx) -> None:
     """Grants for the registrar service principal (`make registrar`), which runs the registration job (resources/jobs/registry.yml).
 
     The job can only do what registration needs: read the catalog and grant on its objects (MANAGE on the catalog), use the
-    warehouse, manage the specialist apps and the bridge it wires (CAN_MANAGE), manage the embedding endpoint and the model
+    warehouse, manage the specialist apps it wires (CAN_MANAGE), manage the embedding endpoint and the model
     services (so it can grant them), and write `registry.specialists`. The deployer sets this up; the job never escalates itself.
     """
     from databricks.sdk.service.apps import AppAccessControlRequest, AppPermissionLevel
@@ -467,7 +479,7 @@ def registrar_grants(ctx) -> None:
     except Exception as e:  # noqa: BLE001
         ctx.say(f"registrar warehouse CAN_USE not granted: {str(e)[:100]}")
     for comp in _components(ctx):
-        if not (comp.startswith("sp-") or comp == "bridge-mcp"):  # only the apps registration wires
+        if not comp.startswith("sp-"):  # only the apps registration wires
             continue
         name = ctx.env.app_name(comp)
         for attempt in range(4):
@@ -500,13 +512,9 @@ def registrar_grants(ctx) -> None:
         conn.execute(f'GRANT USAGE ON SCHEMA registry TO "{sp}"')
         conn.execute(f'GRANT SELECT, INSERT, UPDATE, DELETE ON registry.specialists TO "{sp}"')
         ctx.say("registrar: registry.specialists read/write granted")
-        # the registrar grants each new agent's role access to `mem`; it does not own those objects, so it needs the grant option
-        for q in (f'GRANT USAGE ON SCHEMA mem TO "{sp}" WITH GRANT OPTION',
-                  f'GRANT ALL ON ALL TABLES IN SCHEMA mem TO "{sp}" WITH GRANT OPTION',
-                  f'GRANT ALL ON ALL SEQUENCES IN SCHEMA mem TO "{sp}" WITH GRANT OPTION',
-                  f'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA mem TO "{sp}" WITH GRANT OPTION'):
-            conn.execute(q)
-        ctx.say("registrar: mem grant option applied")
+        # the registrar grants each newly registered agent CREATE on the database (its own schema agent_<key>); with the grant option
+        conn.execute(f'GRANT CREATE ON DATABASE "{ctx.env.lakebase_database}" TO "{sp}" WITH GRANT OPTION')
+        ctx.say("registrar: database CREATE grant option applied")
     except Exception as e:  # noqa: BLE001
         ctx.say(f"registrar registry grant failed: {str(e)[:100]}")
     finally:
@@ -515,6 +523,52 @@ def registrar_grants(ctx) -> None:
 
 def app_grants_teardown(ctx) -> None:
     pass  # revoked implicitly when the apps (and their service principals) are destroyed
+
+
+# ── traces in Unity Catalog (flags.use_uc_trace_storage) ──────────────────────────────────────────
+def _trace_experiments(ctx) -> list[str]:
+    """The platform's experiments plus every agent experiment already deployed (`<experiment_path>-<key>`, created by the agents' bundles)."""
+    import mlflow
+
+    e = ctx.env
+    paths = {e.experiment_path, e.moderator_experiment_path}
+    try:
+        mlflow.set_tracking_uri("databricks")
+        for x in mlflow.search_experiments(filter_string=f"name LIKE '{e.experiment_path}-%'"):
+            paths.add(x.name)
+    except Exception as ex:  # noqa: BLE001
+        ctx.say(f"could not list agent experiments ({str(ex)[:80]}); binding the platform ones")
+    return sorted(paths)
+
+
+def trace_storage_apply(ctx) -> None:
+    """Bind every experiment of this environment to the UC trace location, then grant the platform apps: writers on the platform
+    experiments' tables, the UI SELECT on the whole traces schema. Agent apps are granted by their own `make traces`. Idempotent."""
+    from eqds_agentkit import trace_storage as ts
+
+    e = ctx.env
+    wh = ctx.warehouse_id()
+    for path in _trace_experiments(ctx):
+        res = ts.bind(path, e.catalog, e.traces_schema, wh)
+        ctx.say(f"traces of {path}: {res} ({e.catalog}.{e.traces_schema}.{ts.table_prefix(path)}_otel_*)")
+        if res.startswith("conflict"):
+            ctx.say("  already bound elsewhere: a binding is permanent, create a new experiment to move it")
+    platform = [e.experiment_path, e.moderator_experiment_path]
+    for comp in ("moderator", "ui"):
+        try:
+            sp = ctx.w.apps.get(e.app_name(comp)).service_principal_client_id
+        except Exception as ex:  # noqa: BLE001
+            ctx.say(f"{e.app_name(comp)}: not deployed, trace grants skipped ({str(ex)[:60]})")
+            continue
+        for path in platform:
+            ts.grant_writer(ctx.w, wh, e.catalog, e.traces_schema, path, sp)
+        if comp == "ui":
+            ts.grant_reader(ctx.w, wh, e.catalog, e.traces_schema, sp)
+        ctx.say(f"trace tables granted to {e.app_name(comp)}")
+
+
+def trace_storage_teardown(ctx) -> None:
+    ctx.say("trace tables kept: an experiment's UC binding is permanent; drop the schema manually to discard the traces")
 
 
 # ── specialist registry ──────────────────────────────────────────────────────────────────────────
@@ -566,7 +620,7 @@ def outputs_apply(ctx) -> None:
         out["experiment_id"] = ctx.w.experiments.get_by_name(ctx.env.experiment_path).experiment.experiment_id
     except Exception:  # noqa: BLE001
         pass
-    out["apps"] = {c: ctx.app_url(c) for c in ["ui", "moderator", "bridge-mcp"]}
+    out["apps"] = {c: ctx.app_url(c) for c in ["ui", "moderator"]}
     path = f"{ctx.env.volume_path('artifacts')}/bootstrap-output-{ctx.env.target}.json"
     prev = {}
     try:

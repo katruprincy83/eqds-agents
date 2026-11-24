@@ -1,4 +1,4 @@
-# Platform jobs (design §4.2, §5.6, §7.2, §10, §11.2, §14.7). Seed jobs are in seed.yml. Compute: serverless unless the job must reach the external DB (bridge_compute, E8).
+# Platform jobs (design §4.2, §5.6, §7.2, §10, §11.2, §14.7). Seed jobs are in seed.yml. Compute: serverless (E8).
 resources:
   jobs:
     validate_seed:
@@ -7,8 +7,7 @@ resources:
       parameters:
       - name: target
         default: ${var.target_name}
-      job_clusters: ${var.azure_job_clusters}
-      environments: ${var.azure_environments}
+      environments: ${var.serverless_environments}
       tasks:
       - task_key: validate_seed
         spark_python_task:
@@ -18,9 +17,7 @@ resources:
           - '{{job.parameters.target}}'
           - --root
           - ${workspace.file_path}
-        job_cluster_key: ${var.azure_cluster_key}
-        environment_key: ${var.azure_env_key}
-        libraries: ${var.azure_libraries}
+        environment_key: ${var.serverless_env_key}
     build_eval:
       name: ${var.name_prefix}-build-eval-${var.target_name}
       max_concurrent_runs: 1
@@ -71,7 +68,7 @@ resources:
           - numpy
           - langchain-core
           - openai
-          - mlflow>=3.1
+          - mlflow>=3.14
       tasks:
       - task_key: env_bootstrap
         spark_python_task:
@@ -269,8 +266,7 @@ resources:
       parameters:
       - name: target
         default: ${var.target_name}
-      job_clusters: ${var.azure_job_clusters}
-      environments: ${var.azure_environments}
+      environments: ${var.serverless_environments}
       tasks:
       - task_key: ingest_news
         spark_python_task:
@@ -280,9 +276,7 @@ resources:
           - '{{job.parameters.target}}'
           - --root
           - ${workspace.file_path}
-        job_cluster_key: ${var.azure_cluster_key}
-        environment_key: ${var.azure_env_key}
-        libraries: ${var.azure_libraries}
+        environment_key: ${var.serverless_env_key}
       schedule:
         quartz_cron_expression: ${var.ingest_news_cron}
         timezone_id: UTC
@@ -295,8 +289,7 @@ resources:
         default: ${var.target_name}
       - name: minutes
         default: '30'
-      job_clusters: ${var.azure_job_clusters}
-      environments: ${var.azure_environments}
+      environments: ${var.serverless_environments}
       tasks:
       - task_key: news_generator
         spark_python_task:
@@ -308,32 +301,8 @@ resources:
           - ${workspace.file_path}
           - --minutes
           - '{{job.parameters.minutes}}'
-        job_cluster_key: ${var.azure_cluster_key}
-        environment_key: ${var.azure_env_key}
-        libraries: ${var.azure_libraries}
+        environment_key: ${var.serverless_env_key}
       timeout_seconds: 7200
-    bridge_worker:
-      name: ${var.name_prefix}-bridge-worker-${var.target_name}
-      max_concurrent_runs: 1
-      parameters:
-      - name: target
-        default: ${var.target_name}
-      job_clusters: ${var.azure_job_clusters}
-      environments: ${var.azure_environments}
-      tasks:
-      - task_key: bridge_worker
-        spark_python_task:
-          python_file: ../../src/jobs/bridge_worker.py
-          parameters:
-          - --target
-          - '{{job.parameters.target}}'
-          - --root
-          - ${workspace.file_path}
-        job_cluster_key: ${var.azure_cluster_key}
-        environment_key: ${var.azure_env_key}
-        libraries: ${var.azure_libraries}
-      continuous:
-        pause_status: ${var.bridge_worker_status}
     wiki_refresh:
       name: ${var.name_prefix}-wiki-refresh-${var.target_name}
       max_concurrent_runs: 1

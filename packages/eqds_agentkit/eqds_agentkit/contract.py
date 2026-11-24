@@ -23,7 +23,7 @@ class Claim(BaseModel):
 
 class Source(BaseModel):
     id: str
-    type: str = "uc_function"           # uc_function | vector_search | genie | external_db | bridge | doc
+    type: str = "uc_function"           # uc_function | vector_search | genie | external_db | doc
     ref: str = ""
     system: str | None = None
     template: str | None = None

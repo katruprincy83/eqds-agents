@@ -1,4 +1,4 @@
-"""Live web search for the classic bridge worker (design §5.6, option 2: the classic worker is the only external egress).
+"""Live web search for the specialist agents (design §5.6).
 
 One HTTPS GET to a FIXED vendor endpoint taken from the environment profile (`web_search.endpoint`). The agent can supply
 only the validated query, result count and recency; it cannot change the host or the path. The API key is passed in a
