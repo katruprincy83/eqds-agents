@@ -15,12 +15,13 @@ import yaml
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
+from psycopg import sql as pgsql
 from pydantic import BaseModel, Field
 
 from apps.common import env as get_env
 from apps.common import pool
 from eqds_agentkit import auth, tracing
-from eqds_agentkit.memory import Store
+from eqds_agentkit.memory import Store, specialist_memory_union
 from eqds_agentkit.sql import lit, run_statement
 
 log = logging.getLogger("ui")
@@ -363,8 +364,9 @@ async def dev_invocations(run_id: str, request: Request):
 
     def go():
         with pool().connection() as c:
-            return c.execute("SELECT specialist, idempotency_key, brief, response, created_at FROM mem.specialist WHERE idempotency_key LIKE %s ORDER BY created_at",
-                             (run_id + ":%",)).fetchall()
+            q = pgsql.SQL("SELECT specialist, idempotency_key, brief, response, created_at FROM ({}) m WHERE idempotency_key LIKE %s ORDER BY created_at").format(
+                specialist_memory_union(c))
+            return c.execute(q, (run_id + ":%",)).fetchall()
 
     rows = await asyncio.to_thread(go)
     out = []
@@ -386,7 +388,8 @@ async def dev_memory(run_id: str, request: Request):
         run = s.get_run(run_id)
         with pool().connection() as c:
             turns = c.execute("SELECT turn, question, answer_summary, run_id FROM mem.conversation WHERE conversation_id = %s ORDER BY turn", (run["conversation_id"],)).fetchall() if run else []
-            spec = c.execute("SELECT specialist, caller, idempotency_key, left(brief, 160) AS brief, created_at FROM mem.specialist WHERE conversation_id = %s ORDER BY created_at DESC LIMIT 20", (run["conversation_id"],)).fetchall() if run else []
+            spec = c.execute(pgsql.SQL("SELECT specialist, caller, idempotency_key, left(brief, 160) AS brief, created_at FROM ({}) m WHERE conversation_id = %s ORDER BY created_at DESC LIMIT 20")
+                             .format(specialist_memory_union(c)), (run["conversation_id"],)).fetchall() if run else []
             reg = c.execute("SELECT key, version FROM registry.specialists ORDER BY key").fetchall()
         return {"conversation_id": run and run["conversation_id"], "turns": turns, "specialist": [{**r, "created_at": r["created_at"].isoformat()} for r in spec],
                 "skills": [{"agent": r["key"], "version": r["version"], "path": f"{e.volume_path('skills')}/{r['key']}/{r['version']}/SKILL.md"} for r in reg]}

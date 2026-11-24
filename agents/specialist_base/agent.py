@@ -99,7 +99,7 @@ class SpecialistAgent:
             if hit:
                 out = InvocationOutputs.model_validate(hit)
                 out.cached = True
-                out.activity = [{"component": f"eqds-sp-{self.key}", "zone": "state", "label": "idempotency cache hit", "detail": idem, "link": {"kind": "lakebase", "ref": "mem.specialist"}}]
+                out.activity = [{"component": f"eqds-sp-{self.key}", "zone": "state", "label": "idempotency cache hit", "detail": idem, "link": {"kind": "lakebase", "ref": f"agent_{self.key}.memory"}}]
                 return out
         await self.warm()
         try:

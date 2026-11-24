@@ -6,15 +6,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with: {repository: "${{ vars.PLATFORM_REPO }}", ref: "${{ github.base_ref }}", token: "${{ secrets.PLATFORM_REPO_TOKEN }}", path: platform}
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - run: pip install pyyaml pydantic
-      - name: the app builds against the platform runtime of the target branch, for both environments
+      - name: the runtime snapshot is in the repo, with the platform commit it came from
+        run: test -f runtime/agents/specialist_base/app.py && grep -q platform_commit platform_lock.yaml
+      - name: the app builds from the snapshot, for both environments
         run: |
-          python scripts/build.py --platform platform --target dev
-          python scripts/build.py --platform platform --target demo
+          python scripts/build.py --target dev
+          python scripts/build.py --target demo
       - name: bundle and spec are well-formed, and both targets override every platform value
         run: |
           python - <<'PY'

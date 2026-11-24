@@ -1,9 +1,9 @@
-# make deploy        build ./app from the platform runtime + agent/, deploy the bundle, bind the traces, start the app
+# make deploy        build ./app from runtime/ (platform runtime snapshot) + agent/, deploy the bundle, bind the traces, start the app
 # make smoke         check /healthz and /info of the deployed app (add Q="question" for one real call)
 # make traces        bind this agent's experiment to the environment's UC trace location and grant the app (no-op when the platform
 #                    profile has flags.use_uc_trace_storage off, i.e. production); `make deploy` runs it before the app starts
 # Environments: TARGET=demo is production (branch main), TARGET=dev is dev (branch dev). CI sets TARGET from the branch.
-PLATFORM ?= ../eqds-agents
+PLATFORM ?= runtime
 TARGET ?= {{TARGET}}
 PY ?= python3
 Q ?=

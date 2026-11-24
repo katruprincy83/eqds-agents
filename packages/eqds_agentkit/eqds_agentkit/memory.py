@@ -2,9 +2,15 @@
 from __future__ import annotations
 
 import json
+import pathlib
+import re
 from typing import Any
 
+from psycopg import sql
 from psycopg.types.json import Jsonb
+
+BASELINE_MIGRATIONS = pathlib.Path(__file__).parent / "specialist_migrations"
+_KEY = re.compile(r"[a-z][a-z0-9_]{0,40}")
 
 
 class Store:
@@ -99,6 +105,74 @@ class Store:
                          VALUES (%s,%s,%s,%s,%s,%s)
                          ON CONFLICT (idempotency_key) DO UPDATE SET response = EXCLUDED.response, created_at = now()""",
                       (specialist, conversation_id, caller, idempotency_key, brief, Jsonb(response)))
+
+
+class AgentMemory:
+    """A specialist's own memory, in its own Lakebase schema `agent_<key>` (self-contained agents).
+
+    The app's service principal creates the schema and its tables on startup, so it owns them and the platform grants nothing on
+    them. The methods match the specialist part of `Store`, so `SpecialistAgent` takes either.
+    """
+
+    def __init__(self, pool, key: str):
+        if not _KEY.fullmatch(key or ""):
+            raise ValueError(f"agent key {key!r}: lowercase letters, digits and underscores, starting with a letter")
+        self.pool = pool
+        self.key = key
+        self.schema = f"agent_{key}"
+        self._t = sql.Identifier(self.schema, "memory")
+
+    def migrate(self, agent_dirs: list[str | pathlib.Path] | tuple = ()) -> list[str]:
+        """Create the schema and apply the baseline migrations, then the agent's own `*.sql` files, each once, in name order."""
+        applied: list[str] = []
+        with self.pool.connection() as c:
+            c.execute(sql.SQL("CREATE SCHEMA IF NOT EXISTS {}").format(sql.Identifier(self.schema)))
+            c.execute(sql.SQL("SET search_path TO {}").format(sql.Identifier(self.schema)))
+            try:
+                c.execute("CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, applied_at timestamptz DEFAULT now())")
+                done = {r["version"] for r in c.execute("SELECT version FROM schema_migrations").fetchall()}
+                for d in (BASELINE_MIGRATIONS, *map(pathlib.Path, agent_dirs)):
+                    for f in sorted(pathlib.Path(d).glob("*.sql")):
+                        version = f"{pathlib.Path(d).name}/{f.name}"
+                        if version in done:
+                            continue
+                        c.execute(f.read_text())
+                        c.execute("INSERT INTO schema_migrations (version) VALUES (%s)", (version,))
+                        applied.append(version)
+            finally:
+                c.execute("RESET search_path")
+        return applied
+
+    def cached_response(self, idempotency_key: str, ttl_s: int = 3600) -> dict | None:
+        with self.pool.connection() as c:
+            r = c.execute(sql.SQL("SELECT response FROM {} WHERE idempotency_key = %s AND created_at > now() - make_interval(secs => %s)")
+                          .format(self._t), (idempotency_key, ttl_s)).fetchone()
+        return r["response"] if r else None
+
+    def recent_interactions(self, specialist: str, conversation_id: str, n: int = 5) -> list[dict]:
+        with self.pool.connection() as c:
+            rows = c.execute(sql.SQL("SELECT brief, response FROM {} WHERE conversation_id = %s ORDER BY created_at DESC LIMIT %s")
+                             .format(self._t), (conversation_id, n)).fetchall()
+        return list(reversed(rows))
+
+    def put_interaction(self, specialist: str, conversation_id: str, caller: str, idempotency_key: str, brief: str, response: dict) -> None:
+        with self.pool.connection() as c:
+            c.execute(sql.SQL("""INSERT INTO {} (idempotency_key, conversation_id, caller, brief, response) VALUES (%s,%s,%s,%s,%s)
+                                 ON CONFLICT (idempotency_key) DO UPDATE SET response = EXCLUDED.response, created_at = now()""")
+                      .format(self._t), (idempotency_key, conversation_id, caller, brief, Jsonb(response)))
+
+
+def specialist_memory_union(c) -> sql.Composed:
+    """Every specialist's memory rows as one relation, for the dev console: the legacy platform table `mem.specialist` (rows written
+    before an agent owned its schema) plus `agent_<key>.memory` of each agent that has one. Columns: specialist, idempotency_key,
+    conversation_id, caller, brief, response, created_at."""
+    schemas = [r["table_schema"] for r in c.execute(
+        "SELECT table_schema FROM information_schema.tables WHERE table_name = 'memory' AND table_schema ~ '^agent_' ORDER BY 1").fetchall()]
+    cols = "idempotency_key, conversation_id, caller, brief, response, created_at"
+    parts = [sql.SQL("SELECT specialist, " + cols + " FROM mem.specialist")]
+    for s in schemas:
+        parts.append(sql.SQL("SELECT {} AS specialist, " + cols + " FROM {}").format(sql.Literal(s[len("agent_"):]), sql.Identifier(s, "memory")))
+    return sql.SQL(" UNION ALL ").join(parts)
 
 
 def dumps(o: Any) -> str:

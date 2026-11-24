@@ -297,7 +297,8 @@ def model_services_teardown(ctx) -> None:
 def access_of(sp: dict) -> dict:
     """Access spec for one specialist: its declared grants plus its Lakebase schema and Vector Search indexes."""
     indexes = [i["name"] for t in sp.get("tools", []) if t.get("type") == "vector_search" for i in t.get("indexes", [])]
-    return {**(sp.get("access") or {}), "lakebase": ["mem"], "vector_indexes": indexes}
+    # no Lakebase schema here: an agent creates and owns its own schema agent_<key> (AgentMemory), which needs only CREATE on the database
+    return {**(sp.get("access") or {}), "vector_indexes": indexes}
 
 
 def _components(ctx) -> dict[str, dict]:
@@ -337,6 +338,12 @@ def apply_component_grants(ctx, conn, comp: str, sp: str, spec: dict) -> None:
         _grant_embedding_endpoint(ctx, sp)
     if conn is not None:
         _lakebase_role(ctx, conn, comp, sp)
+        if comp.startswith("sp-"):  # a specialist creates its own schema agent_<key> on startup, so it may create objects in the database
+            try:
+                conn.execute(f'GRANT CREATE ON DATABASE "{ctx.env.lakebase_database}" TO "{sp}"')
+                ctx.say(f"lakebase CREATE on the database granted to {comp} (its own schema)")
+            except Exception as e:  # noqa: BLE001
+                ctx.say(f"lakebase CREATE for {comp} not granted: {str(e)[:100]}")
         for s in spec.get("lakebase", []):
             for q in (f'GRANT USAGE ON SCHEMA {s} TO "{sp}"', f'GRANT ALL ON ALL TABLES IN SCHEMA {s} TO "{sp}"',
                       f'GRANT ALL ON ALL SEQUENCES IN SCHEMA {s} TO "{sp}"', f'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA {s} TO "{sp}"'):
@@ -503,13 +510,9 @@ def registrar_grants(ctx) -> None:
         conn.execute(f'GRANT USAGE ON SCHEMA registry TO "{sp}"')
         conn.execute(f'GRANT SELECT, INSERT, UPDATE, DELETE ON registry.specialists TO "{sp}"')
         ctx.say("registrar: registry.specialists read/write granted")
-        # the registrar grants each new agent's role access to `mem`; it does not own those objects, so it needs the grant option
-        for q in (f'GRANT USAGE ON SCHEMA mem TO "{sp}" WITH GRANT OPTION',
-                  f'GRANT ALL ON ALL TABLES IN SCHEMA mem TO "{sp}" WITH GRANT OPTION',
-                  f'GRANT ALL ON ALL SEQUENCES IN SCHEMA mem TO "{sp}" WITH GRANT OPTION',
-                  f'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA mem TO "{sp}" WITH GRANT OPTION'):
-            conn.execute(q)
-        ctx.say("registrar: mem grant option applied")
+        # the registrar grants each newly registered agent CREATE on the database (its own schema agent_<key>); with the grant option
+        conn.execute(f'GRANT CREATE ON DATABASE "{ctx.env.lakebase_database}" TO "{sp}" WITH GRANT OPTION')
+        ctx.say("registrar: database CREATE grant option applied")
     except Exception as e:  # noqa: BLE001
         ctx.say(f"registrar registry grant failed: {str(e)[:100]}")
     finally:

@@ -6,8 +6,8 @@
 Binds the agent's experiment (created by `databricks bundle deploy`) to <catalog>.<traces_schema> and grants the app's service principal
 MODIFY + SELECT on the four trace tables. Idempotent; run after the bundle deploy and before the app starts (`make deploy` does).
 Production (`demo`) keeps traces in MLflow's own storage: the script then does nothing. The binding of an experiment is permanent.
-Needs: the platform checkout (profile + the shared trace helpers, same one scripts/build.py uses), mlflow>=3.14, databricks-sdk,
-and an identity that may create tables in the traces schema (the CI service principal).
+Needs: the runtime snapshot (./runtime: profile + the shared trace helpers, same one scripts/build.py uses), mlflow>=3.14,
+databricks-sdk, and an identity that may create tables in the traces schema (the CI service principal).
 """
 import argparse
 import pathlib
@@ -17,7 +17,7 @@ import yaml
 
 HERE = pathlib.Path(__file__).resolve().parents[1]
 ap = argparse.ArgumentParser()
-ap.add_argument("--platform", default=str(HERE.parent / "eqds-agents"))
+ap.add_argument("--platform", default=str(HERE / "runtime"))
 ap.add_argument("--target", default="demo")
 a = ap.parse_args()
 P = pathlib.Path(a.platform).resolve()

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Assemble the deployable app source in ./app from the EQDS specialist runtime plus THIS agent's own files.
 
-    python scripts/build.py [--platform ../eqds-agents] [--target demo]
+    python scripts/build.py [--platform runtime] [--target demo]
 
-The runtime (LangGraph ReAct loop, tools, contract, tracing) is vendored from a platform checkout; in a real setup the platform team
-publishes it as a template or package. Everything agent-specific lives in ./agent: specialist.yaml and skills/. The dependency pins
-come from the platform's build script so the two never drift.
+The runtime (LangGraph ReAct loop, tools, contract, tracing, memory) is the snapshot in ./runtime, written by the platform's
+`new_agent.py --scaffold-update` (platform_lock.yaml names its commit). Everything agent-specific lives in ./agent: specialist.yaml,
+skills/ and migrations/. The dependency pins come from the snapshot's build script, so the two never drift.
 """
 import argparse, importlib.util, pathlib, shutil, sys
 
@@ -13,12 +13,12 @@ import yaml
 
 HERE = pathlib.Path(__file__).resolve().parents[1]
 ap = argparse.ArgumentParser()
-ap.add_argument("--platform", default=str(HERE.parent / "eqds-agents"), help="path to the eqds-agents checkout")
+ap.add_argument("--platform", default=str(HERE / "runtime"), help="the runtime snapshot (default ./runtime)")
 ap.add_argument("--target", default="demo")
 a = ap.parse_args()
 P = pathlib.Path(a.platform).resolve()
 if not (P / "agents/specialist_base/app.py").exists():
-    sys.exit(f"{P} is not an eqds-agents checkout")
+    sys.exit(f"{P} is not a runtime snapshot (run the platform's new_agent.py --scaffold-update)")
 
 spec = importlib.util.spec_from_file_location("platform_build_apps", P / "scripts/build_apps.py")
 pb = importlib.util.module_from_spec(spec)
@@ -45,6 +45,8 @@ shutil.copytree(P / "prompts", out / "prompts", ignore=ign)  # shared prompt tem
 (out / f"agents/specialists/{key}").mkdir(parents=True)
 shutil.copy2(HERE / "agent/specialist.yaml", out / f"agents/specialists/{key}/specialist.yaml")
 shutil.copytree(HERE / "agent/skills", out / "skills")
+if (HERE / "agent/migrations").exists():  # this agent's own Lakebase migrations, applied to agent_<key> once each on startup
+    shutil.copytree(HERE / "agent/migrations", out / "migrations")
 # environment profile and model tiers of the platform this agent plugs into
 (out / "config/env").mkdir(parents=True)
 shutil.copy2(P / f"config/env/{a.target}.yaml", out / f"config/env/{a.target}.yaml")

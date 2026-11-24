@@ -10,8 +10,9 @@ generated bundle deploys as is. The project is not registered: its owner does th
 
 The bundle gets one target per environment: the one given by --target (default demo = production, the variable defaults) and every
 environment of --also (default dev). An environment whose platform is not deployed yet is skipped with a warning; run again with
---scaffold-update once it is. --scaffold-update refreshes the generated scaffolding of an existing project (databricks.yml, scripts,
-CI workflows, the deploy/traces targets of the Makefile, the environments section of the README) and touches nothing the owner wrote.
+--scaffold-update once it is. --scaffold-update refreshes the generated scaffolding of an existing project (databricks.yml, scripts, CI workflows, the
+deploy/traces targets of the Makefile, the runtime snapshot runtime/ with platform_lock.yaml, README sections 1 to 6) and touches
+nothing the owner wrote (agent/, the README intro).
 """
 from __future__ import annotations
 
@@ -60,6 +61,7 @@ def render_targets(key: str, primary: Env, primary_vals: dict[str, str], others:
 
 def patch_makefile(text: str, key: str) -> str:
     """Bring the deploy and traces targets of an existing Makefile up to date without touching anything else the owner added."""
+    text = text.replace("PLATFORM ?= ../eqds-agents", "PLATFORM ?= runtime", 1)  # the runtime snapshot replaces the platform checkout
     if "bind_traces.py" in text:
         return text
     old = f"deploy: build\n\tdatabricks bundle deploy -t $(TARGET)\n\tdatabricks bundle run -t $(TARGET) {key}\n"
@@ -81,12 +83,41 @@ def fill(text: str, values: dict[str, str]) -> str:
     return text
 
 
+# the platform's specialist runtime, vendored into each agent repo (runtime/) so it builds without a platform checkout
+RUNTIME_PATHS = ["packages/eqds_agentkit/eqds_agentkit", "packages/eqds_llm/eqds_llm", "apps/__init__.py", "apps/common.py",
+                 "agents/__init__.py", "agents/specialist_base", "prompts", "scripts/build_apps.py", "config/env", "config/models.*.yaml"]
+
+
+def snapshot_runtime(out: pathlib.Path) -> str:
+    """Copy the runtime paths of this platform checkout into <out>/runtime (same layout) and write <out>/platform_lock.yaml with the
+    commit they came from. The agent builds and deploys from this copy alone."""
+    import subprocess
+
+    dest = out / "runtime"
+    if dest.exists():
+        shutil.rmtree(dest)
+    ign = shutil.ignore_patterns("__pycache__", "*.pyc", ".pytest_cache", "tests")
+    for rel in RUNTIME_PATHS:
+        for src in sorted(ROOT.glob(rel)):
+            target = dest / src.relative_to(ROOT)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if src.is_dir():
+                shutil.copytree(src, target, ignore=ign)
+            else:
+                shutil.copy2(src, target)
+    commit = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or "unknown"
+    (out / "platform_lock.yaml").write_text(yaml.safe_dump({"platform_commit": commit, "runtime": RUNTIME_PATHS}, sort_keys=False))
+    return commit
+
+
 def _copy_scaffold(out: pathlib.Path) -> None:
     for f in ("build.py", "smoke.py", "bind_traces.py"):
         shutil.copy2(TPL / "scripts" / f, out / "scripts" / f)
     (out / ".github" / "workflows").mkdir(parents=True, exist_ok=True)
     for f in (TPL / ".github" / "workflows").glob("*.yml"):
         shutil.copy2(f, out / ".github" / "workflows" / f.name)
+    commit = snapshot_runtime(out)
+    print(f"runtime snapshot written to {out / 'runtime'} (platform commit {commit[:12]})")
 
 
 def main() -> int:
@@ -147,10 +178,12 @@ def main() -> int:
         mk = out / "Makefile"
         mk.write_text(patch_makefile(mk.read_text(), key))
         rd = out / "README.md"
-        section = fill((TPL / "README.md").read_text(), values)
-        section = section[section.index("\n## 6. Environments and CI/CD"):]
-        if rd.exists() and "## 6. Environments and CI/CD" not in rd.read_text():
-            rd.write_text(rd.read_text().rstrip("\n") + "\n" + section)
+        fresh = fill((TPL / "README.md").read_text(), values)
+        if rd.exists() and "\n## 1. Deploy" in rd.read_text():  # sections 1 to 6 are generated: replace them, keep the owner's intro
+            old = rd.read_text()
+            rd.write_text(old[:old.index("\n## 1. Deploy")] + fresh[fresh.index("\n## 1. Deploy"):])
+        elif rd.exists() and "## 6. Environments and CI/CD" not in rd.read_text():
+            rd.write_text(rd.read_text().rstrip("\n") + "\n" + fresh[fresh.index("\n## 6. Environments and CI/CD"):])
         _copy_scaffold(out)
         print(f"scaffolding updated in {out} (targets {targets})")
         return 0

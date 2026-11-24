@@ -6,5 +6,5 @@ on:
 jobs:
   deploy:
     uses: ./.github/workflows/_deploy.yml
-    with: {target: dev, environment: dev, platform_ref: dev}
+    with: {target: dev, environment: dev}
     secrets: inherit
