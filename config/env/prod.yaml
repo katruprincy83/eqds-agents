@@ -47,7 +47,7 @@ web_search:                  # live web search from the specialist agents: one f
   secret_key: youdotcom-api-key   # secret in secret_scope; set from env EQDS_YOUDOTCOM_API_KEY by `make infra`
   timeout_s: 15
 network:
-  serverless_blocked: false        # true where the external DB firewall blocks serverless egress; validate_seed asserts this matches reality
+  serverless_blocked: true        # true where the external DB firewall blocks serverless egress; validate_seed asserts this matches reality
 flags:
   use_managed_memory: false
   use_uc_skills: false
